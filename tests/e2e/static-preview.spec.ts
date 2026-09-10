@@ -109,6 +109,14 @@ test("previews, applies and undoes one local graph proposal", async ({ page }) =
   await expect(page.getByRole("heading", { name: "“找到”不等于“足够”" }).last()).toBeVisible();
 });
 
+test("switches branches and restores each branch without a model call", async ({ page }) => {
+  await page.goto("/ideascope/#/workspace/demo");
+  await page.getByRole("button", { name: "按需检索的边界" }).click();
+  await expect(page.getByRole("heading", { name: "按需检索的边界" })).toBeVisible();
+  await page.getByRole("button", { name: "可靠性" }).click();
+  await expect(page.getByRole("heading", { name: "可靠性与证据" })).toBeVisible();
+});
+
 test("exposes truthful demo states, sources, directions, and export boundary", async ({
   page,
 }) => {

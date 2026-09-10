@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Branch, Evidence, GraphPatch, Paper } from "../../../contracts/domain";
+import type { Branch, Evidence, GraphPatch, Message, Paper } from "../../../contracts/domain";
 import type { SearchRecord } from "../../domain/search/literature";
 
 export class IdeaScopeDatabase extends Dexie {
@@ -11,6 +11,7 @@ export class IdeaScopeDatabase extends Dexie {
   patchReceipts!: EntityTable<PatchReceipt, "patchId">;
   runSummaries!: EntityTable<RunSummary, "runId">;
   runExecutions!: EntityTable<RunExecution, "id">;
+  messages!: EntityTable<StoredMessage, "id">;
   constructor(name = "ideascope") {
     super(name);
     this.version(1).stores({
@@ -38,6 +39,17 @@ export class IdeaScopeDatabase extends Dexie {
       runSummaries: "runId,workspaceId,branchId,status,endedAt",
       runExecutions: "id,workspaceId,branchId,status,startedAt,endedAt",
     });
+    this.version(4).stores({
+      papers: "id,externalIds.doi,externalIds.arxiv,externalIds.openalex,fetchedAt",
+      evidence: "id,paperId,level,fetchedAt",
+      searchRecords: "id,source,status,endedAt,cacheKey",
+      branches: "key,workspaceId,branch.id,branch.revision",
+      checkpoints: "id,workspaceId,branchId,revision,createdAt",
+      patchReceipts: "patchId,workspaceId,branchId,runId,committedAt",
+      runSummaries: "runId,workspaceId,branchId,status,endedAt",
+      runExecutions: "id,workspaceId,branchId,status,startedAt,endedAt",
+      messages: "id,branchId,createdAt",
+    });
   }
 }
 
@@ -46,5 +58,6 @@ export interface GraphCheckpoint { id: string; workspaceId: string; branchId: st
 export interface PatchReceipt { patchId: string; workspaceId: string; branchId: string; runId: string; baseRevision: number; committedRevision: number; committedAt: string; patch: GraphPatch }
 export interface RunSummary { runId: string; workspaceId: string; branchId: string; status: "completed"; patchId: string; operationCount: number; baseRevision: number; committedRevision: number; summary: string; endedAt: string }
 export interface RunExecution { id: string; workspaceId: string; branchId: string; baseRevision: number; status: "running" | "completed" | "failed" | "cancelled" | "interrupted" | "budget_exhausted"; states: string[]; startedAt: string; endedAt: string | null; usage: { inputTokens: number | null; outputTokens: number | null; source: "reported" | "estimated" | "unknown" }; error: string | null }
+export interface StoredMessage extends Message { workspaceId: string }
 
 export const ideaScopeDatabase = new IdeaScopeDatabase();

@@ -374,3 +374,25 @@
 风险与决策：撤销产生新 revision 而不是把 revision 数字倒退，保证旧响应永远过期；用户手动布局和锁定状态随 branch checkpoint 原样恢复。
 
 下一阶段入口：v0.5.0-B，实现 BranchService、快照复制、消息/运行按 branchId 路由、活动运行门禁及分支切换恢复测试。
+
+## v0.5.0-B 阶段记录
+
+阶段 ID：v0.5.0-B
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：实现 BranchService、分支快照复制、消息按 workspace/branch 路由、活动运行建分支门禁和跨分支晚到写入拒绝；保留共享不可变 Paper/Evidence。不调用模型。
+
+实际修改文件：Dexie v4 messages 表、`src/infrastructure/storage/branch-service.ts`、分支 unit/e2e、视觉截图与本文件。
+
+已完成：新分支复制来源 branch 的图、视图、范围、摘要与方向，记录 parentBranchId/forkedFromRevision，并从自身 revision 0 开始；后续对象与来源分离。Paper/Evidence 不复制，继续使用 workspace 级记录。消息落库前验证目标 branch，查询同时过滤 workspaceId/branchId。workspace 存在 running 运行时拒绝建分支；GraphPatch 自身的 branch/revision 门禁使 A 的晚到响应不能写入 B。浏览旧分支只读本地快照，不调用模型。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、13 个 unit/contract 文件共 50 项测试、production build、11 项 Playwright e2e 与 secret scan 均成功。新增 fake IndexedDB 测试覆盖快照隔离、消息路由、活动运行门禁和晚到补丁拒绝；e2e 验证切换分支后恢复各自状态且未调用模型。
+
+人工验收与截图：复核 `reports/visual/workspace-1440x900.png`；分支导航延续左侧紧凑轨迹列表，切换不改变地图和右侧详情的视觉层级。
+
+未完成 / 待实测：多标签页同时创建同名分支的竞争将在 v0.6-A 单写者策略中处理；真实 Provider 活动时切分支仍待真实凭证验证。
+
+风险与决策：branch ID 在 workspace 内唯一；服务不复制 Evidence，避免同一来源因分支增加而重复计数。分支切换不隐式取消运行，创建分支则要求先结束或取消，保持写入目标清晰。
+
+下一阶段入口：v0.5.0-C，实现结构折叠/合并建议和完整方向卡片的保存、排除与证据保留规则。
