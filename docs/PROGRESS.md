@@ -1,13 +1,13 @@
 # 开发进度
 
-当前状态：**v0.1.0-A 已完成；v0.1.0-B 探针实现与 OpenAlex localhost 浏览器验证完成，真实 Provider 与 Pages origin 仍待验证。v0.1.0 整体尚未完成。**
+当前状态：**v0.1.0-A 与 v0.1.0-C 本地范围已完成；v0.1.0-B 探针实现与 OpenAlex localhost 浏览器验证完成，真实 Provider 与 Pages origin 仍待验证。v0.1.0 整体尚未通过门禁。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
 | 计划与设计 | 已形成文档包 | README、专题文档、契约草案、原型、包内检查报告 |
 | v0.1.0-A | 已完成 | React/TypeScript/Vite 空壳、lockfile、严格检查、契约/示例测试、ADR 与依赖基线 |
 | v0.1.0-B | 待验收 | 探针与错误分类已实现；OpenAlex localhost 浏览器通过；真实 Provider/Pages origin 待凭证与部署验证 |
-| v0.1.0-C | 待开始 | 未部署真实 Pages |
+| v0.1.0-C | 本地完成 | Hash 路由、Pages 子路径 production preview、CI/e2e 与手动部署 workflow 已验证；真实 Pages 待执行 |
 | 其余版本 | 计划中 | 按路线逐阶段执行 |
 
 ## 每阶段记录模板
@@ -102,3 +102,31 @@
 风险与决策：每个 Provider 探针可能产生费用，只允许用户主动点击。AbortSignal 只保证客户端停止继续处理，不承诺供应商停止计费。OpenAlex localhost 成功不能代替 Pages origin 成功。
 
 下一阶段入口：先由用户选择是否提供一个允许浏览器调用、可产生极小测试费用的 Provider 配置以完成 0.1-B 门禁；门禁完成后进入 v0.1.0-C，实施 Hash 路由、Vite base、Pages workflow 草案、production preview 子路径与失败样例。
+
+## v0.1.0-C 阶段记录
+
+阶段 ID：v0.1.0-C（本地与 workflow 草案完成，真实 Pages 待执行）
+
+实施日期 / commit：2026-09-10 / 见本阶段 Git 提交
+
+范围：HashRouter、可配置 Vite base、GitHub Actions CI、手动 Pages workflow、项目子路径 production preview、e2e 与部署检查清单。不修改远端 Pages 设置，不自动运行部署 workflow。
+
+实际修改文件：`vite.config.ts`、`playwright.config.ts`、`src/main.tsx`、`tests/e2e/static-preview.spec.ts`、`.github/workflows/{ci,pages}.yml`、`public/favicon.svg`、`docs/DEPLOYMENT_CHECKLIST.md`、依赖与本文件。
+
+已完成：
+
+- 应用使用 HashRouter；构建 base 由非敏感的 `IDEASCOPE_BASE_PATH` 设置。
+- production preview 以 `/ideascope/#/` 打开并加载同子路径 JS/CSS/favicon。
+- 未配置模型和 key 时，可能付费的 Provider 探针在 e2e 中保持禁用。
+- push/PR CI 运行 lockfile 安装与完整门禁；Pages workflow 只允许手动触发。
+- 401/403/429、取消、网络或 CORS 的用户可操作错误分类具备单测。
+
+测试命令与结果：`npm run check` 包含 lint、严格 typecheck、15 项 unit/contract 测试、production build、2 项 Playwright e2e 与 secret scan，全部通过。子路径首次 e2e 暴露 preview 未挂载 base 导致资源 404，补充 `vite preview --base /ideascope/` 后通过；随后补齐 base-aware favicon，控制台 404 清零。
+
+人工验收与截图：连接实验室此前已在 1280px Chromium 截图检查；本阶段以 Playwright Headless Chromium 153 验证 `/ideascope/#/` 页面、标题、探针禁用状态与零 console error。
+
+未完成 / 待实测：未运行 `.github/workflows/pages.yml`，未验证真实 Pages URL、刷新、资源、OpenAlex CORS 或 Pages 环境权限；尚无 ELK Worker，Worker 路径留至其首次引入时验证。
+
+风险与决策：仓库名当前按 `ideascope` 设置 base；仓库改名或自定义域上线时必须同步调整。push 不触发 Pages 部署，避免把“允许推送”扩展成“允许发布”。
+
+下一阶段入口：v0.1.0 仍被真实 Provider 门禁阻塞。完成一次经用户授权的普通、流式、结构化/工具与取消实测，并验证目标 Pages origin 后，才可将 v0.1.0 标为完成；否则可按路线允许的条件并行进入 v0.2.0-A，但必须继续显示连接待验证。

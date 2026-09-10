@@ -29,6 +29,11 @@ describe('browser connection probes', () => {
     await expect(probeProvider({ baseUrl: 'https://gateway.example/v1', model: 'test' }, 'test-only-key', 'completion', new AbortController().signal, fetcher)).rejects.toMatchObject({ code: 'unauthorized', status: 401 });
   });
 
+  it.each([[403, 'forbidden'], [429, 'rate_limited']] as const)('classifies HTTP %s', async (status, code) => {
+    const fetcher = vi.fn(() => Promise.resolve(new Response('', { status })));
+    await expect(probeProvider({ baseUrl: 'https://gateway.example/v1', model: 'test' }, 'test-only-key', 'completion', new AbortController().signal, fetcher)).rejects.toMatchObject({ code, status });
+  });
+
   it('normalizes an OpenAlex response', async () => {
     const fetcher = vi.fn(() => Promise.resolve(new Response(JSON.stringify({ meta: { count: 42 }, results: [{ title: 'A Paper' }] }), { status: 200 })));
     await expect(probeOpenAlex(new AbortController().signal, fetcher)).resolves.toMatchObject({ count: 42, firstTitle: 'A Paper' });
