@@ -458,7 +458,7 @@
 
 实际修改文件：`src/domain/export/workspace-export.ts`、`src/infrastructure/export/download.ts`、工作区导出 Dialog、unit/e2e 与本文件。
 
-已完成：JSON 导出覆盖完整 workspace 且不含凭证字段；Markdown 按节点/判断输出 epistemicStatus、编号引用与参考文献，并保留“推断/假设非事实”声明。SVG 只含文本、路径和矩形，不含脚本、HTML、远程图片；可选当前 visible IDs 或完整非归档分支。PNG 在安全尺寸内用本地 Canvas 栅格化，超 8192px 或无法解析尺寸时降级下载 SVG，不生成空文件。导出 Dialog 预览消息、用户笔记、证据 excerpt 数量和 credentials=0。导入经版本迁移后总是分配不冲突的新 workspace ID并标记为非 demo，避免覆盖。
+已完成：JSON 导出覆盖完整 workspace 且不含凭证字段；Markdown 按节点/判断输出 epistemicStatus、编号引用与参考文献，并保留“推断/假设非事实”声明。SVG 只含文本、路径和矩形，不含脚本、HTML、远程图片；Dialog 可选择当前可见图或完整非归档分支。PNG 在安全尺寸内用本地 Canvas 栅格化，超 8192px 或无法解析尺寸时降级下载 SVG，不生成空文件。导出 Dialog 预览消息、用户笔记、证据 excerpt 数量和 credentials=0。导入经版本迁移后总是分配不冲突的新 workspace ID 并标记为非 demo，避免覆盖。
 
 测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、16 个 unit/contract 文件共 61 项测试、production build、11 项 Playwright e2e 与 secret scan 均成功。unit 覆盖 JSON 往返/密钥扫描、Markdown 引用、visible/complete SVG、惰性 SVG、安全 PNG 降级与导入 ID 冲突；e2e 验证 JSON/SVG 实际下载及文件名。
 

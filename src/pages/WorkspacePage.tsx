@@ -11,6 +11,7 @@ import type { GraphNode } from "../../contracts/domain";
 import type { Branch, GraphPatch } from "../../contracts/domain";
 import demoPatchJson from "../../examples/patch.demo.json";
 import { applyGraphPatch } from "../domain/graph/apply-graph-patch";
+import { planCompaction } from "../domain/graph/compaction";
 import { auditWorkspaceExport, exportBranchSvg, exportWorkspaceJson, exportWorkspaceMarkdown } from "../domain/export/workspace-export";
 import { downloadPngOrSvg, downloadText } from "../infrastructure/export/download";
 import { CitationList } from "../features/evidence/CitationList";
@@ -35,6 +36,7 @@ export function WorkspacePage() {
   const [view, setView] = useState("map");
   const [demoState, setDemoState] = useState<DemoState>("ready");
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportScope, setExportScope] = useState<"visible" | "complete">("complete");
   const [mobilePane, setMobilePane] = useState<"main" | "details">("main");
   const exportValue = { ...workspace, workspace: { ...workspace.workspace, branches, activeBranchId: branchId } };
   const exportAudit = auditWorkspaceExport(exportValue);
@@ -78,7 +80,7 @@ export function WorkspacePage() {
   }
   function currentSvg() {
     if (!branch) throw new Error("演示分支不存在。");
-    return exportBranchSvg(branch, "complete");
+    return exportBranchSvg(branch, exportScope, planCompaction(branch).visibleIds);
   }
   function showMobileSection(next: "map" | "papers" | "details") {
     if (next === "details") {
@@ -270,7 +272,14 @@ export function WorkspacePage() {
         onClose={() => setExportOpen(false)}
       >
         <p>当前分支：{branch.title} · {branch.graph.nodes.length} 个节点。导出包含 {exportAudit.messages} 条消息、{exportAudit.userNotes} 条用户笔记、{exportAudit.evidenceExcerpts} 条原文片段；凭证 0 项。</p>
-        <p>JSON 包含完整项目；Markdown 与图形导出当前完整分支。请在分享前检查研究内容与引用片段。</p>
+        <p>JSON 包含完整项目；Markdown 使用当前分支。请在分享前检查研究内容与引用片段。</p>
+        <label>
+          图导出范围
+          <select aria-label="图导出范围" value={exportScope} onChange={(event) => setExportScope(event.target.value as "visible" | "complete") }>
+            <option value="visible">当前可见图</option>
+            <option value="complete">完整分支（含折叠节点）</option>
+          </select>
+        </label>
         <Button onClick={() => downloadText("ideascope-workspace.json", "application/json", exportWorkspaceJson(exportValue, "0.6.0"))}>下载 JSON</Button>
         <Button onClick={() => downloadText("ideascope-outline.md", "text/markdown", exportWorkspaceMarkdown(exportValue, branch.id))}>下载 Markdown</Button>
         <Button onClick={() => downloadText("ideascope-map.svg", "image/svg+xml", currentSvg())}>下载 SVG</Button>

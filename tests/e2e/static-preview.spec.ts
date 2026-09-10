@@ -166,6 +166,9 @@ test("exposes truthful demo states, sources, directions, and export boundary", a
   const dialog = page.getByRole("dialog", { name: "带走当前的理解" });
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("凭证 0 项");
+  await expect(page.getByLabel("图导出范围")).toHaveValue("complete");
+  await page.getByLabel("图导出范围").selectOption("visible");
+  await expect(page.getByLabel("图导出范围")).toHaveValue("visible");
   await page.screenshot({ path: "reports/visual/export-dialog-1440x900.png", fullPage: true });
   await expect(page.getByRole("button", { name: "关闭弹窗" })).toBeFocused();
   await page.keyboard.press("Shift+Tab");
