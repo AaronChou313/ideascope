@@ -10,6 +10,7 @@ export class IdeaScopeDatabase extends Dexie {
   checkpoints!: EntityTable<GraphCheckpoint, "id">;
   patchReceipts!: EntityTable<PatchReceipt, "patchId">;
   runSummaries!: EntityTable<RunSummary, "runId">;
+  runExecutions!: EntityTable<RunExecution, "id">;
   constructor(name = "ideascope") {
     super(name);
     this.version(1).stores({
@@ -27,6 +28,16 @@ export class IdeaScopeDatabase extends Dexie {
       patchReceipts: "patchId,workspaceId,branchId,runId,committedAt",
       runSummaries: "runId,workspaceId,branchId,status,endedAt",
     });
+    this.version(3).stores({
+      papers: "id,externalIds.doi,externalIds.arxiv,externalIds.openalex,fetchedAt",
+      evidence: "id,paperId,level,fetchedAt",
+      searchRecords: "id,source,status,endedAt,cacheKey",
+      branches: "key,workspaceId,branch.id,branch.revision",
+      checkpoints: "id,workspaceId,branchId,revision,createdAt",
+      patchReceipts: "patchId,workspaceId,branchId,runId,committedAt",
+      runSummaries: "runId,workspaceId,branchId,status,endedAt",
+      runExecutions: "id,workspaceId,branchId,status,startedAt,endedAt",
+    });
   }
 }
 
@@ -34,5 +45,6 @@ export interface StoredBranch { key: string; workspaceId: string; branch: Branch
 export interface GraphCheckpoint { id: string; workspaceId: string; branchId: string; revision: number; createdAt: string; reason: string; branch: Branch }
 export interface PatchReceipt { patchId: string; workspaceId: string; branchId: string; runId: string; baseRevision: number; committedRevision: number; committedAt: string; patch: GraphPatch }
 export interface RunSummary { runId: string; workspaceId: string; branchId: string; status: "completed"; patchId: string; operationCount: number; baseRevision: number; committedRevision: number; summary: string; endedAt: string }
+export interface RunExecution { id: string; workspaceId: string; branchId: string; baseRevision: number; status: "running" | "completed" | "failed" | "cancelled" | "interrupted" | "budget_exhausted"; states: string[]; startedAt: string; endedAt: string | null; usage: { inputTokens: number | null; outputTokens: number | null; source: "reported" | "estimated" | "unknown" }; error: string | null }
 
 export const ideaScopeDatabase = new IdeaScopeDatabase();

@@ -330,3 +330,25 @@
 风险与决策：GraphPatch schema 是输入形状门槛，不能代替本地领域验证。checkpoint 保存提交前完整 branch，会增加 IndexedDB 占用；保留到 v0.6 的存储治理阶段处理。补丁无 Paper/Evidence 操作类型，从协议层阻止“补丁创造假论文”。
 
 下一阶段入口：v0.4.0-C，把 AgentController、检索工具和 GraphPatch 提案/应用 UI 串成一条可取消、可恢复、状态明确的单智能体流程；使用 mock Provider 完成端到端验收，并保留真实 Provider 待验证标记。
+
+## v0.4.0-C 阶段记录
+
+阶段 ID：v0.4.0-C
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：补齐首轮运行持久状态、刷新中断恢复和 Provider usage 真实性语义；汇总真实 OpenAlex 浏览器验证、mock Provider 控制流、GraphPatch 提交与来源定位的端到端审查。不调用真实或付费模型，不把 demo 当模型输出。
+
+实际修改文件：Agent Provider/Controller usage 契约、Dexie v3 runExecutions 表、`RunExecutionStore`、相关单测、`reports/v0.4-first-run-review.md` 与本文件。
+
+已完成：OpenAI-compatible transport 读取 Provider 原生 prompt/completion token，缺失即记录 unknown；Controller 聚合多次 reported usage，不维护可能过期的价格表，也不计算金额。运行开始即落 running 记录，完成后保存终态、状态轨迹与 usage；刷新恢复会把遗留 running 原子标为 interrupted，并明确未提交结果已丢弃。审查表逐项区分已验证的真实 OpenAlex 请求、mock 控制链和未验证的真实 Provider 门禁。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、11 个 unit/contract 文件共 45 项测试、production build、9 项 Playwright e2e 与 secret scan 均成功。新增测试覆盖 reported/unknown token 语义以及刷新后 running → interrupted 恢复。
+
+人工验收：沿用并复核 v0.4-B 工作区截图；用户可从 sourced 判断定位公开来源，论文保留在资料/引用层，摘要深度明确，画布不堆论文节点。
+
+未完成 / 待实测：没有真实 Provider 凭证与调用授权，因此真实模型首轮输出、流式中断、实际 usage 和 Provider CORS 保持待验证；GitHub Pages 未部署。此门禁不会以 mock 或演示数据冒充通过。
+
+风险与决策：v0.4 工程链路完成不等于外部 Provider 验收完成。运行记录不保存 prompt、响应正文或密钥；价格未知时不从 token 推算金额。
+
+下一阶段入口：v0.5.0-A，实现节点聚焦的持续追问、解释/探索意图区分、局部 GraphPatch 预览与撤销；保持布局、锁定节点和重试幂等。

@@ -52,6 +52,7 @@ describe("AgentController", () => {
     ).run(context, new AbortController().signal);
     expect(result.state).toBe("completed");
     expect(result.usage).toMatchObject({ modelCalls: 1, toolCalls: 0 });
+    expect(result.usage.tokens.source).toBe("unknown");
     expect(provider.requests[0]?.mode).toBe("structured");
   });
 
@@ -129,6 +130,7 @@ describe("OpenAI-compatible Agent Provider", () => {
       new Response(
         JSON.stringify({
           choices: [{ message: { content: JSON.stringify(complete) } }],
+          usage: { prompt_tokens: 41, completion_tokens: 17 },
         }),
         { status: 200 },
       ),
@@ -145,7 +147,10 @@ describe("OpenAI-compatible Agent Provider", () => {
       schemaName: "agent_output",
       signal: new AbortController().signal,
     });
-    expect(output).toBe(JSON.stringify(complete));
+    expect(output).toMatchObject({
+      value: JSON.stringify(complete),
+      usage: { inputTokens: 41, outputTokens: 17, source: "reported" },
+    });
     const [input, init] = fetcher.mock.calls[0] ?? [];
     expect(input).toBe("https://provider.example/v1/chat/completions");
     expect(new Headers(init?.headers).get("Authorization")).toBe(

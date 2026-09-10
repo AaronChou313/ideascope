@@ -111,6 +111,7 @@ export class OpenAICompatibleAgentProvider implements ProviderAdapter {
       if (!response.ok) throw classifyResponse(response.status);
       const data = (await response.json()) as {
         choices?: Array<{ message?: { content?: unknown } }>;
+        usage?: { prompt_tokens?: unknown; completion_tokens?: unknown };
       };
       const content = data.choices?.[0]?.message?.content;
       if (typeof content !== "string")
@@ -118,7 +119,15 @@ export class OpenAICompatibleAgentProvider implements ProviderAdapter {
           "invalid_response",
           "Provider 未返回文本结构。",
         );
-      return content;
+      const reported = typeof data.usage?.prompt_tokens === "number" && typeof data.usage?.completion_tokens === "number";
+      return {
+        value: content,
+        usage: {
+          inputTokens: reported ? data.usage!.prompt_tokens as number : null,
+          outputTokens: reported ? data.usage!.completion_tokens as number : null,
+          source: reported ? "reported" as const : "unknown" as const,
+        },
+      };
     } catch (error) {
       throw normalizeConnectionError(error);
     }

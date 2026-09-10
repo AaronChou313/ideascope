@@ -5,6 +5,7 @@ import {
   type AgentState,
 } from "./types";
 import type { ProviderAdapter } from "./provider-adapter";
+import { isProviderGeneration, type ProviderUsage } from "./provider-adapter";
 import { BudgetCounter, DEFAULT_AGENT_BUDGET } from "./budget";
 import { buildAgentContext } from "./context-builder";
 
@@ -23,11 +24,13 @@ export interface AgentRunResult {
     toolCalls: number;
     searchQueries: number;
     candidates: number;
+    tokens: ProviderUsage;
   };
   error: string | null;
 }
 
 export class AgentController {
+  private tokenUsage: ProviderUsage = { inputTokens: null, outputTokens: null, source: "unknown" };
   constructor(
     private readonly provider: ProviderAdapter,
     private readonly tools: AgentTools,
@@ -39,6 +42,7 @@ export class AgentController {
     signal: AbortSignal,
   ): Promise<AgentRunResult> {
     this.budget.reset();
+    this.tokenUsage = { inputTokens: null, outputTokens: null, source: "unknown" };
     const states: AgentState[] = ["idle"];
     const allowedEvidenceIds = new Set(context.availableEvidenceIds);
     const move = (state: AgentState) => {
@@ -109,7 +113,7 @@ export class AgentController {
   private async generate(context: string, signal: AbortSignal) {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       if (!this.budget.takeModel()) return null;
-      const raw = await this.provider.generate({
+      const generation = await this.provider.generate({
         mode: this.provider.structuredOutput ? "structured" : "json",
         messages: [
           { role: "system", content: this.systemPrompt },
@@ -119,6 +123,8 @@ export class AgentController {
         signal,
         ...(attempt ? { repair: true } : {}),
       });
+      const raw = isProviderGeneration(generation) ? generation.value : generation;
+      if (isProviderGeneration(generation)) this.addUsage(generation.usage);
       const value = typeof raw === "string" ? safeJson(raw) : raw;
       const parsed = agentOutputSchema.safeParse(value);
       if (parsed.success) return parsed.data;
@@ -140,8 +146,20 @@ export class AgentController {
         toolCalls: this.budget.toolCalls,
         searchQueries: this.budget.searchQueries,
         candidates: this.budget.candidates,
+        tokens: this.tokenUsage,
       },
       error,
+    };
+  }
+  private addUsage(usage: ProviderUsage) {
+    if (usage.source !== "reported") {
+      if (this.tokenUsage.source === "unknown") this.tokenUsage = usage;
+      return;
+    }
+    this.tokenUsage = {
+      inputTokens: (this.tokenUsage.inputTokens ?? 0) + (usage.inputTokens ?? 0),
+      outputTokens: (this.tokenUsage.outputTokens ?? 0) + (usage.outputTokens ?? 0),
+      source: "reported",
     };
   }
 }
