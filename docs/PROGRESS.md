@@ -418,3 +418,25 @@
 风险与决策：折叠是视图决策，不是归档或删除；方向状态属于用户决策，自动流程不得覆盖 userEdited 内容。
 
 下一阶段入口：v0.6.0-A，实现 workspace repositories、刷新恢复、容量错误、单写者租约与导入版本迁移夹具。
+
+## v0.6.0-A 阶段记录
+
+阶段 ID：v0.6.0-A
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：实现 workspace repository、项目重命名/归档/确认删除、全量本地保存与刷新恢复、容量错误状态、运行中断恢复、单写者租约和导入格式版本迁移。不实现文件导出 UI。
+
+实际修改文件：Dexie v5 workspaces/writerLeases、`src/infrastructure/storage/workspace-repository.ts`、`writer-lease.ts`、`src/domain/workspace/migrate-workspace.ts`、故障/迁移测试与本文件。
+
+已完成：WorkspaceExport v1 可事务写入 workspace metadata、branches、Paper、Evidence 与 messages，新 repository 实例可恢复语义等价数据。项目支持列表、重命名、归档和确认名称后删除；删除错误提示先导出备份。QuotaExceededError 返回 quota_exceeded 与“未保存”文案。遗留 running 恢复为 interrupted 已由 v0.4-C 覆盖。单写者租约使用 ownerId/过期时间，其他标签页在有效租约内不可写，原 owner 可续期，过期后可接管。formatVersion 0 显式迁移为 v1，未来版本明确拒绝。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、15 个 unit/contract 文件共 57 项测试、production build、11 项 Playwright e2e 与 secret scan 均成功。新增 fake IndexedDB 测试覆盖刷新恢复、v0 迁移、未来版拒绝、quota、项目生命周期与租约竞争。
+
+人工验收：本阶段没有新增视觉结构；沿用现有保存/错误状态样式。真实浏览器容量上限因环境差异保持待压力验证，自动测试验证错误语义。
+
+未完成 / 待实测：真实浏览器的配额阈值和崩溃时租约接管时延待跨浏览器压力测试；Pages 部署仍未执行。
+
+风险与决策：Paper/Evidence 作为共享不可变记录不在删除单一 workspace 时物理删除，避免破坏其他项目引用；孤立记录的安全垃圾回收留给显式“清除全部数据”。
+
+下一阶段入口：v0.6.0-B，实现 JSON/Markdown/SVG/PNG 导出、可见图/完整分支选择、敏感内容预览、导入生成新项目与往返等价测试。
