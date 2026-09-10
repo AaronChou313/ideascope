@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.3.0-C 检索配方与离线质量夹具已完成；v0.1.0-B 的真实 Provider 与 v0.1.0-C 的 Pages origin 仍待验证，因此 v0.1.0 整体门禁仍未关闭。**
+当前状态：**v0.4.0-A 受控单智能体运行时已完成 mock 验证；真实 Provider 与 Pages origin 仍待验证。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
@@ -14,6 +14,7 @@
 | v0.3.0-A | 已完成 | LiteratureAdapter、OpenAlex 普通关键词/游标/节流/取消/归一化、SearchRecord、脱敏诊断与真实 localhost 查询 |
 | v0.3.0-B | 已完成 | DOI/arXiv/OpenAlex 规范化、精确/候选去重、Dexie Paper/Evidence/SearchRecord、版本关联与审阅界面 |
 | v0.3.0-C | 已完成 | 四类检索配方、4 查询/60 候选预算、部分失败聚合、三学科离线夹具与质量审阅 |
+| v0.4.0-A | 已完成 | 单一 AgentController、状态轨迹、ProviderAdapter、结构化/JSON 回退、预算、上下文、工具校验与 mock 测试 |
 | 其余版本 | 计划中 | 按路线逐阶段执行 |
 
 ## 每阶段记录模板
@@ -287,3 +288,23 @@
 风险与决策：固定配方是可解释起点，不是领域分类结论；用户或后续单智能体可修正术语。缺一来源不崩溃不等于隐藏失败，失败仍保留 source、purpose 与受控原因。
 
 下一阶段入口：v0.4.0-A，建立单一 AgentController、意图/状态机、ProviderAdapter、严格结构化/JSON 回退、上下文预算、取消与 mock LLM 测试；在没有真实 Provider 凭证时不得声称真实模型端到端通过。
+
+## v0.4.0-A 阶段记录
+
+阶段 ID：v0.4.0-A
+
+实施日期 / commit：2026-09-10 / 见本阶段 Git 提交
+
+范围：单一 AgentController、状态轨迹、上下文组装、预算、ProviderAdapter、OpenAI-compatible transport、优先结构化输出与严格 JSON 回退、一次修复、检索工具参数校验、取消与 mock 测试。不实现图补丁事务或真实模型验收。
+
+实际修改文件：`src/agent/*`、`src/infrastructure/llm/agent-provider.ts`、`tests/unit/agent-controller.test.ts`、`docs/AGENT_RUNTIME.md` 与本文件。
+
+已完成：控制器绑定 run/workspace/branch/revision/promptVersion；默认限制 6 次模型、8 次工具、4 次检索、60 条候选和 24k 字符上下文。结构化/JSON 均由同一 Zod 契约验证，失败最多修复一次。非法工具参数不执行；外部检索内容以不可信数据区加入；未知 Evidence ID 拒绝。传输层 key 只从内存 getter 读取并放 Authorization header，URL 中不含 key。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、9 个 unit/contract 文件共 37 项测试、production build、9 项 Playwright e2e 与 secret scan 均成功。新增 mock 测试覆盖无理由不调用工具、结构化优先、JSON 回退与一次修复、合法检索后综合、非法工具/伪造 Evidence 拒绝，以及 Provider 严格 schema 请求与 key 不进入 URL。
+
+未完成 / 待实测：没有获准使用真实 Provider 凭证，因此未声称真实模型输出、usage、取消或费用已验证。当前 Controller 产生回答/工具请求；图提案验证与事务提交属于 0.4-B。
+
+风险与决策：一个 Controller，不引入多角色对话或框架。控制器实例每轮重置预算；外部文本不改变工具权限。失败只返回解释，不执行半成品。
+
+下一阶段入口：v0.4.0-B，实现 GraphPatch reducer、严格引用/图完整性/revision/锁定校验、全有或全无事务、checkpoint、提案与已提交回答一致性。
