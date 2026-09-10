@@ -12,12 +12,16 @@
 
 `.github/workflows/pages.yml` 仅支持手动 `workflow_dispatch`，普通 push 不触发部署。项目仓库名变更时必须同步修改 `IDEASCOPE_BASE_PATH`；自定义域应改为 `/` 并重新验证。
 
-## 待远端验证
+## 远端验证（2026-09-11）
 
-- 仓库 Settings → Pages 的 GitHub Actions source 与权限。
-- 实际 `https://<owner>.github.io/ideascope/#/` 加载、刷新与静态资源路径。
-- Pages HTTPS origin 下的 OpenAlex CORS。
+- GitHub Pages 使用 GitHub Actions source，强制 HTTPS；workflow run `34542847656` 成功部署 commit `3b5d49c`。
+- `https://aaronchou313.github.io/ideascope/#/` 与 `#/workspace/demo` 在系统 Chrome headless 中加载成功，console/page error 为 0。
+- HTML、JS、CSS 与 favicon 均使用 `/ideascope/` 子路径，首页 HTTP 200。
+- Pages HTTPS origin 下匿名 OpenAlex `per-page=1` 请求得到 CORS response 与 HTTP 200；未调用 Provider 或付费模型。
+
+## 仍待外部验证
+
 - 401、403、429 与“网络或跨域策略阻止访问”在实际 Provider 上的文案。
 - Worker 路径尚无运行时 Worker，留待引入 ELK Worker 时验证。
 
-不得把 localhost production preview 记作真实 Pages 已部署；未经明确要求不运行手动部署 workflow。
+不得把 localhost production preview 记作真实 Pages 已部署；后续部署仍只在用户明确授权后手动运行 workflow。

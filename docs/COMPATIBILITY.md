@@ -6,11 +6,11 @@
 
 | 项目 | 值 |
 |---|---|
-| 日期 | 2026-09-10 |
-| 应用 origin | `http://127.0.0.1:4173` |
-| 构建方式 | Vite 8.3.0 production build + `vite preview` |
-| 浏览器 | Codex 内置 Chromium（具体版本未由测试接口提供） |
-| Pages HTTPS origin | 待 0.1-C 部署授权与实际域名 |
+| 日期 | 2026-09-10（localhost）；2026-09-11（Pages） |
+| 应用 origin | `http://127.0.0.1:4173`；`https://aaronchou313.github.io` |
+| 构建方式 | Vite 8.3.0 production build + `vite preview`；GitHub Pages Actions build |
+| 浏览器 | Codex 内置 Chromium（localhost）；系统 Chrome headless（Pages） |
+| Pages HTTPS origin | `https://aaronchou313.github.io/ideascope/`，已验证 |
 
 ## 文献来源
 
@@ -18,8 +18,9 @@
 |---|---|---|---|---|
 | `https://api.openalex.org/works` | 匿名 | 固定查询 `retrieval augmented generation`，`per_page=1` | 浏览器可读取响应 | **已测试通过**；返回 count 187,295，首条题名 *Retrieval-Augmented Generation for Large Language Models: A Survey* |
 | `https://api.openalex.org/works` | 匿名 | 0.3-A 普通关键词 `retrieval augmented generation reliability evidence`，`cursor=*`，`per_page=10` | localhost production preview 浏览器可读取并归一化响应 | **已测试通过**；归一化 10 条，首条题名 *Retrieval-Augmented Generation for Large Language Models: A Survey* |
+| `https://api.openalex.org/works` | 匿名 | Pages origin 基础请求 `retrieval augmented generation reliability evidence`，`per-page=1` | `https://aaronchou313.github.io` 浏览器 origin 收到 CORS response | **已测试通过**；HTTP 200，首条题名 *Retrieval-Augmented Generation for Large Language Models: A Survey* |
 
-数字与题名是测试时的实时返回值，不是稳定产品数据或质量结论。429、空结果、超时、取消和异常响应均使用 mock 测试了受控状态；尚未真实触发 OpenAlex 429，也未测试 OpenAlex key、Authorization header、语义检索、长期额度及目标 Pages HTTPS origin。
+数字与题名是测试时的实时返回值，不是稳定产品数据或质量结论。429、空结果、超时、取消和异常响应均使用 mock 测试了受控状态；尚未真实触发 OpenAlex 429，也未测试 OpenAlex key、Authorization header、语义检索与长期额度。Pages HTTPS origin 的匿名基础 CORS 已验证。
 
 ## OpenAI-compatible Provider
 

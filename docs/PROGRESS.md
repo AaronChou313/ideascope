@@ -1,13 +1,13 @@
 # 开发进度
 
-当前状态：**v0.6.0 工程范围已完成本地验证；真实 Provider、跨浏览器与 Pages origin 仍待外部验收。**
+当前状态：**v0.6.0 工程范围与 GitHub Pages origin 已完成验证；真实 Provider 与跨浏览器仍待外部验收。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
 | 计划与设计 | 已形成文档包 | README、专题文档、契约草案、原型、包内检查报告 |
 | v0.1.0-A | 已完成 | React/TypeScript/Vite 空壳、lockfile、严格检查、契约/示例测试、ADR 与依赖基线 |
-| v0.1.0-B | 待验收 | 探针与错误分类已实现；OpenAlex localhost 浏览器通过；真实 Provider/Pages origin 待凭证与部署验证 |
-| v0.1.0-C | 本地完成 | Hash 路由、Pages 子路径 production preview、CI/e2e 与手动部署 workflow 已验证；真实 Pages 待执行 |
+| v0.1.0-B | 待验收 | 探针与错误分类已实现；OpenAlex localhost 与 Pages origin 浏览器通过；真实 Provider 待凭证与调用授权 |
+| v0.1.0-C | 已完成 | Hash 路由、Pages 子路径、CI/e2e 与手动部署 workflow 已验证；真实 Pages HTTPS origin 与 OpenAlex CORS 通过 |
 | v0.2.0-A | 已完成 | 首页、三栏工作台、设置页、基础组件、折叠/响应式与三档截图 |
 | v0.2.0-B | 已完成 | demo adapter、React Flow 语义节点、ELK 分层布局、列表视图与详情同步 |
 | v0.2.0-C | 已完成 | 关键演示状态、来源与方向视图、可访问导出弹窗、移动视图切换、四档视觉基准与组件尺寸表 |
@@ -119,7 +119,7 @@
 
 ## v0.1.0-C 阶段记录
 
-阶段 ID：v0.1.0-C（本地与 workflow 草案完成，真实 Pages 待执行）
+阶段 ID：v0.1.0-C（真实 Pages 部署与 origin 验证完成）
 
 实施日期 / commit：2026-09-10 / 见本阶段 Git 提交
 
@@ -139,7 +139,9 @@
 
 人工验收与截图：连接实验室此前已在 1280px Chromium 截图检查；本阶段以 Playwright Headless Chromium 153 验证 `/ideascope/#/` 页面、标题、探针禁用状态与零 console error。
 
-未完成 / 待实测：未运行 `.github/workflows/pages.yml`，未验证真实 Pages URL、刷新、资源、OpenAlex CORS 或 Pages 环境权限；尚无 ELK Worker，Worker 路径留至其首次引入时验证。
+远端部署补充（2026-09-11）：经用户明确授权，手动运行 `.github/workflows/pages.yml`，GitHub Actions run `34542847656` 成功将 commit `3b5d49c` 部署至 `https://aaronchou313.github.io/ideascope/`。HTTPS 首页返回 200，HTML 中 JS/CSS/favicon 均使用 `/ideascope/` 子路径；系统 Chrome headless 从真实 Pages origin 打开 `#/` 与 `#/workspace/demo`，页面内容完整且 console/page error 为 0。另从该 Pages origin 发起一次匿名 OpenAlex `per-page=1` 基础请求，得到 CORS response、HTTP 200；未调用 Provider 或付费模型。
+
+未完成 / 待实测：真实 Provider 能力仍因没有凭证与付费调用授权而待验证；尚无 ELK Worker，Worker 路径留至其首次引入时验证。
 
 风险与决策：仓库名当前按 `ideascope` 设置 base；仓库改名或自定义域上线时必须同步调整。push 不触发 Pages 部署，避免把“允许推送”扩展成“允许发布”。
 
@@ -486,7 +488,7 @@
 
 人工验收与截图：最终检查 `reports/visual/data-safety-1440x1000.png` 与 `reports/visual/local-projects-1440x1000.png`；安全面板与本地项目列表沿用白底、细边框和紧凑控件，危险操作与导出备份分开，不改变设计基线。
 
-未完成 / 待实测：真实 Provider 仍无凭证与付费调用授权；Firefox/Safari 导出、实际容量阈值、多标签崩溃接管及 Pages HTTPS origin 仍需相应环境验证。上述项目没有以 mock、Chromium 或构建成功冒充通过。
+未完成 / 待实测：真实 Provider 仍无凭证与付费调用授权；Firefox/Safari 导出、实际容量阈值与多标签崩溃接管仍需相应环境验证。Pages HTTPS origin 已在 2026-09-11 完成部署、路由、资源与 OpenAlex CORS 验证。上述其余项目没有以 mock、Chromium 或构建成功冒充通过。
 
 风险与决策：纯前端只能降低凭证暴露面，不能承诺长期 key 安全。清除全部数据不可撤销，因此 UI 强制精确确认并持续提示先导出项目；单项目删除不会误删共享 Evidence。
 
