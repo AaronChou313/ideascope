@@ -1,0 +1,38 @@
+{
+  "checkedAt": "2026-09-10",
+  "scope": "Planning contracts and fixtures only. No production reducer, database, model/API calls or deployment tested.",
+  "tests": [
+    {
+      "test": "JSON Schema is valid Draft 2020-12",
+      "passed": true
+    },
+    {
+      "test": "positive graph patch example",
+      "passed": true
+    },
+    {
+      "test": "reject unrecognized secret field",
+      "passed": true
+    },
+    {
+      "test": "reject unsupported tool operation",
+      "passed": true
+    },
+    {
+      "test": "reject sourced ADD_CLAIM without evidence",
+      "passed": true
+    },
+    {
+      "test": "workspace demo cross-record references and uniqueness",
+      "passed": true
+    },
+    {
+      "test": "domain.ts strict TypeScript compile",
+      "passed": true
+    },
+    {
+      "test": "scenario fixture is parseable JSON",
+      "passed": true
+    }
+  ]
+}

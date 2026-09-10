@@ -1,0 +1,48 @@
+{
+  "protocolVersion": "0.1",
+  "patchId": "patch-demo-001",
+  "runId": "run-demo-001",
+  "workspaceId": "workspace-demo",
+  "branchId": "branch-main",
+  "baseRevision": 0,
+  "summary": "提出一个待调研问题；这不是已验证的研究空白。",
+  "operations": [
+    {
+      "op": "ADD_CLAIM",
+      "claim": {
+        "id": "claim-new",
+        "text": "还需要调研：不同任务如何定义足够的证据。",
+        "epistemicStatus": "hypothesis",
+        "evidenceLinks": [],
+        "qualifiers": [
+          "尚未检索核查。"
+        ],
+        "verification": "unreviewed"
+      }
+    },
+    {
+      "op": "ADD_NODE",
+      "node": {
+        "id": "q-evidence-criteria",
+        "kind": "question",
+        "title": "“证据充分”如何界定？",
+        "summary": "比较不同研究使用的界定方式。",
+        "claimIds": [
+          "claim-new"
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "op": "ADD_EDGE",
+      "edge": {
+        "id": "edge-new",
+        "source": "g-sufficient",
+        "target": "q-evidence-criteria",
+        "relation": "decomposes_into",
+        "label": "细化问题",
+        "claimIds": []
+      }
+    }
+  ]
+}

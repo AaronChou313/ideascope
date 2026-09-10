@@ -1,0 +1,779 @@
+{
+  "documentType": "ideascope.workspace",
+  "formatVersion": 1,
+  "createdWith": "0.0.0-plan",
+  "exportedAt": "2026-09-10T00:00:00Z",
+  "isDemo": true,
+  "workspace": {
+    "id": "workspace-demo",
+    "title": "从一个想法开始：研究型问答的可靠性",
+    "seedIdea": "我想研究怎样让研究型问答更可靠，但还不清楚应该从检索还是证据判断入手。",
+    "activeBranchId": "branch-main",
+    "branches": [
+      {
+        "id": "branch-main",
+        "title": "可靠性与证据",
+        "parentBranchId": null,
+        "forkedFromRevision": null,
+        "revision": 0,
+        "focusNodeId": "g-sufficient",
+        "scope": {
+          "object": "研究型问答中的可靠性",
+          "question": "怎样从检索与证据角度找到值得深入的研究问题？",
+          "constraints": [
+            "仅作调研与思考，不执行实验。"
+          ],
+          "assumptions": [
+            "以检索增强生成作为一个可修正的起点。"
+          ]
+        },
+        "summary": {
+          "understood": [
+            "当前示例用三篇真实文献演示检索、自检与检索质量三种观察角度。"
+          ],
+          "decisions": [
+            "先把问题说清楚，不急于宣称创新。"
+          ],
+          "openQuestions": [
+            "怎样界定证据足以支撑某个回答？"
+          ]
+        },
+        "graph": {
+          "nodes": [
+            {
+              "id": "q-reliable",
+              "kind": "question",
+              "title": "怎样让研究型问答更可靠？",
+              "summary": "先辨明可靠性指什么，再选择合适的研究切口。",
+              "claimIds": [],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-retrieval",
+              "kind": "approach",
+              "title": "为生成引入外部依据",
+              "summary": "把相关知识送入生成过程。",
+              "claimIds": [
+                "claim-rag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-reflection",
+              "kind": "approach",
+              "title": "何时检索，如何自检",
+              "summary": "按需检索，并反思使用的资料与生成结果。",
+              "claimIds": [
+                "claim-selfrag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-quality",
+              "kind": "approach",
+              "title": "先判断检索质量",
+              "summary": "关注找到的资料是否足以支撑回答。",
+              "claimIds": [
+                "claim-crag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "g-sufficient",
+              "kind": "gap",
+              "title": "“找到”不等于“足够”",
+              "summary": "怎样界定支撑一个判断所需的证据？",
+              "claimIds": [
+                "claim-open"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "g-boundary",
+              "kind": "gap",
+              "title": "可靠性的边界在哪里",
+              "summary": "检索相关性与回答可信性需要怎样区分？",
+              "claimIds": [
+                "claim-focus"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "d-uncertain",
+              "kind": "direction",
+              "title": "围绕证据不足继续探索",
+              "summary": "先调研何时应保留判断，而非急于生成答案。",
+              "claimIds": [
+                "claim-open"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge-1",
+              "source": "q-reliable",
+              "target": "a-retrieval",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-2",
+              "source": "q-reliable",
+              "target": "a-reflection",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-3",
+              "source": "q-reliable",
+              "target": "a-quality",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-4",
+              "source": "a-retrieval",
+              "target": "g-sufficient",
+              "relation": "related_to",
+              "label": "继续追问",
+              "claimIds": []
+            },
+            {
+              "id": "edge-5",
+              "source": "a-reflection",
+              "target": "g-boundary",
+              "relation": "related_to",
+              "label": "比较视角",
+              "claimIds": []
+            },
+            {
+              "id": "edge-6",
+              "source": "a-quality",
+              "target": "g-sufficient",
+              "relation": "related_to",
+              "label": "继续追问",
+              "claimIds": []
+            },
+            {
+              "id": "edge-7",
+              "source": "g-sufficient",
+              "target": "d-uncertain",
+              "relation": "motivates",
+              "label": "探索问题",
+              "claimIds": []
+            },
+            {
+              "id": "edge-8",
+              "source": "g-boundary",
+              "target": "d-uncertain",
+              "relation": "related_to",
+              "label": "澄清边界",
+              "claimIds": []
+            }
+          ],
+          "claims": [
+            {
+              "id": "claim-rag",
+              "text": "作者提出将参数记忆和非参数记忆结合，用于检索增强生成。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-rag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-selfrag",
+              "text": "摘要描述按需检索，以及对检索内容和生成结果进行自我反思。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-selfrag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-crag",
+              "text": "摘要描述评估检索文档质量，并据此触发不同知识检索动作。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-crag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-focus",
+              "text": "可先比较按需检索与检索质量判断，再决定具体的研究切口。",
+              "epistemicStatus": "inference",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-selfrag",
+                  "stance": "background"
+                },
+                {
+                  "evidenceId": "ev-crag",
+                  "stance": "background"
+                }
+              ],
+              "qualifiers": [
+                "这是面向本示例的组织方式，不是领域完整分类。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-open",
+              "text": "证据不足时如何表达不确定性，是当前示例希望继续调查的问题。",
+              "epistemicStatus": "hypothesis",
+              "evidenceLinks": [],
+              "qualifiers": [
+                "未核查完整已有研究，不构成创新性或空白判断。"
+              ],
+              "verification": "unreviewed"
+            }
+          ]
+        },
+        "view": {
+          "positions": {
+            "q-reliable": {
+              "x": 32,
+              "y": 252,
+              "pinned": false
+            },
+            "a-retrieval": {
+              "x": 300,
+              "y": 84,
+              "pinned": false
+            },
+            "a-reflection": {
+              "x": 300,
+              "y": 278,
+              "pinned": false
+            },
+            "a-quality": {
+              "x": 300,
+              "y": 472,
+              "pinned": false
+            },
+            "g-sufficient": {
+              "x": 596,
+              "y": 118,
+              "pinned": false
+            },
+            "g-boundary": {
+              "x": 596,
+              "y": 328,
+              "pinned": false
+            },
+            "d-uncertain": {
+              "x": 596,
+              "y": 538,
+              "pinned": false
+            }
+          },
+          "collapsedIds": [],
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
+          }
+        },
+        "directions": [
+          {
+            "id": "dir-uncertain",
+            "title": "证据不足时，系统应如何回应？",
+            "researchQuestion": "什么样的证据边界可以帮助我们讨论回答与保留判断的选择？",
+            "motivation": "将泛泛的“更可靠”拆成能够继续调研的问题。",
+            "knownWork": [
+              "paper-selfrag",
+              "paper-crag"
+            ],
+            "possibleDifference": "暂未确定；需要核查已有拒答、不确定性与证据评估研究。",
+            "counterEvidence": [
+              "尚未进行有针对性的反证检索，不能据此宣称空白。"
+            ],
+            "unresolvedQuestions": [
+              "已有工作如何定义证据充分性？",
+              "不同研究对象的评价边界是否一致？"
+            ],
+            "nextLiteratureQuestions": [
+              "查找证据充分性与检索增强问答的综述或代表工作。"
+            ],
+            "status": "exploring",
+            "claimIds": [
+              "claim-open"
+            ],
+            "userEdited": false
+          }
+        ]
+      },
+      {
+        "id": "branch-alt",
+        "title": "按需检索的边界",
+        "parentBranchId": "branch-main",
+        "forkedFromRevision": 0,
+        "revision": 0,
+        "focusNodeId": "a-reflection",
+        "scope": {
+          "object": "研究型问答中的可靠性",
+          "question": "何时有必要检索外部资料？",
+          "constraints": [
+            "仅作调研与思考，不执行实验。"
+          ],
+          "assumptions": [
+            "以检索增强生成作为一个可修正的起点。"
+          ]
+        },
+        "summary": {
+          "understood": [
+            "当前示例用三篇真实文献演示检索、自检与检索质量三种观察角度。"
+          ],
+          "decisions": [
+            "先把问题说清楚，不急于宣称创新。"
+          ],
+          "openQuestions": [
+            "如何区分需要检索与无需检索的问题？"
+          ]
+        },
+        "graph": {
+          "nodes": [
+            {
+              "id": "q-reliable",
+              "kind": "question",
+              "title": "怎样让研究型问答更可靠？",
+              "summary": "先辨明可靠性指什么，再选择合适的研究切口。",
+              "claimIds": [],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-retrieval",
+              "kind": "approach",
+              "title": "为生成引入外部依据",
+              "summary": "把相关知识送入生成过程。",
+              "claimIds": [
+                "claim-rag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-reflection",
+              "kind": "approach",
+              "title": "何时检索，如何自检",
+              "summary": "按需检索，并反思使用的资料与生成结果。",
+              "claimIds": [
+                "claim-selfrag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-quality",
+              "kind": "approach",
+              "title": "先判断检索质量",
+              "summary": "关注找到的资料是否足以支撑回答。",
+              "claimIds": [
+                "claim-crag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "g-sufficient",
+              "kind": "gap",
+              "title": "“找到”不等于“足够”",
+              "summary": "怎样界定支撑一个判断所需的证据？",
+              "claimIds": [
+                "claim-open"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "g-boundary",
+              "kind": "gap",
+              "title": "可靠性的边界在哪里",
+              "summary": "检索相关性与回答可信性需要怎样区分？",
+              "claimIds": [
+                "claim-focus"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "d-uncertain",
+              "kind": "direction",
+              "title": "围绕证据不足继续探索",
+              "summary": "先调研何时应保留判断，而非急于生成答案。",
+              "claimIds": [
+                "claim-open"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge-1",
+              "source": "q-reliable",
+              "target": "a-retrieval",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-2",
+              "source": "q-reliable",
+              "target": "a-reflection",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-3",
+              "source": "q-reliable",
+              "target": "a-quality",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-4",
+              "source": "a-retrieval",
+              "target": "g-sufficient",
+              "relation": "related_to",
+              "label": "继续追问",
+              "claimIds": []
+            },
+            {
+              "id": "edge-5",
+              "source": "a-reflection",
+              "target": "g-boundary",
+              "relation": "related_to",
+              "label": "比较视角",
+              "claimIds": []
+            },
+            {
+              "id": "edge-6",
+              "source": "a-quality",
+              "target": "g-sufficient",
+              "relation": "related_to",
+              "label": "继续追问",
+              "claimIds": []
+            },
+            {
+              "id": "edge-7",
+              "source": "g-sufficient",
+              "target": "d-uncertain",
+              "relation": "motivates",
+              "label": "探索问题",
+              "claimIds": []
+            },
+            {
+              "id": "edge-8",
+              "source": "g-boundary",
+              "target": "d-uncertain",
+              "relation": "related_to",
+              "label": "澄清边界",
+              "claimIds": []
+            }
+          ],
+          "claims": [
+            {
+              "id": "claim-rag",
+              "text": "作者提出将参数记忆和非参数记忆结合，用于检索增强生成。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-rag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-selfrag",
+              "text": "摘要描述按需检索，以及对检索内容和生成结果进行自我反思。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-selfrag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-crag",
+              "text": "摘要描述评估检索文档质量，并据此触发不同知识检索动作。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-crag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-focus",
+              "text": "可先比较按需检索与检索质量判断，再决定具体的研究切口。",
+              "epistemicStatus": "inference",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-selfrag",
+                  "stance": "background"
+                },
+                {
+                  "evidenceId": "ev-crag",
+                  "stance": "background"
+                }
+              ],
+              "qualifiers": [
+                "这是面向本示例的组织方式，不是领域完整分类。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-open",
+              "text": "证据不足时如何表达不确定性，是当前示例希望继续调查的问题。",
+              "epistemicStatus": "hypothesis",
+              "evidenceLinks": [],
+              "qualifiers": [
+                "未核查完整已有研究，不构成创新性或空白判断。"
+              ],
+              "verification": "unreviewed"
+            }
+          ]
+        },
+        "view": {
+          "positions": {
+            "q-reliable": {
+              "x": 32,
+              "y": 252,
+              "pinned": false
+            },
+            "a-retrieval": {
+              "x": 300,
+              "y": 84,
+              "pinned": false
+            },
+            "a-reflection": {
+              "x": 300,
+              "y": 278,
+              "pinned": false
+            },
+            "a-quality": {
+              "x": 300,
+              "y": 472,
+              "pinned": false
+            },
+            "g-sufficient": {
+              "x": 596,
+              "y": 118,
+              "pinned": false
+            },
+            "g-boundary": {
+              "x": 596,
+              "y": 328,
+              "pinned": false
+            },
+            "d-uncertain": {
+              "x": 596,
+              "y": 538,
+              "pinned": false
+            }
+          },
+          "collapsedIds": [],
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
+          }
+        },
+        "directions": []
+      }
+    ],
+    "papers": [
+      {
+        "id": "paper-rag",
+        "externalIds": {
+          "arxiv": "2005.11401"
+        },
+        "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "authors": [
+          "Patrick Lewis",
+          "Ethan Perez",
+          "Aleksandra Piktus",
+          "Fabio Petroni",
+          "Vladimir Karpukhin",
+          "Naman Goyal",
+          "Heinrich Küttler",
+          "Mike Lewis",
+          "Wen-tau Yih",
+          "Tim Rocktäschel",
+          "Sebastian Riedel",
+          "Douwe Kiela"
+        ],
+        "year": 2020,
+        "venue": null,
+        "url": "https://arxiv.org/abs/2005.11401",
+        "abstract": null,
+        "source": "arXiv abstract page, manually curated example",
+        "fetchedAt": "2026-09-10T00:00:00Z",
+        "relatedVersionIds": []
+      },
+      {
+        "id": "paper-selfrag",
+        "externalIds": {
+          "arxiv": "2310.11511"
+        },
+        "title": "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection",
+        "authors": [
+          "Akari Asai",
+          "Zeqiu Wu",
+          "Yizhong Wang",
+          "Avirup Sil",
+          "Hannaneh Hajishirzi"
+        ],
+        "year": 2023,
+        "venue": null,
+        "url": "https://arxiv.org/abs/2310.11511",
+        "abstract": null,
+        "source": "arXiv abstract page, manually curated example",
+        "fetchedAt": "2026-09-10T00:00:00Z",
+        "relatedVersionIds": []
+      },
+      {
+        "id": "paper-crag",
+        "externalIds": {
+          "arxiv": "2401.15884"
+        },
+        "title": "Corrective Retrieval Augmented Generation",
+        "authors": [
+          "Shi-Qi Yan",
+          "Jia-Chen Gu",
+          "Yun Zhu",
+          "Zhen-Hua Ling"
+        ],
+        "year": 2024,
+        "venue": null,
+        "url": "https://arxiv.org/abs/2401.15884",
+        "abstract": null,
+        "source": "arXiv abstract page, manually curated example",
+        "fetchedAt": "2026-09-10T00:00:00Z",
+        "relatedVersionIds": []
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-rag",
+        "paperId": "paper-rag",
+        "level": "abstract",
+        "excerpt": null,
+        "paraphrase": "作者提出将参数记忆和非参数记忆结合，用于检索增强生成。",
+        "locator": {
+          "url": "https://arxiv.org/abs/2005.11401",
+          "section": "Abstract"
+        },
+        "verification": "source_located",
+        "contentHash": "7dcb9e5a32e9e161737966ce295109dbefd3656d4f54b43088044b083008584f",
+        "fetchedAt": "2026-09-10T00:00:00Z"
+      },
+      {
+        "id": "ev-selfrag",
+        "paperId": "paper-selfrag",
+        "level": "abstract",
+        "excerpt": null,
+        "paraphrase": "摘要描述按需检索，以及对检索内容和生成结果进行自我反思。",
+        "locator": {
+          "url": "https://arxiv.org/abs/2310.11511",
+          "section": "Abstract"
+        },
+        "verification": "source_located",
+        "contentHash": "dd300e840d01a8905e883e471af03f4e54ff9511bf6b20ef8eaa9f01d01a8cdb",
+        "fetchedAt": "2026-09-10T00:00:00Z"
+      },
+      {
+        "id": "ev-crag",
+        "paperId": "paper-crag",
+        "level": "abstract",
+        "excerpt": null,
+        "paraphrase": "摘要描述评估检索文档质量，并据此触发不同知识检索动作。",
+        "locator": {
+          "url": "https://arxiv.org/abs/2401.15884",
+          "section": "Abstract"
+        },
+        "verification": "source_located",
+        "contentHash": "93088910ed208ddeb99e1165e85105fabf8daf4087188f180d4ef99215de7df6",
+        "fetchedAt": "2026-09-10T00:00:00Z"
+      }
+    ],
+    "messages": [],
+    "runs": []
+  }
+}

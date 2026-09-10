@@ -1,0 +1,4 @@
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-sans); background: var(--bg); }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input, textarea, select { font: inherit; }

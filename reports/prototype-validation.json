@@ -1,0 +1,102 @@
+{
+  "checkedAt": "2026-09-10",
+  "scope": "Planning-package HTML prototype only, NOT production app, model/API integration or Pages deployment.",
+  "browser": "container Chromium via Playwright",
+  "tests": [
+    {
+      "test": "workspace initial nodes",
+      "passed": true
+    },
+    {
+      "test": "node to evidence detail",
+      "passed": true
+    },
+    {
+      "test": "demo conversation",
+      "passed": true
+    },
+    {
+      "test": "branch switching",
+      "passed": true
+    },
+    {
+      "test": "new branch creation",
+      "passed": true
+    },
+    {
+      "test": "paper filtering",
+      "passed": true
+    },
+    {
+      "test": "direction save demo",
+      "passed": true
+    },
+    {
+      "test": "capability checklist without request",
+      "passed": true
+    },
+    {
+      "test": "modal Escape close",
+      "passed": true
+    },
+    {
+      "test": "JSON export preserves branches no keys",
+      "passed": true
+    },
+    {
+      "test": "SVG export valid standalone root",
+      "passed": true
+    },
+    {
+      "test": "home navigation",
+      "passed": true
+    },
+    {
+      "test": "responsive no document overflow",
+      "passed": true
+    },
+    {
+      "test": "no JavaScript runtime errors",
+      "passed": true
+    },
+    {
+      "test": "prototype no remote requests",
+      "passed": true
+    }
+  ],
+  "responsive": [
+    {
+      "viewport": "1440x900",
+      "documentDimensions": {
+        "w": 1440,
+        "scroll": 1440,
+        "h": 900,
+        "sh": 900
+      },
+      "noHorizontalOverflow": true
+    },
+    {
+      "viewport": "1280x800",
+      "documentDimensions": {
+        "w": 1280,
+        "scroll": 1280,
+        "h": 800,
+        "sh": 800
+      },
+      "noHorizontalOverflow": true
+    },
+    {
+      "viewport": "390x844",
+      "documentDimensions": {
+        "w": 390,
+        "scroll": 390,
+        "h": 844,
+        "sh": 844
+      },
+      "noHorizontalOverflow": true
+    }
+  ],
+  "consoleErrors": [],
+  "remoteRequests": [],
+  "renderingNote": "Self-contained HTML rendered through Playwright set_content. The container Chromium policy blocked file:// navigation; ordinary file-open compatibility was not directly tested here."
+}

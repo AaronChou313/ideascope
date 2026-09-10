@@ -1,0 +1,157 @@
+{
+  "package": "IdeaScope Project Plan and Design",
+  "date": "2026-09-10",
+  "visualBaseline": "Monochrome Blue — black/white/neutral gray with restrained blue focus",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 2568,
+      "sha256": "d72239063e1691aad846552fc8a846acd9d0ac40134104d6c93b6661d80568cf"
+    },
+    {
+      "path": "PROJECT_PLAN_FULL.md",
+      "bytes": 82288,
+      "sha256": "aa07fe8e62bf5d9db09e6a77db47d66a5f7cd72f3988d102ceb52702ed244649"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2925,
+      "sha256": "f2816747e470f0817091fdcc892091a93f2957feaa82fd062e407b06d1beeb49"
+    },
+    {
+      "path": "contracts/README.md",
+      "bytes": 800,
+      "sha256": "8049db322702e93ea45983e2983e239b4076172883e651fe164ab0707b6ee26d"
+    },
+    {
+      "path": "contracts/domain.ts",
+      "bytes": 4985,
+      "sha256": "6dab2758eb9cd97f2dee1f0ce73ba0e7935e23d1f1504ef9fbd5bf4da44e9f2b"
+    },
+    {
+      "path": "contracts/graph-patch.schema.json",
+      "bytes": 18369,
+      "sha256": "d1c1cceb868d16999eaba47f38547797c5337bb8aba25524756f5722ec45e1fb"
+    },
+    {
+      "path": "design/README.md",
+      "bytes": 1058,
+      "sha256": "3246a6b12239dc18d9ebc387beaf02b47ec0b75e068c5fa7cfc5c54452a44167"
+    },
+    {
+      "path": "design/STYLE_REVISION.md",
+      "bytes": 1474,
+      "sha256": "1708410afafe3af54ef53eaad8c2cf8c9f1a0bd4feb5895ef0f5d8c48a3dcbaa"
+    },
+    {
+      "path": "design/index.html",
+      "bytes": 91920,
+      "sha256": "807c1076e12f6ae240cd83eb1a72acd037fdf41209181b6afd960776030664c3"
+    },
+    {
+      "path": "design/tokens.css",
+      "bytes": 556,
+      "sha256": "21dac3f53c8222823ca8056bb0b7bec2592120cb7c72510bd3c2917c6592d8b9"
+    },
+    {
+      "path": "docs/01_PRODUCT_REQUIREMENTS.md",
+      "bytes": 8816,
+      "sha256": "e2c92484ab68468c1763d3d4c3f2f93a59a6990b0fedee386bed88e048923c21"
+    },
+    {
+      "path": "docs/02_RELEASE_ROADMAP.md",
+      "bytes": 15747,
+      "sha256": "4fefd0862a97b8b94b5f3bd1d570b86ae2e8c1b1fe867540c63b6d64d8763f9e"
+    },
+    {
+      "path": "docs/03_ARCHITECTURE.md",
+      "bytes": 11182,
+      "sha256": "456e2a98777f5d74d1ec38d2aa7e099b719e55a370c0c7abb8e9aed6b4bc952d"
+    },
+    {
+      "path": "docs/04_AGENT_AND_GRAPH_CONTRACT.md",
+      "bytes": 10481,
+      "sha256": "c11793eb604d91d1ec73d104cb79e00ef72c2bd00d6252c6f6454309f50df2b3"
+    },
+    {
+      "path": "docs/05_DESIGN_SYSTEM.md",
+      "bytes": 11268,
+      "sha256": "41cd4ea9f5e680f0b6ab08009141d51fbcf0e1eb2f3667d14b9e3a47dafa7e75"
+    },
+    {
+      "path": "docs/06_TESTING_AND_ACCEPTANCE.md",
+      "bytes": 7107,
+      "sha256": "9a7e745cb90372781cea7ad5e83350ed9bedc8e78a94c68672b9f1e0c65f6a08"
+    },
+    {
+      "path": "docs/07_SECURITY_AND_DEPLOYMENT.md",
+      "bytes": 7453,
+      "sha256": "73fefa1918334136113c4896d8434559c396a63a3d64ba57299c787ef2a7f7e2"
+    },
+    {
+      "path": "docs/08_LOCAL_AGENT_PLAYBOOK.md",
+      "bytes": 4201,
+      "sha256": "48a04c21b33c6320d770e79d8e2e7ed8e70ecaf4741608872f19faf6d09885b5"
+    },
+    {
+      "path": "docs/09_SOURCES_AND_DECISIONS.md",
+      "bytes": 4908,
+      "sha256": "2ad172edce7f5c0616a2f5c84e196d46254247e5dee8493aa0852fd5bd36e150"
+    },
+    {
+      "path": "docs/PROGRESS.md",
+      "bytes": 733,
+      "sha256": "788237539b9a7ec76761333c342c7e5c0f399d91bb51facbdcfd93622428ad79"
+    },
+    {
+      "path": "examples/README.md",
+      "bytes": 1000,
+      "sha256": "303831730293c81aa6bc3b7807cde9f865afedb684d370a9a158db9e88573fd7"
+    },
+    {
+      "path": "examples/patch.demo.json",
+      "bytes": 1204,
+      "sha256": "7f0b28c0afe5ee9394365de0dd511d622de906520f21301e7ddaa8e8403ecc85"
+    },
+    {
+      "path": "examples/scenarios.json",
+      "bytes": 1185,
+      "sha256": "c7c8a9259119d680add2f44ce00cae468e89195911d4a0b899e08445ba8401e2"
+    },
+    {
+      "path": "examples/workspace.demo.json",
+      "bytes": 25152,
+      "sha256": "032d487d3b6f66dd775e649ac3cf47d78cda2fe7b9b5917256ee9bfac861ccfc"
+    },
+    {
+      "path": "prompts/CONTINUE_STAGE.md",
+      "bytes": 705,
+      "sha256": "1e48fe073fba16d5c319d67bbf31466047c9e4a4c177676feb947b9082993a83"
+    },
+    {
+      "path": "prompts/RESEARCH_AGENT_SYSTEM.md",
+      "bytes": 2255,
+      "sha256": "68f2f0335dd23e955ed394b265dc55c1194a4d1b68421bc383e9b619b2c199bc"
+    },
+    {
+      "path": "prompts/START_LOCAL_AGENT.md",
+      "bytes": 1780,
+      "sha256": "5cd1317d21750af199361441b38d30c2e1098afbe8b5efc9d607c8ee17b510d0"
+    },
+    {
+      "path": "reports/README.md",
+      "bytes": 1656,
+      "sha256": "28d3d35b4c36e53fb75e0a2ed72b8c5284d9731cb902a0c38ab591c4a9ed2a2e"
+    },
+    {
+      "path": "reports/contracts-validation.json",
+      "bytes": 878,
+      "sha256": "ce855d9a7e15b20793b4466a08cb0e7a4d140d27da9b43872bee2a3adcb786e2"
+    },
+    {
+      "path": "reports/prototype-validation.json",
+      "bytes": 2210,
+      "sha256": "04d3323adffcded251dc0c9ccc933df03a060fb1939050e4b1b7284f92e0bfdc"
+    }
+  ]
+}

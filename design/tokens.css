@@ -1,0 +1,20 @@
+/* IdeaScope / Monochrome Blue — visual baseline, 2026-09-10. */
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-subtle: #F7F7F8;
+  --ink: #111318;
+  --muted: #6B7280;
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-soft: #EFF6FF;
+  --line: #E5E7EB;
+  --line-strong: #D1D5DB;
+  --warning: #9A6700;
+  --warning-soft: #FFFBEB;
+  --danger: #B42318;
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --radius-lg: 12px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}

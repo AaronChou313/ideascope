@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="IdeaScope 研究探索工作台 · 可交互视觉原型，不调用模型或外部接口。">
+<title>IdeaScope — 从模糊想法，到清晰的研究方向</title>
+<style>
+/* IdeaScope / Monochrome Blue — visual baseline, 2026-09-10. */
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-subtle: #F7F7F8;
+  --ink: #111318;
+  --muted: #6B7280;
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-soft: #EFF6FF;
+  --line: #E5E7EB;
+  --line-strong: #D1D5DB;
+  --warning: #9A6700;
+  --warning-soft: #FFFBEB;
+  --danger: #B42318;
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --radius-lg: 12px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 var(--font);height:100vh;overflow:hidden}button,input,textarea,select{font:inherit;color:inherit}button,a{touch-action:manipulation}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}button{background:none;border:0}button,a,input,textarea,select{outline-offset:4px}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent)}a{color:var(--accent);text-decoration:none}svg{flex-shrink:0}.ico{width:18px;height:18px;display:inline-block;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.hidden,[hidden]{display:none!important}.button{height:36px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);border-radius:7px;padding:0 13px;background:var(--surface);font-weight:500;white-space:nowrap;transition:background .15s,border-color .15s}.button:hover{background:#F2F2F2;border-color:#C3C3C3}.button.primary{background:var(--accent);border-color:var(--accent);color:white}.button.primary:hover{background:#3F3F3F}.button.ghost{background:none;border-color:transparent}.button.ghost:hover{background:var(--surface-subtle)}.iconbtn{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;color:var(--muted)}.iconbtn:hover{background:var(--surface-subtle);color:var(--ink)}.tag{font-size:11px;line-height:20px;display:inline-flex;gap:5px;align-items:center;padding:1px 7px;border-radius:4px;background:var(--surface-subtle);color:var(--muted);white-space:nowrap}.tag.green{background:var(--accent-soft);color:var(--accent)}.tag.amber{background:var(--warning-soft);color:var(--warning)}.muted{color:var(--muted)}.eyebrow{font-size:10px;letter-spacing:1.6px;font-weight:600;color:var(--muted);text-transform:uppercase}.hstack{display:flex;align-items:center;gap:10px}.spacer{flex:1}.sep{height:18px;width:1px;background:var(--line);margin:0 5px}h1,h2,h3,p{margin:0}.topbar{height:61px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:22px;padding:0 24px;background:#FCFCFC;position:relative;z-index:10}.brand{display:flex;align-items:center;gap:10px;padding:0;font-size:21px;font-weight:650;letter-spacing:-.7px}.brandmark{width:28px;height:28px;color:var(--accent)}.brandmark svg{width:28px;height:28px}.brandmark svg .dot{fill:var(--accent);stroke:none}.top-sub{font-size:12px;color:var(--muted);border-left:1px solid var(--line);padding-left:22px}.top-demo{font-size:11px;color:var(--muted);letter-spacing:.3px;display:flex;align-items:center;gap:7px}.top-demo:before{content:"";width:5px;height:5px;border-radius:50%;background:#A39262}.topbar .actions{display:flex;gap:8px;align-items:center}.app{height:calc(100vh - 61px - 27px);display:grid;grid-template-columns:216px minmax(0,1fr)380px}.sidebar{border-right:1px solid var(--line);padding:24px 14px 16px;background:#F8F8F8;display:flex;flex-direction:column;min-width:0;overflow:auto}.back{color:var(--muted);padding:0 7px;display:flex;align-items:center;gap:9px;text-align:left;font-size:12px;margin-bottom:24px}.project-label{padding:0 10px 22px}.project-label h2{font-size:16px;letter-spacing:-.3px;line-height:1.55;font-weight:600;margin-top:8px}.section-label{font-size:11px;letter-spacing:.6px;color:var(--muted);padding:0 10px;margin:6px 0 12px;display:flex;align-items:center;justify-content:space-between}.journey-root{margin:0 10px 6px;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px}.journey-root .small-dot{width:6px;height:6px;border:1px solid #A6A6A6;border-radius:50%}.branch-list{padding-left:9px;position:relative;margin-bottom:30px}.branch-list:before{content:"";position:absolute;width:1px;background:var(--line);top:0;bottom:24px;left:12px}.branch{width:100%;text-align:left;border:1px solid transparent;border-radius:7px;padding:11px 7px 11px 22px;position:relative;display:block;margin-bottom:4px;font-size:12px;line-height:1.5}.branch:before{content:"";position:absolute;width:8px;height:1px;background:#C9C9C9;left:3px;top:22px}.branch:hover{background:#F1F1F1}.branch.active{background:var(--accent-soft);border-color:#DEDEDE;color:var(--accent)}.branch-sub{font-size:10px;opacity:.75;display:block;margin-top:3px}.side-link{width:100%;height:39px;display:flex;align-items:center;gap:10px;padding:0 12px;font-size:12px;color:#595959;border-radius:6px;text-align:left;margin:2px 0}.side-link:hover,.side-link.active{background:#EDEDED;color:var(--accent)}.side-link .count{margin-left:auto;font-size:11px;color:#8C8C8C}.sidebar-bottom{margin-top:auto;padding:22px 10px 0}.scope-note{padding-top:17px;border-top:1px solid var(--line)}.scope-note p{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.8}.small-save{font-size:10px;color:#858585;margin-top:16px;display:flex;align-items:center;gap:6px}.center-pane{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}.canvas-head{height:89px;display:flex;align-items:center;gap:12px;padding:16px 28px;border-bottom:1px solid var(--line);background:#FCFCFC}.canvas-head h1{font-size:20px;font-weight:600;letter-spacing:-.5px}.canvas-head p{font-size:11px;color:var(--muted);margin-top:2px}.segmented{display:flex;gap:1px;background:#EEEEEE;padding:3px;border-radius:7px}.segmented button{height:27px;padding:0 10px;color:var(--muted);font-size:11px;border-radius:5px;display:flex;align-items:center;gap:5px}.segmented button.active{background:white;box-shadow:0 1px 3px #2B2B2B14;color:var(--ink)}.canvas-wrap{position:relative;flex:1;min-height:0;overflow:hidden;background-image:radial-gradient(#CECECE44 .8px,transparent .8px);background-size:20px 20px}.map-note{position:absolute;top:17px;left:27px;display:flex;align-items:center;gap:8px;z-index:2;color:var(--muted);font-size:10px}.map-note .dot{width:5px;height:5px;background:#B3B3B3;border-radius:50%}.graph-stage{position:absolute;width:900px;height:730px;transform-origin:0 0;left:0;top:0}.lane{position:absolute;top:12px;color:#828282;font-size:10px;letter-spacing:.6px}.lane b{font:12px Georgia,serif;color:#A4A4A4;margin-right:8px}.lane:after{content:"";display:block;margin-top:11px;width:217px;border-top:1px solid #E1E1E199}.lane.first{left:32px}.lane.second{left:300px}.lane.third{left:596px}.graph-edges{position:absolute;inset:0;width:900px;height:730px;overflow:visible}.edge{fill:none;stroke:#C4C4C4;stroke-width:1.25;transition:stroke .15s}.edge.active{stroke:#737373;stroke-width:1.65}.edge-label{font-size:9px;fill:#929292;letter-spacing:.3px}.node{position:absolute;width:220px;min-height:130px;border:1px solid #DADADA;border-radius:9px;background:#FFFFFF;text-align:left;padding:14px 15px 12px;box-shadow:0 2px 2px #37373704;transition:border-color .15s,box-shadow .15s;cursor:pointer;display:block}.node:hover{border-color:#A6A6A6;box-shadow:0 5px 13px #4141410A}.node.selected{border-color:#686868;box-shadow:0 0 0 3px #E2E2E2A0,0 5px 14px #41414108}.node.question{border-left:3px solid var(--accent);background:#FBFBFB}.node.direction{background:#F3F3F3;border-color:#C9C9C9}.node .type{font-size:9px;letter-spacing:.9px;display:flex;align-items:center;gap:5px;color:var(--muted);margin-bottom:8px}.node .type .tiny{width:5px;height:5px;border-radius:2px;background:#939393}.node.gap .type{color:var(--warning)}.node.gap .type .tiny{background:#B99451}.node.direction .type{color:var(--accent)}.node h3{font-size:14px;font-weight:600;line-height:1.5;letter-spacing:-.2px;margin-bottom:6px}.node p{font-size:11px;color:#7D7D7D;line-height:1.7;min-height:34px}.node-foot{margin-top:10px;padding-top:8px;border-top:1px solid #EFEFEF;color:#878787;font-size:9px;display:flex;align-items:center;gap:5px}.node-foot .ico{width:12px;height:12px}.node-foot span:last-child{margin-left:auto}.zoom-tools{position:absolute;bottom:22px;left:27px;border:1px solid var(--line);border-radius:7px;background:#FFFFFF;display:flex;align-items:center;padding:3px;gap:2px;box-shadow:0 2px 7px #37373704}.zoom-level{font-size:10px;color:var(--muted);min-width:39px;text-align:center}.canvas-caption{position:absolute;bottom:27px;right:28px;display:flex;gap:16px;align-items:center;font-size:9px;color:#808080}.legend-item{display:flex;align-items:center;gap:5px}.legend-dot{width:5px;height:5px;background:#9E9E9E;border-radius:50%}.legend-dot.amber{background:#B8965D}.legend-dot.gray{background:#B1B1B1}.map-list{padding:65px 28px 65px;overflow:auto;height:100%;background:var(--bg)}.map-list .list-node{display:flex;gap:15px;padding:16px 0;border-bottom:1px solid var(--line);text-align:left;width:100%;align-items:start}.list-node .tag{margin-top:2px}.list-node h3{font-size:14px;margin-bottom:4px}.list-node p{font-size:12px;color:var(--muted)}.right-pane{display:flex;flex-direction:column;min-height:0;background:#FDFDFD;border-left:1px solid var(--line)}.right-head{height:60px;display:flex;align-items:center;padding:0 21px;gap:20px;border-bottom:1px solid var(--line);flex-shrink:0}.right-tab{height:60px;font-size:12px;color:var(--muted);border-bottom:2px solid transparent;padding:0 1px;position:relative}.right-tab.active{border-bottom-color:var(--accent);color:var(--accent);font-weight:600}.right-body{flex:1;overflow:auto;min-height:0;padding:24px 22px 18px;scrollbar-width:thin}.assistant-kicker{display:flex;align-items:center;gap:7px;font-size:10px;color:#858585;letter-spacing:.7px;margin-bottom:12px}.assistant-kicker .agent-mark{width:21px;height:21px;display:inline-flex;align-items:center;justify-content:center;background:var(--accent-soft);border-radius:5px;color:var(--accent);font:16px Georgia,serif}.user-msg{font-size:12px;line-height:1.9;padding:14px 15px;border:1px solid #E8E8E8;background:#F2F2F2;border-radius:9px;margin-bottom:28px;color:#555555}.assistant-text{font-size:12px;line-height:1.95;color:#555555}.assistant-text strong{font-weight:600;color:#393939}.assistant-text p{margin-bottom:14px}.citation{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;background:#EDEDED;color:#5B5B5B;font-size:9px;border-radius:4px;margin-left:3px;padding:0 4px}.mini-insight{padding:14px 15px;border-left:2px solid #A4A4A4;background:#F6F6F6;border-radius:0 6px 6px 0;margin:17px 0}.mini-insight strong{display:block;color:#525252;font-size:12px;margin-bottom:6px}.mini-insight p{font-size:11px;line-height:1.8;color:#7C7C7C;margin:0}.change-note{font-size:10px;display:flex;align-items:center;gap:5px;color:#878787;margin-top:18px}.follow-label{font-size:10px;color:#939393;margin:25px 0 8px}.followup{border:1px solid #E4E4E4;border-radius:6px;background:#FBFBFB;display:flex;align-items:center;text-align:left;justify-content:space-between;gap:8px;padding:9px 11px;color:#616161;font-size:11px;margin:7px 0;width:100%}.followup:hover{background:#F2F2F2}.followup .ico{width:13px;height:13px}.chat-form{border-top:1px solid var(--line);padding:15px 17px 16px;background:#FCFCFC;flex-shrink:0}.focus-chip{font-size:10px;color:#6A6A6A;margin-bottom:10px;display:flex;align-items:center;gap:6px}.focus-chip .ico{width:13px;height:13px}.focus-chip button{margin-left:auto;font-size:16px;line-height:1;color:#9C9C9C}.composer{border:1px solid #D7D7D7;border-radius:9px;padding:10px 11px 9px;background:white;box-shadow:0 1px 3px #41414105}.composer:focus-within{border-color:#9C9C9C}.composer textarea{width:100%;border:0;resize:none;outline:none;min-height:60px;max-height:120px;font-size:12px;line-height:1.7;background:none}.composer textarea::placeholder{color:#A8A8A8}.composer-bottom{display:flex;align-items:center;justify-content:space-between}.composer-mode{font-size:9px;color:#9A9A9A}.send-button{width:27px;height:27px;background:var(--accent);color:white;border-radius:6px;display:flex;justify-content:center;align-items:center}.send-button .ico{width:15px;height:15px}.composer-help{font-size:9px;color:#9E9E9E;margin-top:8px;text-align:center}.statusbar{height:27px;border-top:1px solid var(--line);background:#F7F7F7;display:flex;gap:20px;align-items:center;padding:0 18px;font-size:10px;color:#8E8E8E}.statusbar span:last-child{margin-left:auto}.status-dot{display:inline-block;width:5px;height:5px;background:#A7A7A7;border-radius:50%;margin-right:5px}.detail-back{font-size:10px;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:5px}.detail-title{font-size:20px;line-height:1.55;letter-spacing:-.4px;margin:13px 0}.detail-summary{font-size:12px;color:var(--muted);line-height:1.9}.detail-section{margin-top:25px}.detail-section h3{font-size:11px;font-weight:600;margin-bottom:9px;color:#686868}.detail-section p{font-size:12px;line-height:1.9;color:#7C7C7C}.claim-item{padding:11px 0;border-bottom:1px solid var(--line);font-size:11px;line-height:1.9}.claim-item .tag{font-size:9px;margin-bottom:6px}.source-item{padding:13px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;font-size:11px}.source-number{font:13px Georgia,serif;color:#9D9D9D;margin-top:2px}.source-item h4{margin:0;font-weight:500;line-height:1.7;font-size:11px}.source-item p{font-size:10px;margin-top:5px;color:var(--muted)}.source-excerpt{margin:12px 0;padding:13px;border-left:2px solid #CBCBCB;background:#F5F5F5;font-size:11px;color:#757575;line-height:1.9}.full-button{width:100%;margin-top:21px}.content-scroll{height:100%;overflow:auto;padding:30px 32px 50px}.page-heading{display:flex;align-items:start;gap:15px;margin-bottom:26px}.page-heading h2{font-size:26px;letter-spacing:-.6px;font-weight:600}.page-heading p{font-size:12px;color:var(--muted);margin-top:6px}.search-input{height:37px;border:1px solid var(--line);border-radius:7px;padding:0 12px;background:#FFF;min-width:200px;font-size:12px}.paper-row{padding:22px 0;border-bottom:1px solid var(--line);display:flex;gap:18px;align-items:start}.paper-no{font:21px Georgia,serif;color:#B3B3B3;width:28px}.paper-text{flex:1}.paper-text h3{font-size:15px;line-height:1.6;font-weight:550;max-width:660px}.paper-text .authors{font-size:11px;color:var(--muted);margin-top:6px}.paper-text p{font-size:12px;color:#7B7B7B;margin-top:10px;line-height:1.8;max-width:650px}.paper-meta{display:flex;gap:10px;align-items:center;margin-top:12px}.direction-card{background:#FDFDFD;border:1px solid #DCDCDC;border-radius:12px;padding:28px;max-width:760px;margin-bottom:20px}.direction-card h3{font-size:23px;font-weight:550;line-height:1.6;margin-top:15px;letter-spacing:-.5px}.direction-lead{font-size:13px;color:#737373;margin:12px 0 26px;line-height:1.9}.direction-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px 28px}.direction-grid h4{margin:0 0 6px;font-size:11px;color:#8A8A8A;font-weight:500}.direction-grid p{font-size:12px;color:#606060;line-height:1.9}.direction-warning{font-size:11px;padding:13px 15px;border-radius:7px;background:#F5F0DC;color:#8D773B;margin-top:24px}.direction-actions{display:flex;gap:10px;margin-top:22px}.home{height:calc(100vh - 61px);overflow:auto;background:#F7F7F7}.home-inner{max-width:1300px;margin:0 auto;padding:72px 60px 60px}.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}.home-kicker{display:flex;align-items:center;gap:9px;font-size:10px;letter-spacing:2px;color:#8E8E8E;margin-bottom:24px}.home-kicker:before{content:"";width:25px;height:1px;background:#BDBDBD}.home h1{font-size:52px;line-height:1.37;letter-spacing:-2px;font-weight:500}.home h1 em{font-style:normal;color:var(--accent)}.home-desc{font-size:14px;line-height:2;color:#8C8C8C;max-width:440px;margin-top:24px}.home-points{display:flex;gap:23px;margin-top:33px;font-size:11px;color:#939393}.home-points span{display:flex;gap:6px;align-items:center}.home-points .ico{width:14px;height:14px}.idea-entry{background:#FFFFFF;border:1px solid #DEDEDE;border-radius:14px;padding:28px;box-shadow:0 9px 34px #4F4F4F06}.idea-entry label{font-size:12px;color:#5D5D5D;font-weight:600}.idea-entry textarea{width:100%;height:164px;padding:16px 0;border:0;outline:none;resize:vertical;background:none;font-size:15px;line-height:1.9;letter-spacing:.2px}.idea-entry textarea::placeholder{color:#B1B1B1}.entry-divider{border-top:1px solid #EEEEEE;padding-top:18px;display:flex;justify-content:space-between;align-items:center}.entry-note{font-size:10px;color:#9D9D9D}.entry-under{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:16px;color:#A0A0A0;font-size:10px}.entry-under button{font-size:11px;color:var(--accent)}.home-divider{border-top:1px solid var(--line);margin:57px 0 26px}.home-bottom-head{display:flex;align-items:center;margin-bottom:18px}.home-bottom-head h2{font-size:14px;font-weight:550}.home-bottom-head .muted{font-size:11px}.project-row{padding:20px 22px;border:1px solid #E0E0E0;border-radius:9px;display:flex;align-items:center;gap:18px;background:#FDFDFD;cursor:pointer}.project-icon{width:40px;height:40px;border:1px solid #E5E5E5;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#919191}.project-row h3{font-size:14px;font-weight:550}.project-row p{font-size:11px;color:#9F9F9F;margin-top:4px}.project-row .ico{color:#959595}.home-caption{font-size:10px;color:#B0B0B0;margin-top:29px}.modal-shade{position:fixed;inset:0;background:#27272755;backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px}.modal{width:760px;max-width:100%;max-height:calc(100vh - 48px);overflow:auto;background:#FDFDFD;border-radius:14px;box-shadow:0 30px 80px #27272740;border:1px solid #E7E7E7}.modal.small{width:540px}.modal-header{padding:23px 28px;border-bottom:1px solid var(--line);display:flex;gap:15px;align-items:center}.modal-header h2{font-size:19px;font-weight:550;letter-spacing:-.4px}.modal-header p{font-size:11px;color:var(--muted);margin-top:4px}.modal-content{padding:25px 28px}.settings-grid{display:grid;grid-template-columns:150px 1fr;gap:28px}.settings-nav button{display:block;padding:11px 13px;width:100%;border-radius:6px;text-align:left;font-size:12px;color:var(--muted);margin:2px 0}.settings-nav button.active{background:var(--accent-soft);color:var(--accent)}.form-field{margin-bottom:18px}.form-field label{display:block;font-size:11px;font-weight:550;color:#6D6D6D;margin-bottom:7px}.form-field input,.form-field select{width:100%;height:39px;border:1px solid #DDDDDD;border-radius:6px;padding:0 11px;background:white;font-size:12px}.form-field p{font-size:10px;color:#9C9C9C;margin-top:6px;line-height:1.8}.notice{padding:13px 14px;background:#F6F1E0;border:1px solid #EBE2C5;border-radius:7px;font-size:11px;line-height:1.9;color:#887341;margin:17px 0}.checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}.check-item{font-size:10px;color:#909090;border:1px solid var(--line);border-radius:5px;padding:4px 7px}.modal-footer{padding:16px 28px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;background:#F9F9F9}.export-option{border:1px solid var(--line);border-radius:8px;padding:15px 16px;margin:10px 0;display:flex;gap:12px;align-items:center;cursor:pointer}.export-option:hover{border-color:#A7A7A7;background:#F8F8F8}.export-option strong{font-size:12px;font-weight:550;display:block}.export-option small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.export-option .file-badge{width:38px;height:38px;border-radius:7px;background:#EEEEEE;color:#7D7D7D;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600}.export-option .ico{margin-left:auto;color:#989898}.toast{position:fixed;bottom:46px;left:50%;transform:translateX(-50%);background:#3E3E3E;color:#F5F5F5;border:1px solid #5E5E5E;border-radius:8px;padding:11px 18px;box-shadow:0 5px 25px #36363630;z-index:200;max-width:90vw;font-size:12px}.mobile-chat-toggle{display:none}.newbranch-input{width:100%;border:1px solid var(--line);border-radius:7px;height:42px;padding:0 12px;font-size:13px}.tiny-line{font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:18px}.pulse-dot{width:5px;height:5px;background:#8F8F8F;border-radius:50%;display:inline-block;margin-right:5px}
+@media(min-width:1750px){.app{grid-template-columns:230px minmax(0,1fr)400px}.right-body{padding-left:27px;padding-right:27px}.assistant-text,.user-msg{font-size:13px}}
+@media(max-width:1499px){.app{grid-template-columns:196px minmax(0,1fr)345px}.topbar{gap:16px}.canvas-head{padding:14px 22px}.right-body{padding:22px 19px}.home-inner{padding-top:60px}.home-grid{gap:55px}.home h1{font-size:46px}}
+@media(max-width:1349px){.app{grid-template-columns:62px minmax(0,1fr)330px}.sidebar{padding:18px 9px}.sidebar .back{padding:8px;margin:0 0 20px}.sidebar .back span,.project-label,.section-label,.journey-root,.branch-list,.sidebar-bottom,.side-link .label,.side-link .count{display:none}.side-link{padding:0;justify-content:center;height:41px}.canvas-head h1{font-size:18px}.top-sub{display:none}.right-body{padding:20px 18px}.home-inner{padding-left:42px;padding-right:42px}.home-grid{gap:45px}}
+@media(max-width:1000px){.app{grid-template-columns:62px minmax(0,1fr)}.right-pane{position:fixed;top:61px;bottom:27px;right:0;width:355px;z-index:30;box-shadow:-10px 0 40px #3636361A;display:none}.right-pane.mobile-open{display:flex}.mobile-chat-toggle{display:inline-flex}.top-demo{display:none}.canvas-caption{display:none}.home-grid{grid-template-columns:1fr;gap:30px}.home h1{font-size:41px}.home-desc{max-width:600px}.home-points{margin-top:21px}.home-inner{padding-top:40px}.home-divider{margin-top:35px}.home .idea-entry textarea{height:115px}}
+@media(max-width:620px){.topbar{padding:0 13px;gap:10px}.brand{font-size:19px}.topbar .actions .label{display:none}.topbar .actions{gap:3px}.topbar .actions .button{padding:0 9px;height:32px}.topbar .sep{display:none}.app{grid-template-columns:50px minmax(0,1fr)}.sidebar{padding:15px 4px}.canvas-head{height:76px;padding:10px 14px;flex-wrap:wrap;gap:5px}.canvas-head p{display:none}.canvas-head .segmented{margin-left:auto}.canvas-head .spacer{display:none}.canvas-head .iconbtn.search-tool{display:none}.canvas-head h1{font-size:16px}.canvas-head .segmented button{padding:0 8px}.map-note{left:16px;font-size:9px}.map-list{padding:51px 15px 60px}.map-list .list-node{flex-direction:column;gap:7px}.map-list .list-node p{font-size:11px}.zoom-tools{display:none}.statusbar{padding:0 8px;font-size:9px;gap:5px}.statusbar .status-extra{display:none}.right-pane{left:0;width:100%;bottom:0}.right-head{height:51px}.right-tab{height:51px}.content-scroll{padding:23px 16px}.page-heading{display:block}.page-heading h2{font-size:22px}.page-heading .search-input{margin-top:13px;width:100%;min-width:0}.paper-row{gap:10px}.paper-text h3{font-size:12px}.paper-meta{flex-wrap:wrap}.paper-no{font-size:17px;width:20px}.direction-card{padding:20px}.direction-card h3{font-size:20px}.direction-grid{grid-template-columns:1fr;gap:18px}.direction-actions{flex-wrap:wrap}.home-inner{padding:34px 22px}.home h1{font-size:36px;letter-spacing:-1px}.home-desc{font-size:12px}.home-points{gap:13px;font-size:9px;flex-wrap:wrap}.idea-entry{padding:21px}.idea-entry textarea{font-size:13px}.entry-note{max-width:100px}.project-row{padding:15px;gap:11px}.project-row h3{font-size:12px}.home-caption{font-size:9px}.modal-shade{padding:12px}.modal{max-height:calc(100vh - 24px)}.modal-header,.modal-content{padding:20px}.modal-footer{padding:14px 20px}.settings-grid{grid-template-columns:1fr;gap:17px}.settings-nav{display:flex}.settings-nav button{font-size:11px;padding:8px;white-space:nowrap;text-align:center}.toast{bottom:28px;width:90%;text-align:center}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* Readable supporting text; subtle decoration remains intentionally quiet. */
+.home-desc{color:#727272}.home-points{color:#7B7B7B}.home-caption{color:#848484}
+.node p{color:#727272}.node-foot{color:#7D7D7D}.form-field p{color:#808080}
+.detail-summary{color:#6C6C6C}.detail-section p{color:#717171}
+</style>
+
+<style id="monochrome-blue-overrides">
+/* Monochrome product UI: hierarchy comes from type, spacing, and borders—not tinted panels. */
+body,.center-pane,.home{background:#fff;color:var(--ink)}
+.topbar,.canvas-head,.right-pane,.sidebar,.right-head,.modal-footer{background:#fff}
+.sidebar{border-right-color:var(--line)}
+.right-pane{border-left-color:var(--line)}
+.topbar,.canvas-head,.right-head{border-color:var(--line)}
+.button{background:#fff;border-color:var(--line);box-shadow:none}
+.button:hover{background:#f7f7f8;border-color:#d1d5db}
+.button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.button.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.button.ghost:hover,.iconbtn:hover{background:#f5f5f5}
+.tag{background:#f4f4f5;color:#52525b}
+.tag.green{background:#eff6ff;color:#1d4ed8}
+.branch:hover,.side-link:hover{background:#f5f5f5;color:#18181b}
+.branch.active,.side-link.active,.settings-nav button.active{background:#f4f4f5;color:#111318;border-color:transparent}
+.branch.active{box-shadow:inset 2px 0 0 var(--accent)}
+.segmented{background:#f3f4f6}
+.segmented button.active{background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.canvas-wrap{background-color:#fff;background-image:radial-gradient(#d9dce1 0.75px,transparent 0.75px);background-size:20px 20px}
+.lane,.lane b,.edge-label{color:#71717a;fill:#71717a}
+.lane:after{border-color:#e5e7eb}
+.edge{stroke:#cfd3da}
+.edge.active{stroke:var(--accent);stroke-width:1.7}
+.node{background:#fff;border-color:#dfe1e5;box-shadow:none}
+.node:hover{border-color:#aeb4bd;box-shadow:0 4px 12px rgba(17,19,24,.06)}
+.node.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.13)}
+.node.question,.node.direction{background:#fff;border-color:#dfe1e5}
+.node.question{border-left:3px solid #111318}
+.node.direction{border-left:3px solid var(--accent)}
+.node .type .tiny{background:#9ca3af}
+.node.direction .type,.node.direction .type .tiny{color:#1d4ed8;background-color:#2563eb}
+.node.gap .type{color:#8a5a00}.node.gap .type .tiny{background:#d19a28}
+.node p,.node-foot,.detail-summary,.detail-section p{color:#6b7280}
+.node-foot{border-top-color:#f0f1f3}
+.zoom-tools{background:#fff;border-color:#e5e7eb;box-shadow:0 2px 8px rgba(17,19,24,.05)}
+.legend-dot{background:#2563eb}.legend-dot.gray{background:#9ca3af}
+.right-tab.active{color:#111318;border-bottom-color:var(--accent)}
+.focus-chip,.focus-bar{background:#f8fafc;border-color:#dbe3ef;color:#334155}
+.composer{background:#fff;border-color:#d6d9de;box-shadow:none}
+.composer:focus-within{border-color:#94a3b8;box-shadow:0 0 0 2px rgba(37,99,235,.08)}
+.send-button{background:#111318;color:#fff}.send-button:hover{background:#272a31}
+.assistant-mark,.assistant-avatar{color:var(--accent)}
+.paper-row:hover,.list-node:hover,.export-option:hover{background:#fafafa;border-color:#d1d5db}
+.direction-card,.idea-entry,.project-row,.modal,.export-option{background:#fff;border-color:#e1e3e7;box-shadow:none}
+.direction-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.10)}
+.home-kicker,.home-desc,.home-points,.home-caption,.entry-note,.project-row p{color:#6b7280}
+.home-kicker:before{background:#a1a1aa}
+.home h1 em{color:#111318;font-weight:600}
+.idea-entry:focus-within{border-color:#b9bec7;box-shadow:0 0 0 3px rgba(37,99,235,.07)}
+.entry-divider{border-color:#eceef1}
+.project-icon{border-color:#e5e7eb;color:#52525b}
+.modal-shade{background:rgba(17,19,24,.48);backdrop-filter:blur(2px)}
+.modal{box-shadow:0 24px 64px rgba(17,19,24,.18)}
+.form-field label{color:#3f3f46}.form-field input,.form-field select{border-color:#d8dbe0;background:#fff}
+.notice{background:#fffbeb;border-color:#f3dfaa;color:#7a5200}
+.check-item{background:#fff;color:#52525b}
+.file-badge{background:#f4f4f5!important;color:#3f3f46!important}
+.toast{background:#111318;color:#fff;border-color:#272a31;box-shadow:0 8px 28px rgba(0,0,0,.18)}
+.statusbar{background:#fafafa;border-color:#e5e7eb;color:#71717a}.status-dot{background:#2563eb}
+.top-demo:before,.pulse-dot{background:#2563eb}
+::selection{background:#dbeafe;color:#111318}
+</style>
+
+</head>
+<body>
+<header class="topbar">
+ <button class="brand" id="brandHome" aria-label="IdeaScope 首页"><span class="brandmark"><svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.35"><path d="M7 7h8a8 8 0 0 1 0 16H7V7Z"/><path d="M12 4v22M5 12h20" opacity=".55"/><circle class="dot" cx="22" cy="8" r="2.3"/></svg></span>IdeaScope</button>
+ <span class="top-sub" id="topContext">研究探索工作台</span>
+ <span class="spacer"></span><span class="top-demo">交互原型 · 不联网</span>
+ <div class="actions"><button class="button ghost mobile-chat-toggle" id="mobileChat" aria-label="显示或关闭对话"><span data-icon="chat"></span></button><button class="button" id="exportBtn"><span data-icon="export"></span><span class="label">导出研究</span></button><button class="button ghost" id="settingsBtn" aria-label="模型与来源设置"><span data-icon="settings"></span><span class="label">模型设置</span></button></div>
+</header>
+<section class="home hidden" id="homeView">
+ <div class="home-inner">
+  <div class="home-grid">
+   <div><div class="home-kicker">A WORKSPACE FOR RESEARCH EXPLORATION</div><h1>让一个想法，<br><em>慢慢变清楚。</em></h1><p class="home-desc">从还说不清的兴趣出发，理解一个领域的研究脉络。<br>沿着证据追问，找到值得继续探索的方向。</p><div class="home-points"><span><span data-icon="map"></span>看清研究地图</span><span><span data-icon="source"></span>让判断有据可循</span><span><span data-icon="branch"></span>随时换个方向</span></div></div>
+   <div><div class="idea-entry"><label for="seedInput">先说说，你在想什么？</label><textarea id="seedInput" placeholder="我对……感兴趣，但还不清楚大家主要解决哪些问题，也不知道可以从哪里切入。"></textarea><div class="entry-divider"><span class="entry-note">不必完整，也不必知道专业术语。</span><button class="button primary" id="startDemo">开始探索 <span data-icon="arrow-right"></span></button></div></div><div class="entry-under">这是一份不联网的设计原型。<button id="openExample">先打开示例看看 <span aria-hidden="true">↗</span></button></div></div>
+  </div>
+  <div class="home-divider"></div><div class="home-bottom-head"><h2>继续一段探索</h2><span class="spacer"></span><span class="muted">示例项目，不会覆盖你的资料</span></div>
+  <button class="project-row" id="openProject" style="width:100%;text-align:left"><span class="project-icon" data-icon="map"></span><span><h3>研究型问答的可靠性</h3><p>检索、证据与不确定性的边界 · 2 条探索分支</p></span><span class="spacer"></span><span class="tag green">演示</span><span data-icon="arrow-right"></span></button>
+  <p class="home-caption">正式产品由你选择模型服务，项目保存在当前浏览器。在线研究会将必要的想法与资料发送至你选择的服务。</p>
+ </div>
+</section>
+<main class="app" id="appView">
+ <aside class="sidebar" aria-label="研究导航">
+  <button class="back" id="allProjects"><span data-icon="arrow-left"></span><span>所有探索</span></button>
+  <div class="project-label"><span class="eyebrow">RESEARCH SPACE / 001</span><h2>研究型问答<br>的可靠性</h2></div>
+  <div class="section-label">研究轨迹<button class="iconbtn" id="newBranch" aria-label="新建研究分支"><span data-icon="plus"></span></button></div>
+  <div class="journey-root"><span class="small-dot"></span>最初的想法</div><div class="branch-list" id="branchList"></div>
+  <button class="side-link active" data-view="map" title="研究地图"><span data-icon="map"></span><span class="label">研究地图</span></button>
+  <button class="side-link" data-view="papers" title="文献与证据"><span data-icon="source"></span><span class="label">文献与证据</span><span class="count" id="sourceCount">3</span></button>
+  <button class="side-link" data-view="directions" title="候选方向"><span data-icon="compass"></span><span class="label">候选方向</span><span class="count" id="directionCount">1</span></button>
+  <div class="sidebar-bottom"><div class="scope-note"><span class="eyebrow">CURRENT LENS</span><p id="scopeText">先厘清检索与证据的边界，再决定研究切口。</p></div><div class="small-save"><span data-icon="lock"></span>示例数据 · 仅在内存中交互</div></div>
+ </aside>
+ <section class="center-pane" id="centerPane" aria-label="研究工作区">
+  <div class="canvas-head" id="canvasHead"><div><h1 id="mapTitle">可靠性与证据</h1><p>从问题出发，理解已有路线与值得追问的边界。</p></div><span class="spacer"></span><div class="segmented" role="group" aria-label="地图显示模式"><button id="showMap" class="active"><span data-icon="map"></span>地图</button><button id="showList"><span data-icon="list"></span>结构</button></div><button class="iconbtn search-tool" id="findNode" aria-label="查找节点"><span data-icon="search"></span></button></div>
+  <div class="canvas-wrap" id="canvasWrap"><div class="map-note"><span class="dot"></span><span id="mapMeta">7 个语义节点 · 3 篇示例文献</span><span>／</span><span>示例整理，非完整调研</span></div><div class="graph-stage" id="graphStage"><div class="lane first"><b>01</b> 问题边界</div><div class="lane second"><b>02</b> 已有路线</div><div class="lane third"><b>03</b> 值得追问</div><svg class="graph-edges" id="graphEdges" aria-hidden="true"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="#B5B5B5" stroke-width="1.5"/></marker></defs></svg><div id="graphNodes"></div></div><div class="map-list hidden" id="mapList"></div><div class="zoom-tools"><button class="iconbtn" id="zoomOut" aria-label="缩小"><span data-icon="minus"></span></button><span class="zoom-level" id="zoomLevel">100%</span><button class="iconbtn" id="zoomIn" aria-label="放大"><span data-icon="plus"></span></button><span class="sep"></span><button class="iconbtn" id="fitMap" aria-label="适应画布"><span data-icon="fit"></span></button></div><div class="canvas-caption"><span class="legend-item"><span class="legend-dot"></span>已有路线</span><span class="legend-item"><span class="legend-dot amber"></span>待调研问题</span><span class="legend-item"><span class="legend-dot gray"></span>可点击查看依据</span></div></div>
+  <div class="content-scroll hidden" id="contentView"></div>
+ </section>
+ <aside class="right-pane" id="rightPane" aria-label="研究对话和证据">
+  <div class="right-head"><button class="right-tab active" id="chatTab">探索对话</button><button class="right-tab" id="detailTab">节点详情</button><span class="spacer"></span><span class="tag">演示</span></div>
+  <div class="right-body" id="rightBody"></div>
+  <form class="chat-form" id="chatForm"><div class="focus-chip" id="focusChip"><span data-icon="focus"></span><span id="focusLabel">围绕：“找到”不等于“足够”</span><button type="button" id="clearFocus" aria-label="清除当前焦点">×</button></div><div class="composer"><textarea id="chatInput" aria-label="向研究助手提问" placeholder="继续追问，或者换个角度想想……"></textarea><div class="composer-bottom"><span class="composer-mode">示例模式 <span aria-hidden="true">·</span> 不调用模型</span><button class="send-button" type="submit" aria-label="发送示例问题"><span data-icon="arrow-up"></span></button></div></div><div class="composer-help">Enter 发送 · Shift + Enter 换行</div></form>
+ </aside>
+</main>
+<footer class="statusbar" id="statusBar"><span><i class="status-dot"></i>交互原型</span><span id="statusBranch">当前分支：可靠性与证据</span><span class="status-extra">真实书目信息 · 示例研究结构</span><span>IdeaScope / Design baseline 01</span></footer>
+<div id="modalRoot"></div><div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+<script id="demoData" type="application/json">{
+  "documentType": "ideascope.workspace",
+  "formatVersion": 1,
+  "createdWith": "0.0.0-plan",
+  "exportedAt": "2026-09-10T00:00:00Z",
+  "isDemo": true,
+  "workspace": {
+    "id": "workspace-demo",
+    "title": "从一个想法开始：研究型问答的可靠性",
+    "seedIdea": "我想研究怎样让研究型问答更可靠，但还不清楚应该从检索还是证据判断入手。",
+    "activeBranchId": "branch-main",
+    "branches": [
+      {
+        "id": "branch-main",
+        "title": "可靠性与证据",
+        "parentBranchId": null,
+        "forkedFromRevision": null,
+        "revision": 0,
+        "focusNodeId": "g-sufficient",
+        "scope": {
+          "object": "研究型问答中的可靠性",
+          "question": "怎样从检索与证据角度找到值得深入的研究问题？",
+          "constraints": [
+            "仅作调研与思考，不执行实验。"
+          ],
+          "assumptions": [
+            "以检索增强生成作为一个可修正的起点。"
+          ]
+        },
+        "summary": {
+          "understood": [
+            "当前示例用三篇真实文献演示检索、自检与检索质量三种观察角度。"
+          ],
+          "decisions": [
+            "先把问题说清楚，不急于宣称创新。"
+          ],
+          "openQuestions": [
+            "怎样界定证据足以支撑某个回答？"
+          ]
+        },
+        "graph": {
+          "nodes": [
+            {
+              "id": "q-reliable",
+              "kind": "question",
+              "title": "怎样让研究型问答更可靠？",
+              "summary": "先辨明可靠性指什么，再选择合适的研究切口。",
+              "claimIds": [],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-retrieval",
+              "kind": "approach",
+              "title": "为生成引入外部依据",
+              "summary": "把相关知识送入生成过程。",
+              "claimIds": [
+                "claim-rag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-reflection",
+              "kind": "approach",
+              "title": "何时检索，如何自检",
+              "summary": "按需检索，并反思使用的资料与生成结果。",
+              "claimIds": [
+                "claim-selfrag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-quality",
+              "kind": "approach",
+              "title": "先判断检索质量",
+              "summary": "关注找到的资料是否足以支撑回答。",
+              "claimIds": [
+                "claim-crag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "g-sufficient",
+              "kind": "gap",
+              "title": "“找到”不等于“足够”",
+              "summary": "怎样界定支撑一个判断所需的证据？",
+              "claimIds": [
+                "claim-open"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "g-boundary",
+              "kind": "gap",
+              "title": "可靠性的边界在哪里",
+              "summary": "检索相关性与回答可信性需要怎样区分？",
+              "claimIds": [
+                "claim-focus"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "d-uncertain",
+              "kind": "direction",
+              "title": "围绕证据不足继续探索",
+              "summary": "先调研何时应保留判断，而非急于生成答案。",
+              "claimIds": [
+                "claim-open"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge-1",
+              "source": "q-reliable",
+              "target": "a-retrieval",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-2",
+              "source": "q-reliable",
+              "target": "a-reflection",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-3",
+              "source": "q-reliable",
+              "target": "a-quality",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-4",
+              "source": "a-retrieval",
+              "target": "g-sufficient",
+              "relation": "related_to",
+              "label": "继续追问",
+              "claimIds": []
+            },
+            {
+              "id": "edge-5",
+              "source": "a-reflection",
+              "target": "g-boundary",
+              "relation": "related_to",
+              "label": "比较视角",
+              "claimIds": []
+            },
+            {
+              "id": "edge-6",
+              "source": "a-quality",
+              "target": "g-sufficient",
+              "relation": "related_to",
+              "label": "继续追问",
+              "claimIds": []
+            },
+            {
+              "id": "edge-7",
+              "source": "g-sufficient",
+              "target": "d-uncertain",
+              "relation": "motivates",
+              "label": "探索问题",
+              "claimIds": []
+            },
+            {
+              "id": "edge-8",
+              "source": "g-boundary",
+              "target": "d-uncertain",
+              "relation": "related_to",
+              "label": "澄清边界",
+              "claimIds": []
+            }
+          ],
+          "claims": [
+            {
+              "id": "claim-rag",
+              "text": "作者提出将参数记忆和非参数记忆结合，用于检索增强生成。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-rag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-selfrag",
+              "text": "摘要描述按需检索，以及对检索内容和生成结果进行自我反思。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-selfrag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-crag",
+              "text": "摘要描述评估检索文档质量，并据此触发不同知识检索动作。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-crag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-focus",
+              "text": "可先比较按需检索与检索质量判断，再决定具体的研究切口。",
+              "epistemicStatus": "inference",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-selfrag",
+                  "stance": "background"
+                },
+                {
+                  "evidenceId": "ev-crag",
+                  "stance": "background"
+                }
+              ],
+              "qualifiers": [
+                "这是面向本示例的组织方式，不是领域完整分类。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-open",
+              "text": "证据不足时如何表达不确定性，是当前示例希望继续调查的问题。",
+              "epistemicStatus": "hypothesis",
+              "evidenceLinks": [],
+              "qualifiers": [
+                "未核查完整已有研究，不构成创新性或空白判断。"
+              ],
+              "verification": "unreviewed"
+            }
+          ]
+        },
+        "view": {
+          "positions": {
+            "q-reliable": {
+              "x": 32,
+              "y": 252,
+              "pinned": false
+            },
+            "a-retrieval": {
+              "x": 300,
+              "y": 84,
+              "pinned": false
+            },
+            "a-reflection": {
+              "x": 300,
+              "y": 278,
+              "pinned": false
+            },
+            "a-quality": {
+              "x": 300,
+              "y": 472,
+              "pinned": false
+            },
+            "g-sufficient": {
+              "x": 596,
+              "y": 118,
+              "pinned": false
+            },
+            "g-boundary": {
+              "x": 596,
+              "y": 328,
+              "pinned": false
+            },
+            "d-uncertain": {
+              "x": 596,
+              "y": 538,
+              "pinned": false
+            }
+          },
+          "collapsedIds": [],
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
+          }
+        },
+        "directions": [
+          {
+            "id": "dir-uncertain",
+            "title": "证据不足时，系统应如何回应？",
+            "researchQuestion": "什么样的证据边界可以帮助我们讨论回答与保留判断的选择？",
+            "motivation": "将泛泛的“更可靠”拆成能够继续调研的问题。",
+            "knownWork": [
+              "paper-selfrag",
+              "paper-crag"
+            ],
+            "possibleDifference": "暂未确定；需要核查已有拒答、不确定性与证据评估研究。",
+            "counterEvidence": [
+              "尚未进行有针对性的反证检索，不能据此宣称空白。"
+            ],
+            "unresolvedQuestions": [
+              "已有工作如何定义证据充分性？",
+              "不同研究对象的评价边界是否一致？"
+            ],
+            "nextLiteratureQuestions": [
+              "查找证据充分性与检索增强问答的综述或代表工作。"
+            ],
+            "status": "exploring",
+            "claimIds": [
+              "claim-open"
+            ],
+            "userEdited": false
+          }
+        ]
+      },
+      {
+        "id": "branch-alt",
+        "title": "按需检索的边界",
+        "parentBranchId": "branch-main",
+        "forkedFromRevision": 0,
+        "revision": 0,
+        "focusNodeId": "a-reflection",
+        "scope": {
+          "object": "研究型问答中的可靠性",
+          "question": "何时有必要检索外部资料？",
+          "constraints": [
+            "仅作调研与思考，不执行实验。"
+          ],
+          "assumptions": [
+            "以检索增强生成作为一个可修正的起点。"
+          ]
+        },
+        "summary": {
+          "understood": [
+            "当前示例用三篇真实文献演示检索、自检与检索质量三种观察角度。"
+          ],
+          "decisions": [
+            "先把问题说清楚，不急于宣称创新。"
+          ],
+          "openQuestions": [
+            "如何区分需要检索与无需检索的问题？"
+          ]
+        },
+        "graph": {
+          "nodes": [
+            {
+              "id": "q-reliable",
+              "kind": "question",
+              "title": "怎样让研究型问答更可靠？",
+              "summary": "先辨明可靠性指什么，再选择合适的研究切口。",
+              "claimIds": [],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-retrieval",
+              "kind": "approach",
+              "title": "为生成引入外部依据",
+              "summary": "把相关知识送入生成过程。",
+              "claimIds": [
+                "claim-rag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-reflection",
+              "kind": "approach",
+              "title": "何时检索，如何自检",
+              "summary": "按需检索，并反思使用的资料与生成结果。",
+              "claimIds": [
+                "claim-selfrag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "a-quality",
+              "kind": "approach",
+              "title": "先判断检索质量",
+              "summary": "关注找到的资料是否足以支撑回答。",
+              "claimIds": [
+                "claim-crag"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "g-sufficient",
+              "kind": "gap",
+              "title": "“找到”不等于“足够”",
+              "summary": "怎样界定支撑一个判断所需的证据？",
+              "claimIds": [
+                "claim-open"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "g-boundary",
+              "kind": "gap",
+              "title": "可靠性的边界在哪里",
+              "summary": "检索相关性与回答可信性需要怎样区分？",
+              "claimIds": [
+                "claim-focus"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            },
+            {
+              "id": "d-uncertain",
+              "kind": "direction",
+              "title": "围绕证据不足继续探索",
+              "summary": "先调研何时应保留判断，而非急于生成答案。",
+              "claimIds": [
+                "claim-open"
+              ],
+              "aliases": [],
+              "locked": false,
+              "archived": false,
+              "mergedInto": null
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge-1",
+              "source": "q-reliable",
+              "target": "a-retrieval",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-2",
+              "source": "q-reliable",
+              "target": "a-reflection",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-3",
+              "source": "q-reliable",
+              "target": "a-quality",
+              "relation": "addressed_by",
+              "label": "已有路线",
+              "claimIds": []
+            },
+            {
+              "id": "edge-4",
+              "source": "a-retrieval",
+              "target": "g-sufficient",
+              "relation": "related_to",
+              "label": "继续追问",
+              "claimIds": []
+            },
+            {
+              "id": "edge-5",
+              "source": "a-reflection",
+              "target": "g-boundary",
+              "relation": "related_to",
+              "label": "比较视角",
+              "claimIds": []
+            },
+            {
+              "id": "edge-6",
+              "source": "a-quality",
+              "target": "g-sufficient",
+              "relation": "related_to",
+              "label": "继续追问",
+              "claimIds": []
+            },
+            {
+              "id": "edge-7",
+              "source": "g-sufficient",
+              "target": "d-uncertain",
+              "relation": "motivates",
+              "label": "探索问题",
+              "claimIds": []
+            },
+            {
+              "id": "edge-8",
+              "source": "g-boundary",
+              "target": "d-uncertain",
+              "relation": "related_to",
+              "label": "澄清边界",
+              "claimIds": []
+            }
+          ],
+          "claims": [
+            {
+              "id": "claim-rag",
+              "text": "作者提出将参数记忆和非参数记忆结合，用于检索增强生成。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-rag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-selfrag",
+              "text": "摘要描述按需检索，以及对检索内容和生成结果进行自我反思。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-selfrag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-crag",
+              "text": "摘要描述评估检索文档质量，并据此触发不同知识检索动作。",
+              "epistemicStatus": "sourced",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-crag",
+                  "stance": "supports"
+                }
+              ],
+              "qualifiers": [
+                "基于所列摘要页面的简短概括，不代表全文审阅。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-focus",
+              "text": "可先比较按需检索与检索质量判断，再决定具体的研究切口。",
+              "epistemicStatus": "inference",
+              "evidenceLinks": [
+                {
+                  "evidenceId": "ev-selfrag",
+                  "stance": "background"
+                },
+                {
+                  "evidenceId": "ev-crag",
+                  "stance": "background"
+                }
+              ],
+              "qualifiers": [
+                "这是面向本示例的组织方式，不是领域完整分类。"
+              ],
+              "verification": "unreviewed"
+            },
+            {
+              "id": "claim-open",
+              "text": "证据不足时如何表达不确定性，是当前示例希望继续调查的问题。",
+              "epistemicStatus": "hypothesis",
+              "evidenceLinks": [],
+              "qualifiers": [
+                "未核查完整已有研究，不构成创新性或空白判断。"
+              ],
+              "verification": "unreviewed"
+            }
+          ]
+        },
+        "view": {
+          "positions": {
+            "q-reliable": {
+              "x": 32,
+              "y": 252,
+              "pinned": false
+            },
+            "a-retrieval": {
+              "x": 300,
+              "y": 84,
+              "pinned": false
+            },
+            "a-reflection": {
+              "x": 300,
+              "y": 278,
+              "pinned": false
+            },
+            "a-quality": {
+              "x": 300,
+              "y": 472,
+              "pinned": false
+            },
+            "g-sufficient": {
+              "x": 596,
+              "y": 118,
+              "pinned": false
+            },
+            "g-boundary": {
+              "x": 596,
+              "y": 328,
+              "pinned": false
+            },
+            "d-uncertain": {
+              "x": 596,
+              "y": 538,
+              "pinned": false
+            }
+          },
+          "collapsedIds": [],
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
+          }
+        },
+        "directions": []
+      }
+    ],
+    "papers": [
+      {
+        "id": "paper-rag",
+        "externalIds": {
+          "arxiv": "2005.11401"
+        },
+        "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "authors": [
+          "Patrick Lewis",
+          "Ethan Perez",
+          "Aleksandra Piktus",
+          "Fabio Petroni",
+          "Vladimir Karpukhin",
+          "Naman Goyal",
+          "Heinrich Küttler",
+          "Mike Lewis",
+          "Wen-tau Yih",
+          "Tim Rocktäschel",
+          "Sebastian Riedel",
+          "Douwe Kiela"
+        ],
+        "year": 2020,
+        "venue": null,
+        "url": "https://arxiv.org/abs/2005.11401",
+        "abstract": null,
+        "source": "arXiv abstract page, manually curated example",
+        "fetchedAt": "2026-09-10T00:00:00Z",
+        "relatedVersionIds": []
+      },
+      {
+        "id": "paper-selfrag",
+        "externalIds": {
+          "arxiv": "2310.11511"
+        },
+        "title": "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection",
+        "authors": [
+          "Akari Asai",
+          "Zeqiu Wu",
+          "Yizhong Wang",
+          "Avirup Sil",
+          "Hannaneh Hajishirzi"
+        ],
+        "year": 2023,
+        "venue": null,
+        "url": "https://arxiv.org/abs/2310.11511",
+        "abstract": null,
+        "source": "arXiv abstract page, manually curated example",
+        "fetchedAt": "2026-09-10T00:00:00Z",
+        "relatedVersionIds": []
+      },
+      {
+        "id": "paper-crag",
+        "externalIds": {
+          "arxiv": "2401.15884"
+        },
+        "title": "Corrective Retrieval Augmented Generation",
+        "authors": [
+          "Shi-Qi Yan",
+          "Jia-Chen Gu",
+          "Yun Zhu",
+          "Zhen-Hua Ling"
+        ],
+        "year": 2024,
+        "venue": null,
+        "url": "https://arxiv.org/abs/2401.15884",
+        "abstract": null,
+        "source": "arXiv abstract page, manually curated example",
+        "fetchedAt": "2026-09-10T00:00:00Z",
+        "relatedVersionIds": []
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-rag",
+        "paperId": "paper-rag",
+        "level": "abstract",
+        "excerpt": null,
+        "paraphrase": "作者提出将参数记忆和非参数记忆结合，用于检索增强生成。",
+        "locator": {
+          "url": "https://arxiv.org/abs/2005.11401",
+          "section": "Abstract"
+        },
+        "verification": "source_located",
+        "contentHash": "7dcb9e5a32e9e161737966ce295109dbefd3656d4f54b43088044b083008584f",
+        "fetchedAt": "2026-09-10T00:00:00Z"
+      },
+      {
+        "id": "ev-selfrag",
+        "paperId": "paper-selfrag",
+        "level": "abstract",
+        "excerpt": null,
+        "paraphrase": "摘要描述按需检索，以及对检索内容和生成结果进行自我反思。",
+        "locator": {
+          "url": "https://arxiv.org/abs/2310.11511",
+          "section": "Abstract"
+        },
+        "verification": "source_located",
+        "contentHash": "dd300e840d01a8905e883e471af03f4e54ff9511bf6b20ef8eaa9f01d01a8cdb",
+        "fetchedAt": "2026-09-10T00:00:00Z"
+      },
+      {
+        "id": "ev-crag",
+        "paperId": "paper-crag",
+        "level": "abstract",
+        "excerpt": null,
+        "paraphrase": "摘要描述评估检索文档质量，并据此触发不同知识检索动作。",
+        "locator": {
+          "url": "https://arxiv.org/abs/2401.15884",
+          "section": "Abstract"
+        },
+        "verification": "source_located",
+        "contentHash": "93088910ed208ddeb99e1165e85105fabf8daf4087188f180d4ef99215de7df6",
+        "fetchedAt": "2026-09-10T00:00:00Z"
+      }
+    ],
+    "messages": [],
+    "runs": []
+  }
+}
+</script>
+<script>
+'use strict';
+const doc=JSON.parse(document.getElementById('demoData').textContent);const ws=doc.workspace;
+const $=(id)=>document.getElementById(id);
+const iconPaths={
+ 'arrow-right':'<path d="M4 9h10M10 5l4 4-4 4"/>', 'arrow-left':'<path d="M14 9H4m4-4L4 9l4 4"/>','arrow-up':'<path d="M9 14V4m-4 4 4-4 4 4"/>',
+ 'plus':'<path d="M9 4v10M4 9h10"/>','minus':'<path d="M4 9h10"/>','map':'<rect x="3" y="7" width="4" height="4" rx="1"/><rect x="11" y="2" width="4" height="4" rx="1"/><rect x="11" y="12" width="4" height="4" rx="1"/><path d="M7 9h2V4h2M9 9v5h2"/>',
+ 'list':'<path d="M6 4h9M6 9h9M6 14h9"/><circle cx="3" cy="4" r=".5"/><circle cx="3" cy="9" r=".5"/><circle cx="3" cy="14" r=".5"/>',
+ 'source':'<path d="M4 2h7l3 3v11H4zM10 2v4h4M6.5 9h5M6.5 12h4"/>',
+ 'branch':'<circle cx="5" cy="3" r="1.5"/><circle cx="5" cy="15" r="1.5"/><circle cx="13" cy="5" r="1.5"/><path d="M5 4.5v9M5 11c0-4 8-1 8-4.5"/>',
+ 'compass':'<circle cx="9" cy="9" r="6.5"/><path d="m11.7 6.3-1.4 4-4 1.4 1.4-4z"/>',
+ 'settings':'<path d="M4 3v12M9 3v12M14 3v12"/><path d="M2 6h4M7 12h4M12 7h4" stroke-width="3"/>',
+ 'export':'<path d="M3 10v5h12v-5M9 12V2m-3 3 3-3 3 3"/>','download':'<path d="M3 11v4h12v-4M9 2v9M6 8l3 3 3-3"/>',
+ 'search':'<circle cx="7.5" cy="7.5" r="4.5"/><path d="m11 11 4 4"/>','fit':'<path d="M6 3H3v3M12 3h3v3M3 12v3h3M15 12v3h-3"/>',
+ 'focus':'<circle cx="9" cy="9" r="4"/><path d="M9 1v3M9 14v3M1 9h3M14 9h3"/>','check':'<path d="m4 9 3 3 7-7"/>','lock':'<rect x="4" y="8" width="10" height="8" rx="2"/><path d="M6 8V5a3 3 0 0 1 6 0v3"/>',
+ 'chat':'<path d="M3 3h12v9H7l-4 3V3Z"/>','close':'<path d="m4 4 10 10M14 4 4 14"/>','external':'<path d="M10 3h5v5M15 3l-8 8M7 4H3v11h11v-4"/>'};
+function icon(n){return '<svg class="ico" viewBox="0 0 18 18" aria-hidden="true">'+(iconPaths[n]||iconPaths.source)+'</svg>'}
+function hydrateIcons(root=document){root.querySelectorAll('[data-icon]').forEach(el=>{el.innerHTML=icon(el.dataset.icon);el.removeAttribute('data-icon')})}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+let branch=ws.branches[0],selected='g-sufficient',rightMode='chat',view='map',displayMode=window.innerWidth<620?'list':'map',zoom=1,toastTimer=null,previousFocus=null;
+const histories={};const kindLabel={question:'研究问题',concept:'核心概念',approach:'已有路线',finding:'研究发现',debate:'争议',gap:'待调研问题',direction:'候选方向'};
+const epistemicLabel={sourced:'来源摘要',inference:'综合推断',hypothesis:'待验证假设',user_note:'用户笔记'};
+function notify(msg){$('toast').textContent=msg;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),3400)}
+function renderBranches(){ $('branchList').innerHTML=ws.branches.map((b,i)=>'<button class="branch '+(b.id===branch.id?'active':'')+'" data-branch="'+esc(b.id)+'">'+esc(b.title)+'<span class="branch-sub">'+(b.id===branch.id?'当前探索':'另一条路径')+'</span></button>').join('');document.querySelectorAll('[data-branch]').forEach(el=>el.onclick=()=>switchBranch(el.dataset.branch));$('directionCount').textContent=branch.directions.length;$('mapTitle').textContent=branch.title;$('statusBranch').textContent='当前分支：'+branch.title; }
+function switchBranch(id){branch=ws.branches.find(b=>b.id===id)||branch;ws.activeBranchId=branch.id;selected=branch.focusNodeId;renderBranches();renderGraph();setView('map');renderRight();$('scopeText').textContent=branch.id==='branch-main'?'先厘清检索与证据的边界，再决定研究切口。':branch.scope.question;notify('已切换分支。原来的图和讨论仍然保留。')}
+function nodeEvidence(n){const result=new Set();for(const cid of n.claimIds){const c=branch.graph.claims.find(x=>x.id===cid);if(c)c.evidenceLinks.forEach(l=>result.add(l.evidenceId))}return [...result]}
+function renderGraph(){
+ const nodes=branch.graph.nodes.filter(n=>!n.archived);$('graphNodes').innerHTML=nodes.map(n=>{let p=branch.view.positions[n.id]||{x:300,y:278};const count=nodeEvidence(n).length;return '<button class="node '+n.kind+' '+(selected===n.id?'selected':'')+'" data-node="'+esc(n.id)+'" style="left:'+p.x+'px;top:'+p.y+'px" aria-label="'+esc(n.title)+'"><span class="type"><span class="tiny"></span>'+kindLabel[n.kind]+'</span><h3>'+esc(n.title)+'</h3><p>'+esc(n.summary)+'</p><span class="node-foot">'+icon(count?'source':'compass')+'<span>'+(count?count+' 篇相关来源':'待继续检索')+'</span><span>'+(selected===n.id?'正在聚焦':n.kind==='direction'?'探索中':'查看')+' ↗</span></span></button>'}).join('');
+ $('graphNodes').querySelectorAll('[data-node]').forEach(el=>el.onclick=()=>selectNode(el.dataset.node,true));
+ $('mapList').innerHTML=nodes.map(n=>'<button class="list-node" data-node="'+esc(n.id)+'"><span class="tag '+(n.kind==='gap'?'amber':'green')+'">'+kindLabel[n.kind]+'</span><span><h3>'+esc(n.title)+'</h3><p>'+esc(n.summary)+'</p></span></button>').join('');$('mapList').querySelectorAll('[data-node]').forEach(el=>el.onclick=()=>selectNode(el.dataset.node,true));
+ const defs=$('graphEdges').querySelector('defs').outerHTML;
+ $('graphEdges').innerHTML=defs+branch.graph.edges.map((e,i)=>{let a=branch.view.positions[e.source],b=branch.view.positions[e.target];if(!a||!b)return '';const heights={};$('graphNodes').querySelectorAll('[data-node]').forEach(el=>heights[el.dataset.node]=el.offsetHeight);let sx=a.x+220,sy=a.y+(heights[e.source]||152)/2,tx=b.x,ty=b.y+(heights[e.target]||152)/2;let d;if(Math.abs(a.x-b.x)<10){tx=b.x+220;const cx=856;d=`M ${sx} ${sy} C ${cx} ${sy}, ${cx} ${ty}, ${tx} ${ty}`;}else {let mx=(sx+tx)/2;d=`M ${sx} ${sy} C ${mx} ${sy}, ${mx} ${ty}, ${tx} ${ty}`;}return '<path d="'+d+'" class="edge '+([e.source,e.target].includes(selected)?'active':'')+'" marker-end="url(#arrow)"/>'+(i===0?'<text x="257" y="174" class="edge-label">探索路线</text>':'');}).join('');
+ $('mapMeta').textContent=nodes.length+' 个语义节点 · '+ws.papers.length+' 篇示例文献';setDisplayMode(displayMode);fitGraph();updateFocus();
+}
+function fitGraph(){const c=$('canvasWrap');if(!c||c.clientWidth===0)return;const base=Math.min((c.clientWidth-34)/900,(c.clientHeight-87)/730,1.06);const scale=Math.max(.2,base*zoom);const x=Math.max(4,(c.clientWidth-900*scale)/2);const y=44+Math.max(0,(c.clientHeight-95-730*scale)/2);$('graphStage').style.transform=`translate(${x}px,${y}px) scale(${scale})`;$('zoomLevel').textContent=Math.round(scale*100)+'%'}
+function setDisplayMode(mode){displayMode=mode;$('graphStage').classList.toggle('hidden',mode==='list');$('mapList').classList.toggle('hidden',mode!=='list');$('showMap').classList.toggle('active',mode==='map');$('showList').classList.toggle('active',mode==='list');document.querySelector('.zoom-tools').style.visibility=mode==='map'?'visible':'hidden'}
+function selectNode(id,details=false){selected=id;branch.focusNodeId=id;if(details)rightMode='detail';renderGraph();renderRight();if(window.innerWidth<1000&&details)$('rightPane').classList.add('mobile-open')}
+function updateFocus(){const n=branch.graph.nodes.find(n=>n.id===selected);$('focusChip').classList.toggle('hidden',!n);$('focusLabel').textContent=n?'围绕：'+n.title:'';}
+function defaultChat(){return '<div class="user-msg">'+esc(ws.seedIdea)+'</div><div class="assistant-kicker"><span class="agent-mark">i</span> IDEASCOPE <span class="spacer"></span><span>示例回复</span></div><div class="assistant-text"><p>先不急着找“创新点”。可以把你的想法拆成一个更清楚的问题：<strong>外部资料如何真正帮助一个回答变得可靠？</strong></p><p>这里用三篇文献演示三个观察角度：引入外部依据、按需检索与自检、判断检索质量。<button class="citation" data-paper="paper-rag">1</button><button class="citation" data-paper="paper-selfrag">2</button><button class="citation" data-paper="paper-crag">3</button></p><div class="mini-insight"><strong>值得先追问的，不一定是新方法。</strong><p>“找到了相关资料”与“足以支持回答”是否是同一件事？这个问题可以帮助你收窄下一轮调研范围。</p></div><p>图里的右侧是<strong>待调研问题</strong>，不是已经确认的研究空白。还需要进一步核查已有工作。</p></div><div class="change-note">'+icon('map')+'已展示 7 个示例节点 · 可点击查看依据</div><div class="follow-label">沿着一个问题继续</div><button class="followup" data-follow="怎样界定证据是否足够？">怎样界定证据是否足够？'+icon('arrow-right')+'</button><button class="followup" data-follow="我更想了解按需检索这个方向。">换个角度，看看按需检索'+icon('arrow-right')+'</button>'}
+function renderRight(){
+ $('chatTab').classList.toggle('active',rightMode==='chat');$('detailTab').classList.toggle('active',rightMode==='detail');
+ if(rightMode==='chat'){$('rightBody').innerHTML=defaultChat()+(histories[branch.id]||[]).map(m=>m.role==='user'?'<div class="user-msg" style="margin-top:24px">'+esc(m.text)+'</div>':'<div class="assistant-kicker"><span class="agent-mark">i</span> IDEASCOPE · 示例反馈</div><div class="assistant-text"><p>'+esc(m.text)+'</p></div>').join('');}
+ else {const n=branch.graph.nodes.find(n=>n.id===selected);if(!n){$('rightBody').innerHTML='<p class="muted">选择一个节点，看看它的含义、依据与待查问题。</p>'}else {const evids=nodeEvidence(n);$('rightBody').innerHTML='<span class="tag '+(n.kind==='gap'?'amber':'green')+'">'+kindLabel[n.kind]+'</span><h2 class="detail-title">'+esc(n.title)+'</h2><p class="detail-summary">'+esc(n.summary)+'</p><div class="detail-section"><h3>为什么与当前想法有关</h3><p>把“更可靠”拆成一个能够查证和比较的具体问题，而不是直接罗列论文。</p></div><div class="detail-section"><h3>相关判断</h3>'+n.claimIds.map(cid=>{const c=branch.graph.claims.find(x=>x.id===cid);return c?'<div class="claim-item"><span class="tag '+(c.epistemicStatus==='hypothesis'?'amber':'')+'">'+epistemicLabel[c.epistemicStatus]+'</span><p>'+esc(c.text)+'</p></div>':''}).join('')+(n.claimIds.length?'':'<p>这是用户的研究问题，不是需要被论文证明的事实陈述。</p>')+'</div><div class="detail-section"><h3>依据与阅读范围</h3>'+(evids.length?evids.map((id,i)=>{const e=ws.evidence.find(e=>e.id===id),p=ws.papers.find(p=>p.id===e.paperId);return '<button class="source-item" data-paper="'+p.id+'" style="width:100%;text-align:left"><span class="source-number">'+String(i+1).padStart(2,'0')+'</span><span><h4>'+esc(p.title)+'</h4><p>'+p.year+' · 摘要页面 · 非全文核验</p></span></button>'}).join(''):'<p>尚未绑定可支持这一问题的证据。它是待探索问题，不应被称为研究空白。</p>')+'</div><button class="button primary full-button" id="exploreNode">围绕此处继续 '+icon('arrow-right')+'</button>';}}
+ bindRight();updateFocus();
+}
+function bindRight(){ $('rightBody').querySelectorAll('[data-paper]').forEach(el=>el.onclick=()=>showPaper(el.dataset.paper));$('rightBody').querySelectorAll('[data-follow]').forEach(el=>el.onclick=()=>submitDemo(el.dataset.follow));if($('exploreNode'))$('exploreNode').onclick=()=>{rightMode='chat';renderRight();$('chatInput').focus();notify('已设置讨论焦点。输入问题后再继续。')}; }
+function submitDemo(text){text=text.trim();if(!text)return;if(!histories[branch.id])histories[branch.id]=[];histories[branch.id].push({role:'user',text});const response=text.includes('按需')?'这个角度可以保留为另一条探索路径。左侧切换“按需检索的边界”，即可看到分支隔离的交互。正式产品会检索新资料后再更新图；本原型没有发起网络请求。':'这个追问可以进一步拆为：证据支持哪个判断、适用于什么条件，以及缺少哪些信息。正式产品会据此追加检索并提出可审阅的图更新；本原型只演示对话与焦点联动，不生成真实调研结论。';histories[branch.id].push({role:'assistant',text:response});const at=new Date().toISOString(),mid=Date.now();ws.messages.push({id:'msg-user-'+mid,branchId:branch.id,role:'user',text,evidenceIds:[],createdAt:at,isDemo:true},{id:'msg-assistant-'+mid,branchId:branch.id,role:'assistant',text:response,evidenceIds:[],createdAt:at,isDemo:true});rightMode='chat';renderRight();$('chatInput').value='';$('rightBody').scrollTop=$('rightBody').scrollHeight;}
+function showPaper(id){const p=ws.papers.find(p=>p.id===id);if(!p)return;const e=ws.evidence.find(e=>e.paperId===id);rightMode='detail';$('chatTab').classList.remove('active');$('detailTab').classList.add('active');$('rightBody').innerHTML='<button class="detail-back" id="backDetail">'+icon('arrow-left')+'返回节点</button><span class="tag">摘要页面 · 来源可定位</span><h2 class="detail-title" style="font-size:18px">'+esc(p.title)+'</h2><p class="detail-summary">'+esc(p.authors[0])+' 等 · '+p.year+'</p><div class="detail-section"><h3>摘要中的相关内容 · 简短释义</h3><div class="source-excerpt">'+esc(e.paraphrase)+'</div><p>这是根据摘要页面整理的简短概括，没有进行全文审阅。论文信息真实；当前研究图仍是界面示例。</p></div><div class="detail-section"><h3>用于理解什么</h3><p>帮助理解地图中的一个已有研究视角；它不能单独证明某个方向存在空白或具有创新性。</p></div><a class="button full-button" href="'+esc(p.url)+'" target="_blank" rel="noopener noreferrer">查看来源页面 '+icon('external')+'</a>';$('backDetail').onclick=()=>renderRight();if(window.innerWidth<1000)$('rightPane').classList.add('mobile-open');}
+function setView(v){view=v;document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===v));const map=v==='map';$('canvasHead').classList.toggle('hidden',!map);$('canvasWrap').classList.toggle('hidden',!map);$('contentView').classList.toggle('hidden',map);if(map){fitGraph();return;}if(v==='papers')renderPapers();else renderDirections();}
+function renderPapers(filter=''){const list=ws.papers.filter(p=>(p.title+' '+p.year).toLowerCase().includes(filter.toLowerCase()));$('contentView').innerHTML='<div class="page-heading"><div><span class="eyebrow">SOURCES & EVIDENCE</span><h2>每个判断，都能找到来处。</h2><p>三篇真实文献，用于演示来源与研究结构的关联。</p></div><span class="spacer"></span><input class="search-input" id="paperSearch" aria-label="搜索文献" placeholder="搜索题名或年份" value="'+esc(filter)+'"></div><div class="notice">本原型没有执行实时检索。书目信息来自文档中列出的公开摘要页面；研究网络为示例整理。</div>'+list.map((p,i)=>'<article class="paper-row"><span class="paper-no">'+String(i+1).padStart(2,'0')+'</span><div class="paper-text"><h3>'+esc(p.title)+'</h3><div class="authors">'+esc(p.authors.slice(0,3).join(', '))+' 等 · '+p.year+'</div><p>'+esc(ws.evidence.find(e=>e.paperId===p.id).paraphrase)+'</p><div class="paper-meta"><span class="tag">摘要页面</span><span class="tag green">来源可定位</span><button class="button ghost" style="height:25px;font-size:11px" data-open-paper="'+p.id+'">查看相关内容 '+icon('arrow-right')+'</button></div></div></article>').join('');$('paperSearch').oninput=(e)=>{const val=e.target.value;renderPapers(val);$('paperSearch').focus();$('paperSearch').setSelectionRange(val.length,val.length)};$('contentView').querySelectorAll('[data-open-paper]').forEach(el=>el.onclick=()=>showPaper(el.dataset.openPaper));}
+function renderDirections(){const c=branch.directions[0];$('contentView').innerHTML='<div class="page-heading"><div><span class="eyebrow">EMERGING DIRECTIONS</span><h2>值得继续，而不是仓促定论。</h2><p>把当前理解暂存成一个方向，带着尚未解决的问题继续调研。</p></div></div>'+(c?'<article class="direction-card"><div class="hstack"><span class="tag green">'+(c.status==='saved'?'已暂存':'探索中')+'</span><span class="tag">示例方向 · 未核查新颖性</span><span class="spacer"></span><span class="eyebrow">DIRECTION / 01</span></div><h3>'+esc(c.title)+'</h3><p class="direction-lead">'+esc(c.researchQuestion)+'</p><div class="direction-grid"><div><h4>为什么值得追问</h4><p>'+esc(c.motivation)+'</p></div><div><h4>已有工作的参照</h4><p>按需检索与自检、对检索质量的判断。需要继续检索，而非据此确认分类完整。</p></div><div><h4>可能差异 · 待核查</h4><p>'+esc(c.possibleDifference)+'</p></div><div><h4>尚需查清</h4><p>'+c.unresolvedQuestions.map(esc).join('<br>')+'</p></div></div><div class="direction-warning">'+esc(c.counterEvidence[0])+'</div><div class="direction-actions"><button class="button primary" id="continueDirection">继续探索 '+icon('arrow-right')+'</button><button class="button" id="saveDirection">'+(c.status==='saved'?'已暂存':'暂存当前方向')+'</button></div></article>':'<div class="notice">这个分支还没有整理方向。可以先回到地图，选中一个问题继续讨论。</div><button class="button primary" id="returnMap">返回研究地图</button>');if($('continueDirection'))$('continueDirection').onclick=()=>{setView('map');selectNode('d-uncertain',false);rightMode='chat';renderRight();$('chatInput').focus()};if($('saveDirection'))$('saveDirection').onclick=()=>{c.status='saved';renderDirections();notify('已在演示内存中暂存；刷新会恢复原始示例。')};if($('returnMap'))$('returnMap').onclick=()=>setView('map');}
+function showHome(){ document.querySelector('#openProject p').textContent='检索、证据与不确定性的边界 · '+ws.branches.length+' 条探索分支'; $('homeView').classList.remove('hidden');$('appView').classList.add('hidden');$('statusBar').classList.add('hidden');$('exportBtn').classList.add('hidden');$('topContext').textContent='从模糊想法，到清晰方向';location.hash='home';}
+function showWorkspace(){ $('homeView').classList.add('hidden');$('appView').classList.remove('hidden');$('statusBar').classList.remove('hidden');$('exportBtn').classList.remove('hidden');$('topContext').textContent='研究探索工作台';location.hash='workspace';setTimeout(fitGraph,0);}
+function closeModal(){ $('modalRoot').innerHTML='';if(previousFocus&&previousFocus.isConnected)previousFocus.focus();}
+function modal(title,subtitle,body,footer='',small=false){previousFocus=document.activeElement;$('modalRoot').innerHTML='<div class="modal-shade" id="shade"><section class="modal '+(small?'small':'')+'" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-header"><div><h2 id="modalTitle">'+esc(title)+'</h2><p>'+esc(subtitle)+'</p></div><span class="spacer"></span><button class="iconbtn" id="closeModal" aria-label="关闭弹窗">'+icon('close')+'</button></div><div class="modal-content">'+body+'</div>'+(footer?'<div class="modal-footer">'+footer+'</div>':'')+'</section></div>';$('closeModal').onclick=closeModal;$('shade').onclick=e=>{if(e.target===$('shade'))closeModal()};setTimeout(()=>$('closeModal')?.focus(),0);}
+function showSettings(tab='model'){
+ const nav='<nav class="settings-nav" aria-label="设置分类"><button data-settings="model" class="'+(tab==='model'?'active':'')+'">模型服务</button><button data-settings="sources" class="'+(tab==='sources'?'active':'')+'">文献来源</button><button data-settings="privacy" class="'+(tab==='privacy'?'active':'')+'">隐私与存储</button></nav>';
+ let body;
+ if(tab==='model')body='<div class="form-field"><label for="protocol">接口协议</label><select id="protocol"><option>OpenAI-compatible</option><option>用户自有网关</option></select></div><div class="form-field"><label for="baseUrl">Base URL</label><input id="baseUrl" placeholder="https://your-provider.example/v1" autocomplete="off"><p>使用你选择的服务端点，浏览器兼容性需要实际测试。</p></div><div class="form-field"><label for="modelName">Model ID</label><input id="modelName" placeholder="填写服务提供的模型名称" autocomplete="off"></div><div class="form-field"><label for="apiKey">API Key</label><input id="apiKey" type="password" placeholder="设计原型中请勿输入真实密钥" autocomplete="off" disabled><p>正式产品默认仅在内存中使用，刷新后需要重新输入。</p></div><div class="notice">这是设置样式示例，不会保存凭证或发起请求。纯前端不能保证长期 API Key 安全。</div><button class="button" id="probeDemo">查看能力检查项 '+icon('arrow-right')+'</button><div class="checks hidden" id="capabilityChecks"><span class="check-item">普通请求：待验证</span><span class="check-item">流式：待验证</span><span class="check-item">结构化输出：待验证</span><span class="check-item">CORS：待验证</span></div>';
+ else if(tab==='sources')body='<span class="eyebrow">LITERATURE SOURCES</span><h3 style="font-size:18px;margin:12px 0">模型与文献来源，分别连接。</h3><p class="tiny-line">模型能回答，不代表可以获取文献。每个来源有独立的认证、额度与浏览器兼容状态。</p><div class="export-option"><span class="file-badge">OA</span><span><strong>OpenAlex</strong><small>首版优先接入 · 普通关键词检索</small></span><span class="tag amber">待实测</span></div><div class="export-option"><span class="file-badge">+</span><span><strong>其他来源与手动导入</strong><small>v1.1 功能计划，不是原型已实现能力</small></span></div><div class="notice">调用规则会变化。正式产品需在目标 Pages 域名下实测，不能用开发代理掩盖跨域问题。</div>';
+ else body='<span class="eyebrow">YOUR DATA, YOUR CHOICE</span><h3 style="font-size:18px;margin:12px 0">本地保存，不等于不向外发送。</h3><p class="tiny-line">正式产品将必要的想法、对话与证据发送给你选择的模型服务；检索词发送给文献来源。当前这个原型没有网络请求，也没有持久化你的输入。</p><div class="source-excerpt">项目与分支：当前浏览器<br>模型凭证：仅内存<br>自动同步：不提供<br>公开分享：不自动执行</div><p class="tiny-line">浏览器数据可能被清理。正式版本应提供项目备份、保存状态与删除确认，不能承诺永不丢失。</p>';
+ modal('模型与来源','由你决定，使用哪一个研究助手。','<div class="settings-grid">'+nav+'<div>'+body+'</div></div>','<button class="button primary" id="doneSettings">返回工作台</button>');document.querySelectorAll('[data-settings]').forEach(el=>el.onclick=()=>showSettings(el.dataset.settings));$('doneSettings').onclick=closeModal;if($('probeDemo'))$('probeDemo').onclick=()=>{$('capabilityChecks').classList.remove('hidden');notify('原型只展示检查项，没有发起真实连接。')};
+}
+function download(name,content,mime){const blob=new Blob([content],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);notify('已导出演示文件；不包含密钥。')}
+function exportJson(){doc.exportedAt=new Date().toISOString();download('IdeaScope-demo.ideascope.json',JSON.stringify(doc,null,2),'application/json')}
+function wrap(s,len){return Array.from(s).reduce((a,c,i)=>{if(i%len===0)a.push('');a[a.length-1]+=c;return a},[])}
+function exportSvg(){const n=branch.graph.nodes;const edges=branch.graph.edges.map(e=>{const a=branch.view.positions[e.source],b=branch.view.positions[e.target];if(!a||!b)return '';let x1=a.x+220,y1=a.y+78,x2=b.x,y2=b.y+78;let path;if(a.x===b.x){x2=b.x+220;path=`M${x1} ${y1} C866 ${y1} 866 ${y2} ${x2} ${y2}`}else path=`M${x1} ${y1} C${(x1+x2)/2} ${y1} ${(x1+x2)/2} ${y2} ${x2} ${y2}`;return `<path d="${path}" fill="none" stroke="#C0C0C0" stroke-width="1.5"/>`}).join('');const nodes=n.map(v=>{const p=branch.view.positions[v.id],title=wrap(v.title,13),sum=wrap(v.summary,18);return `<g transform="translate(${p.x},${p.y})"><rect width="220" height="156" rx="9" fill="${v.kind==='direction'?'#F3F3F3':'#FFFFFF'}" stroke="#C9C9C9"/><text x="15" y="22" font-size="10" fill="#7C7C7C">${esc(kindLabel[v.kind])}</text>${title.map((t,i)=>`<text x="15" y="${46+i*20}" font-size="14" font-weight="600" fill="#353535">${esc(t)}</text>`).join('')}${sum.map((t,i)=>`<text x="15" y="${90+i*17}" font-size="11" fill="#838383">${esc(t)}</text>`).join('')}<text x="15" y="143" font-size="9" fill="#8A6A20">示例整理 · 非完整调研</text></g>`}).join('');download('IdeaScope-demo-map.svg','<svg xmlns="http://www.w3.org/2000/svg" width="980" height="840" viewBox="0 0 980 840"><rect width="980" height="840" fill="#F6F6F6"/><g font-family="sans-serif"><text x="50" y="40" font-size="19" fill="#4F4F4F">IdeaScope · '+esc(branch.title)+'</text><g transform="translate(28 70)">'+edges+nodes+'</g><text x="50" y="820" font-size="11" fill="#919191">交互原型 / 真实题名，示例研究结构 / 不代表完整调研或创新性判断</text></g></svg>','image/svg+xml')}
+function showExport(){modal('带走当前的理解','演示项目与图可直接导出；正式产品还规划 PNG 与 Markdown。','<p class="tiny-line">当前分支：'+esc(branch.title)+' · '+branch.graph.nodes.length+' 个节点<br>文件会保留演示标记，不包含模型设置或密钥。</p><button class="export-option" id="doJson" style="width:100%;text-align:left"><span class="file-badge">JSON</span><span><strong>完整演示项目</strong><small>所有分支、语义节点与来源关系</small></span>'+icon('download')+'</button><button class="export-option" id="doSvg" style="width:100%;text-align:left"><span class="file-badge">SVG</span><span><strong>当前分支研究图</strong><small>独立矢量示例，无外部图片或字体依赖</small></span>'+icon('download')+'</button><div class="notice">本原型的导出用于展示格式与样式。生产版本的迁移、完整性与大图导出仍需按计划实现和测试。</div>','',true);$('doJson').onclick=exportJson;$('doSvg').onclick=exportSvg;}
+function showNewBranch(){modal('另开一条探索路径','保存当前理解，同时容纳一个新的问题。','<p class="tiny-line">新分支复制当前示例图；后续讨论单独保存，不影响原分支。刷新原型后恢复初始示例。</p><label for="branchName" class="eyebrow" style="display:block;margin-bottom:8px">分支名称</label><input id="branchName" class="newbranch-input" maxlength="45" placeholder="例如：证据不足时的回答边界">','<button class="button" id="cancelBranch">取消</button><button class="button primary" id="createBranch">创建分支 '+icon('branch')+'</button>',true);$('cancelBranch').onclick=closeModal;$('createBranch').onclick=()=>{const title=$('branchName').value.trim();if(!title){$('branchName').focus();return;}const b=JSON.parse(JSON.stringify(branch));b.id='branch-demo-'+Date.now();b.title=title;b.parentBranchId=branch.id;b.forkedFromRevision=branch.revision;b.revision=0;b.directions=[];ws.branches.push(b);closeModal();switchBranch(b.id)};}
+$('brandHome').onclick=showHome;$('allProjects').onclick=showHome;$('openExample').onclick=showWorkspace;$('openProject').onclick=showWorkspace;
+$('startDemo').onclick=()=>{showWorkspace();notify('已打开示例工作台。你输入的想法没有发送至模型。')};$('settingsBtn').onclick=()=>showSettings();$('exportBtn').onclick=showExport;$('newBranch').onclick=showNewBranch;
+$('chatTab').onclick=()=>{rightMode='chat';renderRight()};$('detailTab').onclick=()=>{rightMode='detail';renderRight()};$('clearFocus').onclick=()=>{selected=null;branch.focusNodeId=null;renderGraph();renderRight()};
+$('chatForm').onsubmit=e=>{e.preventDefault();submitDemo($('chatInput').value)};$('chatInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();submitDemo(e.target.value)}};
+$('showMap').onclick=()=>setDisplayMode('map');$('showList').onclick=()=>setDisplayMode('list');$('zoomIn').onclick=()=>{zoom=Math.min(1.65,zoom+.12);fitGraph()};$('zoomOut').onclick=()=>{zoom=Math.max(.55,zoom-.12);fitGraph()};$('fitMap').onclick=()=>{zoom=1;fitGraph()};
+$('findNode').onclick=()=>{setDisplayMode('list');notify('已切换结构列表，可浏览并选择所有节点。')};$('mobileChat').onclick=()=>{$('rightPane').classList.toggle('mobile-open')};
+ document.querySelectorAll('[data-view]').forEach(el=>el.onclick=()=>setView(el.dataset.view));
+ document.addEventListener('keydown',e=>{const modalEl=document.querySelector('.modal');if(e.key==='Escape'){if(modalEl)closeModal();else $('rightPane').classList.remove('mobile-open')}if(e.key==='Tab'&&modalEl){const focusable=[...modalEl.querySelectorAll('button, a[href], input:not([disabled]), select, textarea, [tabindex="0"]')].filter(el=>el.offsetParent!==null);const first=focusable[0],last=focusable[focusable.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+ window.addEventListener('resize',fitGraph);hydrateIcons();renderBranches();renderGraph();renderRight();if(location.hash==='#home')showHome();else showWorkspace();
+</script>
+</body>
+</html>
