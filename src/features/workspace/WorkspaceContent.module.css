@@ -1,0 +1,153 @@
+.mapWrap {
+  height: 100%;
+  position: relative;
+}
+.proposal {
+  position: absolute;
+  z-index: 10;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: 11px;
+  box-shadow: 0 8px 24px #11131814;
+}
+.proposal svg {
+  width: 15px;
+  color: var(--accent);
+}
+.proposal button {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-weight: 650;
+}
+.state {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  padding: 32px;
+  text-align: center;
+}
+.state svg {
+  width: 24px;
+  color: var(--muted);
+}
+.state h2 {
+  margin: 13px 0 5px;
+  font-size: 16px;
+}
+.state p {
+  max-width: 390px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.state small {
+  margin-top: 12px;
+  color: var(--muted);
+}
+.content {
+  height: 100%;
+  padding: 38px 48px;
+  overflow: auto;
+}
+.content > header {
+  margin-bottom: 28px;
+}
+.content > header p {
+  margin: 0;
+  color: var(--muted);
+  font:
+    10px Georgia,
+    serif;
+  letter-spacing: 0.16em;
+}
+.content > header h2 {
+  margin: 8px 0 4px;
+  font-size: 24px;
+}
+.content > header span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.paper {
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+}
+.paper > b {
+  color: var(--muted);
+  font:
+    20px Georgia,
+    serif;
+}
+.paper h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+.paper small,
+.paper p {
+  color: var(--muted);
+  font-size: 11px;
+}
+.paper p {
+  max-width: 760px;
+}
+.paper a {
+  color: var(--ink);
+  font-size: 11px;
+}
+.direction {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.direction > small {
+  color: var(--accent);
+  font-size: 10px;
+}
+.direction h3 {
+  margin: 10px 0 8px;
+  font-size: 24px;
+}
+.lead {
+  max-width: 760px;
+  color: var(--muted);
+}
+.direction > div {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+.direction section b {
+  font-size: 11px;
+}
+.direction section p {
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .content {
+    padding: 24px 20px;
+  }
+  .direction > div {
+    grid-template-columns: 1fr;
+  }
+  .proposal {
+    width: calc(100% - 28px);
+  }
+}
