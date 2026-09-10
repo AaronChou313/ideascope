@@ -3,6 +3,7 @@ import { applyGraphPatch } from "../../domain/graph/apply-graph-patch";
 import { IdeaScopeDatabase, ideaScopeDatabase, type PatchReceipt, type RunSummary } from "./ideascope-database";
 
 export interface PatchCommit { branch: Branch; receipt: PatchReceipt; summary: RunSummary; replayed: boolean }
+export interface PatchPreview { branch: Branch; addedNodes: number; addedEdges: number; addedClaims: number; operationCount: number }
 
 export class GraphPatchRepository {
   constructor(private readonly db: IdeaScopeDatabase = ideaScopeDatabase) {}
@@ -12,6 +13,19 @@ export class GraphPatchRepository {
   }
   async getBranch(workspaceId: string, branchId: string) {
     return (await this.db.branches.get(GraphPatchRepository.branchKey(workspaceId, branchId)))?.branch;
+  }
+  async preview(patch: GraphPatch): Promise<PatchPreview> {
+    const stored = await this.getBranch(patch.workspaceId, patch.branchId);
+    if (!stored) throw new Error("目标分支不存在。");
+    const evidenceIds = new Set((await this.db.evidence.toCollection().primaryKeys()).map(String));
+    const branch = applyGraphPatch(patch, { workspaceId: patch.workspaceId, branch: stored, evidenceIds });
+    return {
+      branch,
+      addedNodes: branch.graph.nodes.length - stored.graph.nodes.length,
+      addedEdges: branch.graph.edges.length - stored.graph.edges.length,
+      addedClaims: branch.graph.claims.length - stored.graph.claims.length,
+      operationCount: patch.operations.length,
+    };
   }
   async apply(patch: GraphPatch): Promise<PatchCommit> {
     return this.db.transaction("rw", this.db.branches, this.db.evidence, this.db.checkpoints, this.db.patchReceipts, this.db.runSummaries, async () => {
@@ -36,6 +50,23 @@ export class GraphPatchRepository {
       await this.db.patchReceipts.add(receipt);
       await this.db.runSummaries.put(summary);
       return { branch, receipt, summary, replayed: false };
+    });
+  }
+  async undoLast(workspaceId: string, branchId: string) {
+    return this.db.transaction("rw", this.db.branches, this.db.checkpoints, async () => {
+      const key = GraphPatchRepository.branchKey(workspaceId, branchId);
+      const stored = await this.db.branches.get(key);
+      if (!stored) throw new Error("目标分支不存在。");
+      const checkpoint = (await this.db.checkpoints.where("branchId").equals(branchId).filter((item) => item.workspaceId === workspaceId && !item.consumedAt).sortBy("createdAt")).at(-1);
+      if (!checkpoint) throw new Error("没有可撤销的提交。");
+      const now = new Date().toISOString();
+      const restored = structuredClone(checkpoint.branch);
+      restored.revision = stored.branch.revision + 1;
+      checkpoint.consumedAt = now;
+      await this.db.checkpoints.put(checkpoint);
+      await this.db.checkpoints.add({ id: `undo:${crypto.randomUUID()}`, workspaceId, branchId, revision: stored.branch.revision, createdAt: now, reason: `撤销至 ${checkpoint.id}`, branch: structuredClone(stored.branch), consumedAt: now });
+      await this.db.branches.put({ ...stored, branch: restored });
+      return restored;
     });
   }
 }

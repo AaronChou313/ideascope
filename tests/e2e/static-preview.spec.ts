@@ -99,6 +99,16 @@ test("selects a semantic node and mirrors it in details and list views", async (
   ).toBeVisible();
 });
 
+test("previews, applies and undoes one local graph proposal", async ({ page }) => {
+  await page.goto("/ideascope/#/workspace/demo");
+  await page.getByLabel("演示状态").selectOption("proposal");
+  await expect(page.getByText(/当前图尚未修改/)).toBeVisible();
+  await page.getByRole("button", { name: "应用提案" }).click();
+  await expect(page.getByRole("heading", { name: "“证据充分”如何界定？" }).last()).toBeVisible();
+  await page.getByRole("button", { name: "撤销上次应用" }).click();
+  await expect(page.getByRole("heading", { name: "“找到”不等于“足够”" }).last()).toBeVisible();
+});
+
 test("exposes truthful demo states, sources, directions, and export boundary", async ({
   page,
 }) => {

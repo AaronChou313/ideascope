@@ -42,7 +42,7 @@ export class IdeaScopeDatabase extends Dexie {
 }
 
 export interface StoredBranch { key: string; workspaceId: string; branch: Branch }
-export interface GraphCheckpoint { id: string; workspaceId: string; branchId: string; revision: number; createdAt: string; reason: string; branch: Branch }
+export interface GraphCheckpoint { id: string; workspaceId: string; branchId: string; revision: number; createdAt: string; reason: string; branch: Branch; consumedAt?: string }
 export interface PatchReceipt { patchId: string; workspaceId: string; branchId: string; runId: string; baseRevision: number; committedRevision: number; committedAt: string; patch: GraphPatch }
 export interface RunSummary { runId: string; workspaceId: string; branchId: string; status: "completed"; patchId: string; operationCount: number; baseRevision: number; committedRevision: number; summary: string; endedAt: string }
 export interface RunExecution { id: string; workspaceId: string; branchId: string; baseRevision: number; status: "running" | "completed" | "failed" | "cancelled" | "interrupted" | "budget_exhausted"; states: string[]; startedAt: string; endedAt: string | null; usage: { inputTokens: number | null; outputTokens: number | null; source: "reported" | "estimated" | "unknown" }; error: string | null }

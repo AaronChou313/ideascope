@@ -59,6 +59,8 @@ export function WorkspaceContent({
   branch,
   selectedId,
   onSelect,
+  onApplyProposal,
+  onDismissProposal,
 }: {
   section: WorkspaceSection;
   state: DemoState;
@@ -66,6 +68,8 @@ export function WorkspaceContent({
   branch: Branch;
   selectedId: string | null;
   onSelect: (node: GraphNode) => void;
+  onApplyProposal?: () => void;
+  onDismissProposal?: () => void;
 }) {
   if (state !== "ready" && state !== "proposal") {
     const item = states[state];
@@ -159,7 +163,8 @@ export function WorkspaceContent({
         <div className={styles.proposal}>
           <Check />
           待应用变更：新增 1 个待验证问题。当前图尚未修改。
-          <button>查看提案</button>
+          <button onClick={onApplyProposal}>应用提案</button>
+          <button onClick={onDismissProposal}>暂不应用</button>
         </div>
       )}
       <ResearchMap

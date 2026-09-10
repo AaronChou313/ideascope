@@ -12,6 +12,7 @@ export function buildAgentContext(context: AgentRunContext, maxChars: number) {
     branchSummary: context.branchSummary,
     recentMessages: context.recentMessages.slice(-8),
     availableEvidenceIds: context.availableEvidenceIds,
+    focus: context.focus ?? null,
   };
   const text = JSON.stringify(payload);
   return text.length <= maxChars

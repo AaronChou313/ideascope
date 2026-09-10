@@ -8,6 +8,9 @@ import {
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { GraphNode } from "../../contracts/domain";
+import type { Branch, GraphPatch } from "../../contracts/domain";
+import demoPatchJson from "../../examples/patch.demo.json";
+import { applyGraphPatch } from "../domain/graph/apply-graph-patch";
 import { CitationList } from "../features/evidence/CitationList";
 import {
   WorkspaceContent,
@@ -20,6 +23,8 @@ import styles from "./WorkspacePage.module.css";
 
 export function WorkspacePage() {
   const workspace = useMemo(() => loadDemoWorkspace(), []);
+  const [branches, setBranches] = useState<Branch[]>(() => workspace.workspace.branches);
+  const [undoBranch, setUndoBranch] = useState<Branch | null>(null);
   const [branchId, setBranchId] = useState(workspace.workspace.activeBranchId);
   const [selectedId, setSelectedId] = useState<string | null>("g-sufficient");
   const [left, setLeft] = useState(true);
@@ -29,8 +34,7 @@ export function WorkspacePage() {
   const [exportOpen, setExportOpen] = useState(false);
   const [mobilePane, setMobilePane] = useState<"main" | "details">("main");
   const branch =
-    workspace.workspace.branches.find((item) => item.id === branchId) ??
-    workspace.workspace.branches[0];
+    branches.find((item) => item.id === branchId) ?? branches[0];
   if (!branch) throw new Error("Demo workspace has no branch.");
   const selected =
     branch.graph.nodes.find((node) => node.id === selectedId) ?? null;
@@ -44,8 +48,23 @@ export function WorkspacePage() {
   }
   function selectBranch(id: string) {
     setBranchId(id);
-    const next = workspace.workspace.branches.find((item) => item.id === id);
+    const next = branches.find((item) => item.id === id);
     setSelectedId(next?.focusNodeId ?? next?.graph.nodes[0]?.id ?? null);
+  }
+  function applyDemoProposal() {
+    if (!branch) return;
+    const proposal = { ...(demoPatchJson as GraphPatch), baseRevision: branch.revision };
+    const next = applyGraphPatch(proposal, { workspaceId: workspace.workspace.id, branch, evidenceIds: new Set(workspace.workspace.evidence.map(({ id }) => id)) });
+    setUndoBranch(structuredClone(branch));
+    setBranches((items) => items.map((item) => item.id === next.id ? next : item));
+    setDemoState("ready");
+    setSelectedId("q-evidence-criteria");
+  }
+  function undoDemoProposal() {
+    if (!undoBranch) return;
+    setBranches((items) => items.map((item) => item.id === undoBranch.id ? undoBranch : item));
+    setUndoBranch(null);
+    setSelectedId(undoBranch.focusNodeId);
   }
   function showMobileSection(next: "map" | "papers" | "details") {
     if (next === "details") {
@@ -64,7 +83,7 @@ export function WorkspacePage() {
         <aside className={styles.left}>
           <Link to="/">← 所有探索</Link>
           <p>研究轨迹</p>
-          {workspace.workspace.branches.map((item) => (
+          {branches.map((item) => (
             <button
               key={item.id}
               className={item.id === branch.id ? styles.active : ""}
@@ -121,6 +140,7 @@ export function WorkspacePage() {
               <Button aria-label="导出演示" onClick={() => setExportOpen(true)}>
                 导出
               </Button>
+              {undoBranch && <Button variant="ghost" onClick={undoDemoProposal}>撤销上次应用</Button>}
             </div>
           </header>
           <div className={styles.canvas}>
@@ -150,6 +170,8 @@ export function WorkspacePage() {
                 branch={branch}
                 selectedId={selectedId}
                 onSelect={selectNode}
+                onApplyProposal={applyDemoProposal}
+                onDismissProposal={() => setDemoState("ready")}
               />
             )}
           </div>

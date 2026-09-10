@@ -352,3 +352,25 @@
 风险与决策：v0.4 工程链路完成不等于外部 Provider 验收完成。运行记录不保存 prompt、响应正文或密钥；价格未知时不从 token 推算金额。
 
 下一阶段入口：v0.5.0-A，实现节点聚焦的持续追问、解释/探索意图区分、局部 GraphPatch 预览与撤销；保持布局、锁定节点和重试幂等。
+
+## v0.5.0-A 阶段记录
+
+阶段 ID：v0.5.0-A
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：实现持续追问的确定性意图门禁、焦点节点/邻域上下文、GraphPatch 无写入预览和事务撤销；在演示工作台提供明确的提案应用/拒绝/撤销交互。不调用模型，不把演示提案当真实生成。
+
+实际修改文件：`src/domain/agent/turn-intent.ts`、Agent context 契约、GraphPatch repository、工作区提案交互、unit/e2e、视觉截图与本文件。
+
+已完成：默认意图是 explain，仅明确检索/探索/范围/分支请求允许进入改图流程；选中节点的 ID、标题、摘要、邻居与判断 ID 进入有界上下文。`preview` 在副本验证并返回节点/边/判断增量，不写 IndexedDB；`undoLast` 在事务内恢复提交前 checkpoint，同时创建新 revision，避免回滚 revision 引发晚到响应写入。已有 patchId 重试继续幂等。演示状态可应用一个明确的 hypothesis/question 提案、暂不应用并撤销；每一步均标注演示。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、12 个 unit/contract 文件共 48 项测试、production build、10 项 Playwright e2e 与 secret scan 均成功。新增测试覆盖解释不改图、探索意图、焦点邻域、预览零写入、提交与单次撤销；e2e 实际执行提案预览、应用和撤销。
+
+人工验收与截图：已检查更新后的 `reports/visual/workspace-1440x900.png`；默认态无多余彩色面板，提案控制沿用紧凑 banner 与既有按钮层级，撤销入口只在有可撤销变更时出现。
+
+未完成 / 待实测：真实多轮 Provider 对话仍受凭证与调用授权门禁；当前意图分类是保守产品门禁，不宣称语义分类模型精度。
+
+风险与决策：撤销产生新 revision 而不是把 revision 数字倒退，保证旧响应永远过期；用户手动布局和锁定状态随 branch checkpoint 原样恢复。
+
+下一阶段入口：v0.5.0-B，实现 BranchService、快照复制、消息/运行按 branchId 路由、活动运行门禁及分支切换恢复测试。

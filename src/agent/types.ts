@@ -46,6 +46,13 @@ export interface AgentRunContext {
   branchSummary: string[];
   recentMessages: Array<{ role: "user" | "assistant"; text: string }>;
   availableEvidenceIds: string[];
+  focus?: {
+    nodeId: string;
+    title: string;
+    summary: string;
+    neighborIds: string[];
+    claimIds: string[];
+  };
 }
 export interface AgentBudget {
   maxModelCalls: number;
