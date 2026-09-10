@@ -21,6 +21,7 @@ import {
 import { loadDemoWorkspace } from "../infrastructure/demo/workspace-demo";
 import { AppHeader } from "../shared/ui/AppHeader";
 import { Button, Dialog, Tabs } from "../shared/ui";
+import { SafeRichText } from "../shared/ui/SafeRichText";
 import styles from "./WorkspacePage.module.css";
 
 export function WorkspacePage() {
@@ -206,7 +207,7 @@ export function WorkspacePage() {
                   claims.map((claim) => (
                     <article key={claim.id}>
                       <b>{claim.epistemicStatus}</b>
-                      <p>{claim.text}</p>
+                      <p><SafeRichText text={claim.text} /></p>
                       <CitationList claim={claim} evidence={workspace.workspace.evidence} papers={workspace.workspace.papers} />
                     </article>
                   ))

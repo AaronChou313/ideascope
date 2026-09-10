@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.4.0-A 受控单智能体运行时已完成 mock 验证；真实 Provider 与 Pages origin 仍待验证。**
+当前状态：**v0.6.0 工程范围已完成本地验证；真实 Provider、跨浏览器与 Pages origin 仍待外部验收。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
@@ -15,7 +15,14 @@
 | v0.3.0-B | 已完成 | DOI/arXiv/OpenAlex 规范化、精确/候选去重、Dexie Paper/Evidence/SearchRecord、版本关联与审阅界面 |
 | v0.3.0-C | 已完成 | 四类检索配方、4 查询/60 候选预算、部分失败聚合、三学科离线夹具与质量审阅 |
 | v0.4.0-A | 已完成 | 单一 AgentController、状态轨迹、ProviderAdapter、结构化/JSON 回退、预算、上下文、工具校验与 mock 测试 |
-| 其余版本 | 计划中 | 按路线逐阶段执行 |
+| v0.4.0-B | 已完成 | GraphPatch reducer、证据/锁定/revision 校验、原子事务、checkpoint、幂等回执与引用渲染 |
+| v0.4.0-C | 工程完成 / 外部待验收 | 运行状态与中断恢复、reported/unknown usage、端到端审查；真实 Provider 未调用 |
+| v0.5.0-A | 已完成 | 追问意图门禁、焦点邻域、补丁预览/应用/撤销与多轮 e2e |
+| v0.5.0-B | 已完成 | BranchService、快照/消息/运行隔离、活动运行门禁与晚到响应拒绝 |
+| v0.5.0-C | 已完成 | 非破坏折叠、合并建议、完整方向卡片与用户保存/排除状态 |
+| v0.6.0-A | 已完成 | workspace 持久化、刷新/中断恢复、quota、版本迁移、项目生命周期与单写者租约 |
+| v0.6.0-B | 已完成 | JSON/Markdown/SVG/PNG、敏感内容审计、SVG 降级、导入新项目与下载 e2e |
+| v0.6.0-C | 已完成 | 安全文本、endpoint/redirect 限制、脱敏诊断、全量清除、攻击夹具与数据流说明 |
 
 ## 每阶段记录模板
 
@@ -462,3 +469,25 @@
 风险与决策：导出前明确列出可能敏感的本地内容；SVG 作为大图可靠兜底。Paper/Evidence 题名和摘要一律转义为文本，不执行 HTML。
 
 下一阶段入口：v0.6.0-C，完成外部文本安全渲染、远程图片/endpoint 限制、导出审计、脱敏诊断、清除全部数据与三方数据流说明。
+
+## v0.6.0-C 阶段记录
+
+阶段 ID：v0.6.0-C
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：完成外部文本/Markdown 安全渲染、远程资源和 Provider endpoint 限制、脱敏诊断、确认清除全部数据、攻击夹具与三方数据流说明；执行 v0.6.0 最终本地审计。不部署、不调用付费模型。
+
+实际修改文件：`SafeRichText`、Provider transports、`DiagnosticExporter`、`LocalDataService`、设置页安全面板、攻击夹具/测试、`docs/DATA_FLOWS_AND_SECURITY.md`、e2e/截图与本文件。
+
+已完成：不可信 HTML、Markdown image 和 javascript link 只作为文本显示；http(s) 明文 URL 才生成带 noreferrer/noopener 的链接，不使用 innerHTML，不自动加载图片。远程 Provider 强制 HTTPS，localhost 例外；URL 禁止内嵌 username/password，fetch 禁止 redirect，凭证只发往用户明确配置的 origin。脱敏诊断排除查询、cache key、完整 URL、headers、prompt、response 和消息。清除全部数据需输入完整确认文字，在单一 Dexie 事务清空所有表并清空内存 key。文档列出 Provider、OpenAlex 与本地下载的具体数据流，并明确纯前端不能安全保管长期密钥。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、17 个 unit/contract 文件共 65 项测试、production build、12 项 Playwright e2e 与 secret scan 均成功。阶段 unit 覆盖攻击渲染、endpoint、redirect 配置、诊断字段与全量清除，e2e 覆盖诊断下载和清除门禁。package 与演示导出版本已更新为 0.6.0；远端 CI 在提交后确认。
+
+人工验收与截图：最终检查 `reports/visual/data-safety-1440x1000.png`；安全面板沿用白底、细边框和紧凑控件，危险操作与导出备份分开，不改变设计基线。
+
+未完成 / 待实测：真实 Provider 仍无凭证与付费调用授权；Firefox/Safari 导出、实际容量阈值、多标签崩溃接管及 Pages HTTPS origin 仍需相应环境验证。上述项目没有以 mock、Chromium 或构建成功冒充通过。
+
+风险与决策：纯前端只能降低凭证暴露面，不能承诺长期 key 安全。清除全部数据不可撤销，因此 UI 强制精确确认并持续提示先导出项目；单项目删除不会误删共享 Evidence。
+
+下一阶段入口：v1.0.0-A；先补齐真实 Provider/Pages/跨浏览器外部门禁，再执行跨学科任务集、20 轮稳定性和科研质量人工抽查，不以本次 v0.6 构建结果代替 v1.0 验收。

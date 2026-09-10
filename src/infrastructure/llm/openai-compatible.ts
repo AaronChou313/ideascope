@@ -5,6 +5,7 @@ type FetchLike = typeof fetch;
 
 export function normalizeBaseUrl(value: string): string {
   const url = new URL(value.trim());
+  if (url.username || url.password) throw new ConnectionError('invalid_response', 'Provider URL 不能包含凭证。');
   if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
     throw new ConnectionError('invalid_response', '远程 Provider 必须使用 HTTPS。');
   }
@@ -44,6 +45,7 @@ export async function probeProvider(config: ProviderConfig, key: string, capabil
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
       body: JSON.stringify(requestBody(config, capability)),
       signal,
+      redirect: 'error',
     });
     if (!response.ok) throw classifyResponse(response.status);
     if (capability === 'cancellation') return { capability, state: 'unknown', detail: '请求在取消前已完成，无法确认取消能力。', usageReporting: 'unknown' };

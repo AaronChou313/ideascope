@@ -106,6 +106,7 @@ export class OpenAICompatibleAgentProvider implements ProviderAdapter {
           },
           body: JSON.stringify(body),
           signal: request.signal,
+          redirect: "error",
         },
       );
       if (!response.ok) throw classifyResponse(response.status);

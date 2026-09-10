@@ -156,6 +156,7 @@ describe("OpenAI-compatible Agent Provider", () => {
     expect(new Headers(init?.headers).get("Authorization")).toBe(
       "Bearer secret-test-value",
     );
+    expect(init?.redirect).toBe("error");
     if (typeof init?.body !== "string") throw new Error("Expected JSON body");
     expect(init.body).toContain("json_schema");
   });

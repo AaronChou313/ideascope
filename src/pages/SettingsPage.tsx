@@ -6,6 +6,11 @@ const LiteratureSearchLab = lazy(() =>
     (module) => ({ default: module.LiteratureSearchLab }),
   ),
 );
+const DataSafetyPanel = lazy(() =>
+  import("../features/provider-settings/DataSafetyPanel").then(
+    (module) => ({ default: module.DataSafetyPanel }),
+  ),
+);
 export function SettingsPage() {
   return (
     <>
@@ -14,6 +19,7 @@ export function SettingsPage() {
       <Suspense fallback={<p role="status">正在加载检索工具…</p>}>
         <LiteratureSearchLab />
       </Suspense>
+      <DataSafetyPanel />
     </>
   );
 }

@@ -13,6 +13,7 @@ import type {
 } from "../../../contracts/domain";
 import { ResearchMap } from "../graph/ResearchMap";
 import styles from "./WorkspaceContent.module.css";
+import { SafeRichText } from "../../shared/ui/SafeRichText";
 
 export type WorkspaceSection = "map" | "papers" | "directions";
 export type DemoState =
@@ -106,7 +107,7 @@ export function WorkspaceContent({
                   {paper.authors.slice(0, 3).join(", ")} · {paper.year} ·
                   摘要页面
                 </small>
-                <p>{evidence?.paraphrase}</p>
+                <p><SafeRichText text={evidence?.paraphrase ?? ""} /></p>
                 <a href={paper.url} target="_blank" rel="noreferrer noopener">
                   查看公开来源 ↗
                 </a>

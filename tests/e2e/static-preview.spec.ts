@@ -21,6 +21,21 @@ test("does not enable paid provider probes without model and key", async ({
   await expect(page.getByRole("button", { name: /结构化输出/ })).toBeDisabled();
 });
 
+test("exposes redacted diagnostics and guarded local data cleanup", async ({ page }) => {
+  await page.goto("/ideascope/#/settings");
+  await expect(page.getByText(/纯前端应用无法安全保管长期密钥/)).toBeVisible();
+  const clear = page.getByRole("button", { name: "清除全部本地数据" });
+  await expect(clear).toBeDisabled();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "导出脱敏诊断" }).click();
+  expect((await download).suggestedFilename()).toBe("ideascope-diagnostics.json");
+  await page.getByLabel(/输入“清除全部数据”确认/).fill("不清除");
+  await expect(clear).toBeDisabled();
+  await expect(page.getByRole("heading", { name: "真实关键词检索" })).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({ path: "reports/visual/data-safety-1440x1000.png", fullPage: true });
+});
+
 test("runs a bounded OpenAlex keyword query without invoking a model", async ({
   page,
 }) => {
