@@ -396,3 +396,25 @@
 风险与决策：branch ID 在 workspace 内唯一；服务不复制 Evidence，避免同一来源因分支增加而重复计数。分支切换不隐式取消运行，创建分支则要求先结束或取消，保持写入目标清晰。
 
 下一阶段入口：v0.5.0-C，实现结构折叠/合并建议和完整方向卡片的保存、排除与证据保留规则。
+
+## v0.5.0-C 阶段记录
+
+阶段 ID：v0.5.0-C
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：实现非破坏结构整理、最多 30 个默认可见目标、重复概念合并建议与方向卡片状态事务；补齐方向卡的已有工作、潜在差异、反证和剩余问题。不实现创新评分，不自动合并。
+
+实际修改文件：`src/domain/graph/compaction.ts`、`src/infrastructure/storage/direction-service.ts`、方向 UI、unit/e2e、视觉截图与本文件。
+
+已完成：整理计划从焦点按邻域优先选取最多 30 个非归档节点，其余只进入 collapsedIds，原图记录不删除。标题或用户显式 alias 相同只产出需确认的合并建议；实际合并仍走 GraphPatch 校验并保留 claim/evidence 引用。DirectionService 在 branch 事务内写保存/排除状态、userEdited、checkpoint 和新 revision。方向视图完整显示价值、已有工作、待核查差异、反证/限制与未决问题，并提供保存/排除操作。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、14 个 unit/contract 文件共 52 项测试、production build、11 项 Playwright e2e 与 secret scan 均成功。新增测试证明 35 节点只显示 30 而不删数据、重复概念只形成建议，以及方向决定带 checkpoint 持久化；e2e 执行保存和排除操作。
+
+人工验收与截图：`reports/visual/directions-1440x900.png` 在最终 e2e 生成并人工复核；完整卡片仍使用白底、细边框与黑灰文字，蓝色仅保留在选择/主操作，不引入评分或彩色大卡。
+
+未完成 / 待实测：真实模型生成的合并建议与方向质量仍受 Provider 门禁；当前不提供也不暗示伪精确创新分。
+
+风险与决策：折叠是视图决策，不是归档或删除；方向状态属于用户决策，自动流程不得覆盖 userEdited 内容。
+
+下一阶段入口：v0.6.0-A，实现 workspace repositories、刷新恢复、容量错误、单写者租约与导入版本迁移夹具。

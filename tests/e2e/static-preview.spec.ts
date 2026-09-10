@@ -138,6 +138,13 @@ test("exposes truthful demo states, sources, directions, and export boundary", a
   await expect(
     page.getByRole("heading", { name: "值得继续，而不是仓促定论。" }),
   ).toBeVisible();
+  await expect(page.getByText("已有工作", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "保存方向" }).click();
+  await expect(page.getByText("当前状态：saved")).toBeVisible();
+  await page.getByRole("button", { name: "排除方向" }).click();
+  await expect(page.getByText("当前状态：excluded")).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: "reports/visual/directions-1440x900.png", fullPage: true });
   await page.getByRole("button", { name: "导出演示" }).click();
   const dialog = page.getByRole("dialog", { name: "带走当前的理解" });
   await expect(dialog).toBeVisible();

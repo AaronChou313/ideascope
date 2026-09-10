@@ -66,6 +66,11 @@ export function WorkspacePage() {
     setUndoBranch(null);
     setSelectedId(undoBranch.focusNodeId);
   }
+  function setDirectionStatus(status: "saved" | "excluded") {
+    if (!branch) return;
+    const targetId = branch.id;
+    setBranches((items) => items.map((item) => item.id !== targetId ? item : { ...item, directions: item.directions.map((direction, index) => index ? direction : { ...direction, status, userEdited: true }) }));
+  }
   function showMobileSection(next: "map" | "papers" | "details") {
     if (next === "details") {
       setMobilePane("details");
@@ -172,6 +177,7 @@ export function WorkspacePage() {
                 onSelect={selectNode}
                 onApplyProposal={applyDemoProposal}
                 onDismissProposal={() => setDemoState("ready")}
+                onDirectionStatus={setDirectionStatus}
               />
             )}
           </div>

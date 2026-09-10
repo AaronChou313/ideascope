@@ -61,6 +61,7 @@ export function WorkspaceContent({
   onSelect,
   onApplyProposal,
   onDismissProposal,
+  onDirectionStatus,
 }: {
   section: WorkspaceSection;
   state: DemoState;
@@ -70,6 +71,7 @@ export function WorkspaceContent({
   onSelect: (node: GraphNode) => void;
   onApplyProposal?: () => void;
   onDismissProposal?: () => void;
+  onDirectionStatus?: (status: "saved" | "excluded") => void;
 }) {
   if (state !== "ready" && state !== "proposal") {
     const item = states[state];
@@ -134,6 +136,10 @@ export function WorkspaceContent({
                 <p>{direction.motivation}</p>
               </section>
               <section>
+                <b>已有工作</b>
+                <p>{direction.knownWork.join("；")}</p>
+              </section>
+              <section>
                 <b>可能差异 · 待核查</b>
                 <p>{direction.possibleDifference}</p>
               </section>
@@ -146,6 +152,11 @@ export function WorkspaceContent({
                 <p>{direction.unresolvedQuestions.join("；")}</p>
               </section>
             </div>
+            <footer>
+              <button onClick={() => onDirectionStatus?.("saved")}>保存方向</button>
+              <button onClick={() => onDirectionStatus?.("excluded")}>排除方向</button>
+              <small>当前状态：{direction.status}</small>
+            </footer>
           </article>
         ) : (
           <div className={styles.state}>
