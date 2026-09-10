@@ -58,6 +58,10 @@ test("runs a bounded OpenAlex keyword query without invoking a model", async ({
     });
   });
   await page.goto("/ideascope/#/settings");
+  await page.getByRole("button", { name: "预览四类检索配方" }).click();
+  await expect(
+    page.getByText("counterevidence", { exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "执行真实检索" }).click();
   await expect(
     page.getByText("Reliable Research Question Answering").first(),

@@ -1,0 +1,38 @@
+{
+  "documentType": "ideascope.search-quality-fixtures",
+  "cases": [
+    {
+      "id": "cs-rag-reliability",
+      "discipline": "计算机科学",
+      "originalIdea": "怎样让研究型问答更可靠？",
+      "language": "en",
+      "coreTerms": "retrieval augmented generation reliability evidence",
+      "routeTerms": "evaluation citation verification",
+      "limitationTerms": "failure OR hallucination OR limitation",
+      "include": ["直接讨论 RAG 可靠性、证据或评估"],
+      "exclude": ["仅提及检索但不涉及问答或证据质量"]
+    },
+    {
+      "id": "public-health-heat",
+      "discipline": "公共卫生",
+      "originalIdea": "城市热浪如何影响老年人的健康服务需求？",
+      "language": "en",
+      "coreTerms": "urban heatwave older adults health service utilization",
+      "routeTerms": "hospital admission emergency department epidemiology",
+      "limitationTerms": "confounding OR inequity OR underreporting",
+      "include": ["人群、热暴露与服务使用结局可定位"],
+      "exclude": ["只研究气象预测且没有健康结局"]
+    },
+    {
+      "id": "humanities-digital-archives",
+      "discipline": "人文学科",
+      "originalIdea": "数字档案如何改变地方记忆的叙述？",
+      "language": "en",
+      "coreTerms": "digital archives local memory narrative",
+      "routeTerms": "oral history archival studies community",
+      "limitationTerms": "bias OR exclusion OR silence OR colonial",
+      "include": ["讨论档案实践与地方/社区记忆叙述"],
+      "exclude": ["纯数字存储工程且不讨论文化叙事"]
+    }
+  ]
+}

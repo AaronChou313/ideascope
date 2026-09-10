@@ -196,6 +196,32 @@
     font-size: 25px;
   }
 }
+.recipeToggle {
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 11px;
+}
+.recipe {
+  margin: 0 0 18px;
+  padding: 12px 12px 12px 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+}
+.recipe li {
+  margin: 6px 0;
+  font-size: 10px;
+}
+.recipe b {
+  display: inline-block;
+  width: 90px;
+}
+.recipe code {
+  overflow-wrap: anywhere;
+}
 .review {
   margin-bottom: 12px;
   padding: 14px;

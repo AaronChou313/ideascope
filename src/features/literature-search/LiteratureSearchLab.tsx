@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Paper } from "../../../contracts/domain";
 import type {
   LiteratureQuery,
   LiteratureSearchResult,
   SearchStatus,
 } from "../../domain/search/literature";
+import { createSearchRecipe } from "../../domain/search/recipes";
 import {
   OpenAlexLiteratureAdapter,
   OPENALEX_FIELDS,
@@ -49,6 +50,21 @@ export function LiteratureSearchLab() {
   const [savedCount, setSavedCount] = useState(0);
   const [library, setLibrary] = useState<Paper[]>([]);
   const [reviews, setReviews] = useState<PendingReview[]>([]);
+  const [showRecipe, setShowRecipe] = useState(false);
+  const recipe = useMemo(
+    () =>
+      createSearchRecipe({
+        id: "preview",
+        originalIdea,
+        language,
+        rationale,
+        coreTerms: keywords,
+        routeTerms: "methods evaluation",
+        limitationTerms: "failure OR limitation OR bias",
+        currentYear: new Date().getFullYear(),
+      }),
+    [originalIdea, language, rationale, keywords],
+  );
   const active = useRef<AbortController | null>(null);
   useEffect(() => {
     void paperStore.list().then((papers) => {
@@ -125,6 +141,23 @@ export function LiteratureSearchLab() {
             点击检索会从浏览器直接请求 OpenAlex，消耗匿名 API
             预算。不会调用付费模型，也不会把结果自动写成研究判断。
           </p>
+          <button
+            className={styles.recipeToggle}
+            type="button"
+            onClick={() => setShowRecipe((value) => !value)}
+          >
+            {showRecipe ? "收起四类配方" : "预览四类检索配方"}
+          </button>
+          {showRecipe && (
+            <ol className={styles.recipe}>
+              {recipe.items.map((item) => (
+                <li key={item.purpose}>
+                  <b>{item.purpose}</b>
+                  <code>{item.query.keywords}</code>
+                </li>
+              ))}
+            </ol>
+          )}
           <label>
             原始想法
             <textarea
