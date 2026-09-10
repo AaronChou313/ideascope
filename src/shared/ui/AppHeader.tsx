@@ -1,0 +1,2 @@
+import { Settings } from 'lucide-react';import { Link } from 'react-router-dom';import { copy } from '../i18n/zh-CN';import { Tooltip } from '.';import styles from './layout.module.css';
+export function AppHeader({context}:{context:string}){return <header className={styles.header}><Link className={styles.brand} to="/"><span>i</span>{copy.brand}</Link><p>{context}</p><Tooltip label="模型与来源设置"><Link className={styles.settings} to="/settings" aria-label="模型与来源设置"><Settings size={17}/></Link></Tooltip></header>}

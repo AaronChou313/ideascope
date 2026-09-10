@@ -18,6 +18,7 @@
 |---|---:|---|
 | react / react-dom | 19.3.0 | 静态 SPA UI |
 | react-router-dom | 7.18.3 | Hash 路由与静态托管路径 |
+| lucide-react | 1.44.0 | 可访问图标组件 |
 | @xyflow/react | 12.11.6 | 后续语义图渲染，0.1-A 未接入业务 UI |
 | elkjs | 0.12.0 | 后续自动布局，0.1-A 未执行布局 |
 | zustand | 5.0.15 | 后续临时 UI 状态 |
