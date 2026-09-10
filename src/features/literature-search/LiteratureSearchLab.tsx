@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { Paper } from "../../../contracts/domain";
 import type {
   LiteratureQuery,
   LiteratureSearchResult,
@@ -8,6 +9,10 @@ import {
   OpenAlexLiteratureAdapter,
   OPENALEX_FIELDS,
 } from "../../infrastructure/literature/openalex";
+import {
+  PaperStore,
+  SearchRecordStore,
+} from "../../infrastructure/storage/evidence-repositories";
 import styles from "./LiteratureSearchLab.module.css";
 
 const statusText: Record<SearchStatus, string> = {
@@ -19,6 +24,13 @@ const statusText: Record<SearchStatus, string> = {
   source_unavailable: "来源不可用",
   invalid_response: "响应格式异常",
 };
+const paperStore = new PaperStore();
+const searchRecordStore = new SearchRecordStore();
+interface PendingReview {
+  incomingId: string;
+  existingId: string;
+  reasons: string[];
+}
 
 export function LiteratureSearchLab() {
   const [originalIdea, setOriginalIdea] = useState("怎样让研究型问答更可靠？");
@@ -31,11 +43,20 @@ export function LiteratureSearchLab() {
   );
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState(
-    "尚未发起真实查询。结果只保存在当前页面内存中。",
+    "尚未发起真实查询。文献元数据与查询记录保存在本机浏览器中。",
   );
   const [history, setHistory] = useState<LiteratureSearchResult[]>([]);
+  const [savedCount, setSavedCount] = useState(0);
+  const [library, setLibrary] = useState<Paper[]>([]);
+  const [reviews, setReviews] = useState<PendingReview[]>([]);
   const active = useRef<AbortController | null>(null);
-  useEffect(() => () => active.current?.abort(), []);
+  useEffect(() => {
+    void paperStore.list().then((papers) => {
+      setSavedCount(papers.length);
+      setLibrary(papers);
+    });
+    return () => active.current?.abort();
+  }, []);
 
   async function search() {
     active.current?.abort();
@@ -54,10 +75,27 @@ export function LiteratureSearchLab() {
         { limit: 10, maxPages: 1, sort: "relevance", fields: OPENALEX_FIELDS },
         active.current.signal,
       );
+      await searchRecordStore.save(result.record);
+      const pending: PendingReview[] = [];
+      for (const paper of result.papers) {
+        const saved = await paperStore.save(paper);
+        for (const review of saved.duplicateReviews) {
+          if (review.relation === "candidate")
+            pending.push({
+              incomingId: paper.id,
+              existingId: review.paperId,
+              reasons: review.reasons,
+            });
+        }
+      }
+      const savedPapers = await paperStore.list();
+      setSavedCount(savedPapers.length);
+      setLibrary(savedPapers);
+      setReviews((current) => [...pending, ...current]);
       setHistory((current) => [result, ...current].slice(0, 5));
       setMessage(
         result.record.status === "completed"
-          ? `检索完成：本页归一化 ${result.papers.length} 条记录。`
+          ? `检索完成：本页归一化 ${result.papers.length} 条，已保存到本地文献库。`
           : `检索结束：${statusText[result.record.status]}。`,
       );
     } catch (error) {
@@ -71,10 +109,10 @@ export function LiteratureSearchLab() {
     <section className={styles.lab} aria-labelledby="search-lab-title">
       <header>
         <div>
-          <p>LITERATURE SEARCH / 0.3-A</p>
+          <p>LITERATURE SEARCH / 0.3</p>
           <h2 id="search-lab-title">真实关键词检索</h2>
         </div>
-        <span>OpenAlex · 普通搜索</span>
+        <span>本地文献库 {savedCount} 条</span>
       </header>
       <div className={styles.layout}>
         <form
@@ -136,6 +174,41 @@ export function LiteratureSearchLab() {
           <p className={styles.status} role="status" aria-live="polite">
             {message}
           </p>
+          {reviews.map((review) => (
+            <article
+              className={styles.review}
+              key={`${review.incomingId}:${review.existingId}`}
+            >
+              <b>候选重复 · 需人工审阅</b>
+              <p>{review.reasons.join("；")}</p>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void paperStore
+                      .linkVersions(review.incomingId, review.existingId)
+                      .then(() =>
+                        setReviews((items) =>
+                          items.filter((item) => item !== review),
+                        ),
+                      );
+                  }}
+                >
+                  关联为不同版本
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setReviews((items) =>
+                      items.filter((item) => item !== review),
+                    )
+                  }
+                >
+                  保留独立
+                </button>
+              </div>
+            </article>
+          ))}
           {history.length === 0 ? (
             <div className={styles.empty}>
               查询记录会显示关键词、状态、数量和脱敏诊断；不会记录完整请求 URL。
@@ -170,6 +243,33 @@ export function LiteratureSearchLab() {
                 ))}
               </article>
             ))
+          )}
+          {library.length > 0 && (
+            <section
+              className={styles.library}
+              aria-labelledby="local-library-title"
+            >
+              <h3 id="local-library-title">本地文献库</h3>
+              <p>摘要缺失会明确显示为空；被引次数不作为证据强度。</p>
+              {library.slice(0, 20).map((paper) => (
+                <article key={paper.id}>
+                  <strong>{paper.title}</strong>
+                  <span>
+                    {paper.externalIds.doi
+                      ? `DOI ${paper.externalIds.doi}`
+                      : paper.externalIds.openalex
+                        ? `OpenAlex ${paper.externalIds.openalex}`
+                        : "无精确外部 ID"}
+                  </span>
+                  <small>
+                    {paper.abstract === null ? "摘要缺失" : "已取得来源摘要"} ·{" "}
+                    {paper.relatedVersionIds.length
+                      ? `关联 ${paper.relatedVersionIds.length} 个版本`
+                      : "未关联版本"}
+                  </small>
+                </article>
+              ))}
+            </section>
           )}
         </div>
       </div>

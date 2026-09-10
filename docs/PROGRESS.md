@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.3.0-A 检索适配器已完成；v0.1.0-B 的真实 Provider 与 v0.1.0-C 的 Pages origin 仍待验证，因此 v0.1.0 整体门禁仍未关闭。**
+当前状态：**v0.3.0-B 文献与证据本地底座已完成；v0.1.0-B 的真实 Provider 与 v0.1.0-C 的 Pages origin 仍待验证，因此 v0.1.0 整体门禁仍未关闭。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
@@ -12,6 +12,7 @@
 | v0.2.0-B | 已完成 | demo adapter、React Flow 语义节点、ELK 分层布局、列表视图与详情同步 |
 | v0.2.0-C | 已完成 | 关键演示状态、来源与方向视图、可访问导出弹窗、移动视图切换、四档视觉基准与组件尺寸表 |
 | v0.3.0-A | 已完成 | LiteratureAdapter、OpenAlex 普通关键词/游标/节流/取消/归一化、SearchRecord、脱敏诊断与真实 localhost 查询 |
+| v0.3.0-B | 已完成 | DOI/arXiv/OpenAlex 规范化、精确/候选去重、Dexie Paper/Evidence/SearchRecord、版本关联与审阅界面 |
 | 其余版本 | 计划中 | 按路线逐阶段执行 |
 
 ## 每阶段记录模板
@@ -241,3 +242,25 @@
 风险与决策：OpenAlex 2026-08 官方文档描述免费匿名基础使用，同时 Search 请求会计入 API 费用/预算；界面因此明确“消耗匿名 API 预算”。Zod 和检索 UI 通过 lazy chunk 隔离，主入口保持约 482 kB；ELK 动态块的既有体积警告仍存在。
 
 下一阶段入口：v0.3.0-B，先实现 DOI/arXiv/OpenAlex ID 规范化与候选去重，再建立 Dexie PaperStore/EvidenceStore 和人工审阅界面；不得凭题名生成摘要，也不得把相似题目静默合并。
+
+## v0.3.0-B 阶段记录
+
+阶段 ID：v0.3.0-B
+
+实施日期 / commit：2026-09-10 / 见本阶段 Git 提交
+
+范围：规范 DOI、arXiv 与 OpenAlex ID，区分精确重复和候选重复；建立 Dexie Paper/Evidence/SearchRecord 表与 repository；将检索结果保存到本地文献库并提供候选重复人工决策。不实现检索配方、模型摘要、全文抓取或静默合并。
+
+实际修改文件：`src/domain/evidence/*`、`src/infrastructure/storage/*`、`src/features/literature-search/*`、fake IndexedDB 测试、e2e、依赖锁、检索文档、视觉截图与本文件。
+
+已完成：DOI 去 URL/前缀并小写；arXiv base ID 与版本可解析；OpenAlex Work ID 统一大写。相同精确 ID 复用已有记录；规范化题名、首位作者与相近年份只提示候选。人工可“关联为不同版本”或“保留独立”，关联保持两条 Paper。摘要缺失显示“摘要缺失”，不会按题名补写。Evidence 必须指向已保存 Paper，同 ID 不同内容不可覆盖。检索记录与 Paper 写入 IndexedDB，但不包含 Provider 密钥。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、7 个 unit/contract 文件共 30 项测试、production build、9 项 Playwright e2e 与 secret scan 均成功。新增 fake IndexedDB 单测覆盖三类 ID、精确/候选重复、Paper 持久化、Evidence 外键与不可变快照、显式版本关联；e2e 覆盖两条相似记录触发候选审阅、保留独立及本地库计数。
+
+人工验收与截图：已检查更新后的 `reports/visual/literature-search-1440x1000.png`；本地库、摘要深度、精确 ID 和查询记录层级清楚，候选审阅只用小面积琥珀边框，未改变既有黑白灰视觉基线。
+
+未完成 / 待实测：真实跨来源重复、预印本与正式发表版本关系需要 0.3-C 夹具与人工质量审阅；当前只保存 OpenAlex 元数据/摘要，不声称取得全文。IndexedDB 迁移、备份恢复和容量压力留到 v0.6。
+
+风险与决策：题名相似不自动合并；版本关联也不把两条记录计算成两份独立证据。引文计数未进入证据强度。候选审阅决定当前只反映在 Paper 版本关联或保留独立，不建立不可解释的相似度阈值。
+
+下一阶段入口：v0.3.0-C，实现综述/代表路线/近期/反证四类检索配方、预算组合、至少三个学科的离线夹具及质量审阅记录；单一来源失败不得导致整轮丢失。

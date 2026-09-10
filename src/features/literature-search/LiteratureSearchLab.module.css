@@ -97,6 +97,34 @@
   min-height: 22px;
   margin: 0 0 16px;
 }
+.review {
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid #d4a62a;
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+.review b {
+  font-size: 11px;
+}
+.review p {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.review div {
+  display: flex;
+  gap: 6px;
+}
+.review button {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink);
+  font-size: 10px;
+}
 .empty {
   padding: 48px 24px;
   border: 1px dashed var(--line-strong);
@@ -167,4 +195,64 @@
   .lab h2 {
     font-size: 25px;
   }
+}
+.review {
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid #d4a62a;
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+.review b {
+  font-size: 11px;
+}
+.review p {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.review div {
+  display: flex;
+  gap: 6px;
+}
+.review button {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink);
+  font-size: 10px;
+}
+.library {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.library h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.library > p {
+  margin: 5px 0 12px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.library article {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.library strong,
+.library span,
+.library small {
+  display: block;
+}
+.library strong {
+  font-size: 11px;
+}
+.library span,
+.library small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
 }

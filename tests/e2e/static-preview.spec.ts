@@ -25,8 +25,10 @@ test("runs a bounded OpenAlex keyword query without invoking a model", async ({
   page,
 }) => {
   let requestedUrl = "";
+  let requestCount = 0;
   await page.route("**/works**", async (route) => {
     requestedUrl = route.request().url();
+    requestCount += 1;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -39,7 +41,7 @@ test("runs a bounded OpenAlex keyword query without invoking a model", async ({
         meta: { count: 1, next_cursor: null, cost_usd: 0.001 },
         results: [
           {
-            id: "https://openalex.org/W1",
+            id: `https://openalex.org/W${requestCount}`,
             doi: null,
             title: "Reliable Research Question Answering",
             publication_year: 2025,
@@ -58,8 +60,14 @@ test("runs a bounded OpenAlex keyword query without invoking a model", async ({
   await page.goto("/ideascope/#/settings");
   await page.getByRole("button", { name: "执行真实检索" }).click();
   await expect(
-    page.getByText("Reliable Research Question Answering"),
+    page.getByText("Reliable Research Question Answering").first(),
   ).toBeVisible();
+  await expect(page.getByText("本地文献库 1 条")).toBeVisible();
+  await page.getByRole("button", { name: "执行真实检索" }).click();
+  await expect(page.getByText("候选重复 · 需人工审阅")).toBeVisible();
+  await page.getByRole("button", { name: "保留独立" }).click();
+  await expect(page.getByText("候选重复 · 需人工审阅")).toBeHidden();
+  await expect(page.getByText("本地文献库 2 条")).toBeVisible();
   expect(new URL(requestedUrl).searchParams.get("search")).toBe(
     "retrieval augmented generation reliability evidence",
   );
