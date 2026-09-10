@@ -1,12 +1,12 @@
 # 开发进度
 
-当前状态：**v0.1.0-A 已完成；工程与契约基线可安装、检查和构建。v0.1.0 整体尚未完成。**
+当前状态：**v0.1.0-A 已完成；v0.1.0-B 探针实现与 OpenAlex localhost 浏览器验证完成，真实 Provider 与 Pages origin 仍待验证。v0.1.0 整体尚未完成。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
 | 计划与设计 | 已形成文档包 | README、专题文档、契约草案、原型、包内检查报告 |
 | v0.1.0-A | 已完成 | React/TypeScript/Vite 空壳、lockfile、严格检查、契约/示例测试、ADR 与依赖基线 |
-| v0.1.0-B | 待开始 | 未提供/验证真实 Provider |
+| v0.1.0-B | 待验收 | 探针与错误分类已实现；OpenAlex localhost 浏览器通过；真实 Provider/Pages origin 待凭证与部署验证 |
 | v0.1.0-C | 待开始 | 未部署真实 Pages |
 | 其余版本 | 计划中 | 按路线逐阶段执行 |
 
@@ -72,3 +72,33 @@
 风险与决策：TypeScript 最新 7.0.2 与 typescript-eslint 8.70.0 的 peer 范围不兼容，基线锁定为 TypeScript 6.0.3；不使用强制安装。`MANIFEST.json` 的哈希描述原始交付包，生产开发后自然不再代表当前树，保留其历史含义。
 
 下一阶段入口：v0.1.0-B“浏览器真实连接探针”。先建立仅内存凭证存储与最小 Provider 表单，分别实测普通完成、流式、结构化/工具能力、取消和 OpenAlex 基础检索；没有用户明确提供的凭证与预算授权时，所有真实连接项必须保持“待验证”。
+
+## v0.1.0-B 阶段记录
+
+阶段 ID：v0.1.0-B（实现完成，真实 Provider 门禁待验收）
+
+实施日期 / commit：2026-09-10 / 见本阶段 Git 提交（真实 Provider 门禁待补充）
+
+范围：浏览器直连探针、仅内存凭证、OpenAI-compatible 能力分项、OpenAlex 匿名基础检索、取消与错误分类。不实现研究 Agent、持久化 Provider key、自动检索或公共代理。
+
+实际修改文件：
+
+- `src/features/provider-settings/ConnectionLab.tsx` 与 CSS Module：生产连接实验室。
+- `src/infrastructure/llm/*`：Base URL 规范化和普通完成、流式、结构化输出、工具调用探针。
+- `src/infrastructure/literature/openalex.ts`：固定非敏感查询的匿名浏览器探针。
+- `src/infrastructure/network/errors.ts`：401/403/429/取消/网络或 CORS 分类。
+- `src/infrastructure/secrets/memory-key-store.ts`：刷新与卸载后丢失的模块内存凭证。
+- `tests/unit/connection-probes.test.ts`、应用空壳及其测试。
+- `docs/COMPATIBILITY.md` 与本文件。
+
+已完成：逐项能力状态、显式费用提示、受控 origin、HTTPS 约束、取消入口、OpenAlex 真实浏览器基础查询；不使用开发代理、`no-cors` 或公共 CORS 代理。
+
+测试命令与结果：`npm run lint`、`npm run typecheck`、`npm run test`、`npm run build`、`npm run check:secrets` 均通过；4 个测试文件、13 项测试通过。production preview 的内置 Chromium 从 `http://127.0.0.1:4173` 直接读取 OpenAlex 响应成功，控制台 0 error / 0 warning。
+
+人工验收与截图：1280px 浏览器视图检查通过；Provider 表单、四项能力按钮、取消入口、OpenAlex 状态与长题名无横向溢出。OpenAlex 实测返回 count 187,295，首条题名为 *Retrieval-Augmented Generation for Large Language Models: A Survey*；这是当时 API 响应，不是稳定数据或研究结论。
+
+未完成 / 待实测：未获得并获准使用真实 Provider 凭证，因此普通完成、流式、结构化输出、工具调用、真实取消与 usage reporting 保持待验证；目标 Pages HTTPS origin 也未验证。
+
+风险与决策：每个 Provider 探针可能产生费用，只允许用户主动点击。AbortSignal 只保证客户端停止继续处理，不承诺供应商停止计费。OpenAlex localhost 成功不能代替 Pages origin 成功。
+
+下一阶段入口：先由用户选择是否提供一个允许浏览器调用、可产生极小测试费用的 Provider 配置以完成 0.1-B 门禁；门禁完成后进入 v0.1.0-C，实施 Hash 路由、Vite base、Pages workflow 草案、production preview 子路径与失败样例。

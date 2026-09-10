@@ -7,7 +7,7 @@ describe('production shell', () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { name: /让一个想法/ })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('不调用模型');
-    expect(screen.getAllByText('待 0.1-B 浏览器实测', { selector: 'dd' })).toHaveLength(2);
+    expect(screen.getAllByRole('status')[0]).toHaveTextContent('不自动调用模型');
+    expect(screen.getByText('待 0.1-B 浏览器实测', { selector: 'dd' })).toBeInTheDocument();
   });
 });
