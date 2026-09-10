@@ -16,9 +16,10 @@
 
 | 来源 | 认证 | 基础检索 | CORS | 结果 |
 |---|---|---|---|---|
-| `https://api.openalex.org/works` | 匿名 | 固定查询 `retrieval augmented generation`，`per-page=1` | 浏览器可读取响应 | **已测试通过**；返回 count 187,295，首条题名 *Retrieval-Augmented Generation for Large Language Models: A Survey* |
+| `https://api.openalex.org/works` | 匿名 | 固定查询 `retrieval augmented generation`，`per_page=1` | 浏览器可读取响应 | **已测试通过**；返回 count 187,295，首条题名 *Retrieval-Augmented Generation for Large Language Models: A Survey* |
+| `https://api.openalex.org/works` | 匿名 | 0.3-A 普通关键词 `retrieval augmented generation reliability evidence`，`cursor=*`，`per_page=10` | localhost production preview 浏览器可读取并归一化响应 | **已测试通过**；归一化 10 条，首条题名 *Retrieval-Augmented Generation for Large Language Models: A Survey* |
 
-该数字是测试时的实时返回值，不是稳定产品数据或质量结论。尚未测试 OpenAlex key、Authorization header、429、语义检索、额度及目标 Pages HTTPS origin。
+数字与题名是测试时的实时返回值，不是稳定产品数据或质量结论。429、空结果、超时、取消和异常响应均使用 mock 测试了受控状态；尚未真实触发 OpenAlex 429，也未测试 OpenAlex key、Authorization header、语义检索、长期额度及目标 Pages HTTPS origin。
 
 ## OpenAI-compatible Provider
 

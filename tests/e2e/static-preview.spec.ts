@@ -21,6 +21,58 @@ test("does not enable paid provider probes without model and key", async ({
   await expect(page.getByRole("button", { name: /结构化输出/ })).toBeDisabled();
 });
 
+test("runs a bounded OpenAlex keyword query without invoking a model", async ({
+  page,
+}) => {
+  let requestedUrl = "";
+  await page.route("**/works**", async (route) => {
+    requestedUrl = route.request().url();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "X-RateLimit-Remaining": "42",
+        "X-RateLimit-Reset": "300",
+      },
+      body: JSON.stringify({
+        meta: { count: 1, next_cursor: null, cost_usd: 0.001 },
+        results: [
+          {
+            id: "https://openalex.org/W1",
+            doi: null,
+            title: "Reliable Research Question Answering",
+            publication_year: 2025,
+            authorships: [{ author: { display_name: "Example Author" } }],
+            primary_location: {
+              source: { display_name: "Example Journal" },
+              landing_page_url: "https://example.test/paper",
+            },
+            best_oa_location: null,
+            abstract_inverted_index: null,
+          },
+        ],
+      }),
+    });
+  });
+  await page.goto("/ideascope/#/settings");
+  await page.getByRole("button", { name: "执行真实检索" }).click();
+  await expect(
+    page.getByText("Reliable Research Question Answering"),
+  ).toBeVisible();
+  expect(new URL(requestedUrl).searchParams.get("search")).toBe(
+    "retrieval augmented generation reliability evidence",
+  );
+  expect(requestedUrl).not.toContain(
+    encodeURIComponent("怎样让研究型问答更可靠？"),
+  );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({
+    path: "reports/visual/literature-search-1440x1000.png",
+    fullPage: true,
+  });
+});
+
 test("selects a semantic node and mirrors it in details and list views", async ({
   page,
 }) => {

@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.2.0 视觉工作台已完成；v0.1.0-B 的真实 Provider 与 v0.1.0-C 的 Pages origin 仍待验证，因此 v0.1.0 整体门禁仍未关闭。**
+当前状态：**v0.3.0-A 检索适配器已完成；v0.1.0-B 的真实 Provider 与 v0.1.0-C 的 Pages origin 仍待验证，因此 v0.1.0 整体门禁仍未关闭。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
@@ -11,6 +11,7 @@
 | v0.2.0-A | 已完成 | 首页、三栏工作台、设置页、基础组件、折叠/响应式与三档截图 |
 | v0.2.0-B | 已完成 | demo adapter、React Flow 语义节点、ELK 分层布局、列表视图与详情同步 |
 | v0.2.0-C | 已完成 | 关键演示状态、来源与方向视图、可访问导出弹窗、移动视图切换、四档视觉基准与组件尺寸表 |
+| v0.3.0-A | 已完成 | LiteratureAdapter、OpenAlex 普通关键词/游标/节流/取消/归一化、SearchRecord、脱敏诊断与真实 localhost 查询 |
 | 其余版本 | 计划中 | 按路线逐阶段执行 |
 
 ## 每阶段记录模板
@@ -211,3 +212,32 @@
 风险与决策：ELK 动态 chunk 为 1,431.53 kB（gzip 442.30 kB），构建仍给出超过 500 kB 的非阻断警告；继续保留警告并在 Worker/加载策略阶段评估，不上调阈值掩盖。移动端不把完整横向图压缩到不可读，而是保留可平移画布。
 
 下一阶段入口：v0.3.0-A，按路线实现 OpenAlex 检索适配器、查询/游标/限速与错误契约；先复核现有探针边界，不调用付费模型，不把检索结果直接写成模型判断。
+
+## v0.3.0-A 阶段记录
+
+阶段 ID：v0.3.0-A
+
+实施日期 / commit：2026-09-10 / 见本阶段 Git 提交
+
+范围：实现 OpenAlex 普通关键词检索适配器、游标与产品预算上限、串行节流、取消/超时、运行时响应校验、Paper 归一化、SearchRecord 与脱敏诊断，并提供用户主动触发的真实查询列表。不实现 semantic search、持久化缓存、去重合并、证据判断或模型生成关键词。
+
+实际修改文件：`src/domain/search/*`、`src/infrastructure/literature/*`、`src/features/literature-search/*`、设置页、检索 unit/e2e、`docs/LITERATURE_SEARCH.md`、`docs/COMPATIBILITY.md`、检索页视觉截图、依赖锁与本文件。
+
+已完成：
+
+- `LiteratureAdapter.search(query, options, signal)` 返回 normalized Paper、next cursor 与 SearchRecord；单轮最多 60 条、最多 5 页，每页不超过 100 条。
+- 使用 OpenAlex 普通 `search`、`cursor`、`select`、筛选与显式排序；不启用 `search.semantic`。共享 RequestThrottle 默认 120ms 间隔，整轮 30 秒超时。
+- Zod 校验响应；缺失摘要保持 null，倒排摘要只按位置还原；外部文本经 React 文本节点显示，不执行 HTML。
+- 中文原始想法、实际关键词、语言和转换依据分离；含中文的想法不能原样作为关键词提交。
+- 缓存键覆盖来源、关键词、筛选、排序、字段和语言。脱敏诊断仅保存固定 endpoint、状态、额度响应头、请求费用与错误码，不保存完整 URL、凭证或响应体。
+- 设置页新增真实关键词检索实验室；用户点击前不发请求，结果只保留当前组件内存，不调用模型、不自动生成研究判断。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、6 个 unit/contract 文件共 25 项测试、production build、9 项 Playwright e2e 与 secret scan 均成功。新增 8 项适配器/契约单测覆盖请求参数、归一化、游标与 60 条上限、429/503、空结果、异常响应、超时、取消、中文查询边界及缓存键；Playwright 增加真实查询 UI 的受控响应测试，并验证实际网络 URL 不含中文原始想法。
+
+人工验收与截图：`reports/visual/literature-search-1440x1000.png` 已检查；检索表单、来源/状态/数量与结果层级清晰，延续黑白灰与克制蓝色主操作。localhost production preview 使用 Chromium 从页面真实请求 OpenAlex 成功，查询为 `retrieval augmented generation reliability evidence`、`cursor=*`、`per_page=10`，归一化 10 条记录；首条题名为 *Retrieval-Augmented Generation for Large Language Models: A Survey*。
+
+未完成 / 待实测：未真实触发 OpenAlex 429；API key、Authorization header、长期额度、GitHub Pages HTTPS origin 和 Pages CORS 待验证。SearchRecord 与结果尚未写 Dexie；缓存策略、去重、版本关联与证据片段属于后续阶段。
+
+风险与决策：OpenAlex 2026-08 官方文档描述免费匿名基础使用，同时 Search 请求会计入 API 费用/预算；界面因此明确“消耗匿名 API 预算”。Zod 和检索 UI 通过 lazy chunk 隔离，主入口保持约 482 kB；ELK 动态块的既有体积警告仍存在。
+
+下一阶段入口：v0.3.0-B，先实现 DOI/arXiv/OpenAlex ID 规范化与候选去重，再建立 Dexie PaperStore/EvidenceStore 和人工审阅界面；不得凭题名生成摘要，也不得把相似题目静默合并。
