@@ -5,8 +5,9 @@ import {
   PanelLeftClose,
   PanelRightClose,
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import type { WorkspaceExport } from "../../contracts/domain";
 import type { GraphNode } from "../../contracts/domain";
 import type { Branch, GraphPatch } from "../../contracts/domain";
 import demoPatchJson from "../../examples/patch.demo.json";
@@ -26,7 +27,28 @@ import { SafeRichText } from "../shared/ui/SafeRichText";
 import styles from "./WorkspacePage.module.css";
 
 export function WorkspacePage() {
-  const workspace = useMemo(() => loadDemoWorkspace(), []);
+  const { id = "demo" } = useParams();
+  return <WorkspaceLoader key={id} id={id} />;
+}
+
+function WorkspaceLoader({ id }: { id: string }) {
+  const [workspace, setWorkspace] = useState<WorkspaceExport | null>(() => id === "demo" ? loadDemoWorkspace() : null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    if (id === "demo") return;
+    let active = true;
+    void import("../infrastructure/storage/workspace-repository").then(({ WorkspaceRepository }) => new WorkspaceRepository().get(id)).then((value) => {
+      if (!active) return;
+      if (value) setWorkspace(value); else setError("本地项目不存在或已被清除。");
+    });
+    return () => { active = false; };
+  }, [id]);
+  if (!workspace) return <><AppHeader context="本地研究工作区"/><main role="status">{error || "正在恢复本地项目…"}</main></>;
+  return <WorkspaceView key={workspace.workspace.id} workspace={workspace} />;
+}
+
+function WorkspaceView({ workspace: initialWorkspace }: { workspace: WorkspaceExport }) {
+  const workspace = useMemo(() => structuredClone(initialWorkspace), [initialWorkspace]);
   const [branches, setBranches] = useState<Branch[]>(() => workspace.workspace.branches);
   const [undoBranch, setUndoBranch] = useState<Branch | null>(null);
   const [branchId, setBranchId] = useState(workspace.workspace.activeBranchId);

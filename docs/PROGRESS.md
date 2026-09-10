@@ -436,7 +436,7 @@
 
 实际修改文件：Dexie v5 workspaces/writerLeases、`src/infrastructure/storage/workspace-repository.ts`、`writer-lease.ts`、`src/domain/workspace/migrate-workspace.ts`、故障/迁移测试与本文件。
 
-已完成：WorkspaceExport v1 可事务写入 workspace metadata、branches、Paper、Evidence 与 messages，新 repository 实例可恢复语义等价数据。项目支持列表、重命名、归档和确认名称后删除；删除错误提示先导出备份。QuotaExceededError 返回 quota_exceeded 与“未保存”文案。遗留 running 恢复为 interrupted 已由 v0.4-C 覆盖。单写者租约使用 ownerId/过期时间，其他标签页在有效租约内不可写，原 owner 可续期，过期后可接管。formatVersion 0 显式迁移为 v1，未来版本明确拒绝。
+已完成：WorkspaceExport v1 可事务写入 workspace metadata、branches、Paper、Evidence 与 messages，新 repository 实例可恢复语义等价数据。首页可从用户原始想法创建不调用模型、不伪造证据的本地 question workspace，本地项目列表支持打开、重命名、归档和确认名称后删除；实际 workspace 路由从 IndexedDB 恢复项目，不再固定加载 demo。QuotaExceededError 返回 quota_exceeded 与“未保存”文案。遗留 running 恢复为 interrupted 已由 v0.4-C 覆盖。单写者租约使用 ownerId/过期时间，其他标签页在有效租约内不可写，原 owner 可续期，过期后可接管。formatVersion 0 显式迁移为 v1，未来版本明确拒绝。
 
 测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、15 个 unit/contract 文件共 57 项测试、production build、11 项 Playwright e2e 与 secret scan 均成功。新增 fake IndexedDB 测试覆盖刷新恢复、v0 迁移、未来版拒绝、quota、项目生命周期与租约竞争。
 
@@ -482,9 +482,9 @@
 
 已完成：不可信 HTML、Markdown image 和 javascript link 只作为文本显示；http(s) 明文 URL 才生成带 noreferrer/noopener 的链接，不使用 innerHTML，不自动加载图片。远程 Provider 强制 HTTPS，localhost 例外；URL 禁止内嵌 username/password，fetch 禁止 redirect，凭证只发往用户明确配置的 origin。脱敏诊断排除查询、cache key、完整 URL、headers、prompt、response 和消息。本地 JSON 文件经迁移校验后始终以新 UUID 导入，不覆盖现有项目，也不上传。清除全部数据需输入完整确认文字，在单一 Dexie 事务清空所有表并清空内存 key。文档列出 Provider、OpenAlex 与本地下载的具体数据流，并明确纯前端不能安全保管长期密钥。
 
-测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、17 个 unit/contract 文件共 65 项测试、production build、12 项 Playwright e2e 与 secret scan 均成功。阶段 unit 覆盖攻击渲染、endpoint、redirect 配置、诊断字段与全量清除，e2e 覆盖诊断下载和清除门禁。package 与演示导出版本已更新为 0.6.0；远端 CI 在提交后确认。
+测试命令与结果：最终 `npm run check` 全部通过；ESLint、严格 typecheck、18 个 unit/contract 文件共 66 项测试、production build、13 项 Playwright e2e 与 secret scan 均成功。新增本地项目创建 unit 与创建→刷新恢复→确认删除 e2e；安全测试覆盖攻击渲染、endpoint、redirect、诊断字段、导入和全量清除。package 与演示导出版本均为 0.6.0。
 
-人工验收与截图：最终检查 `reports/visual/data-safety-1440x1000.png`；安全面板沿用白底、细边框和紧凑控件，危险操作与导出备份分开，不改变设计基线。
+人工验收与截图：最终检查 `reports/visual/data-safety-1440x1000.png` 与 `reports/visual/local-projects-1440x1000.png`；安全面板与本地项目列表沿用白底、细边框和紧凑控件，危险操作与导出备份分开，不改变设计基线。
 
 未完成 / 待实测：真实 Provider 仍无凭证与付费调用授权；Firefox/Safari 导出、实际容量阈值、多标签崩溃接管及 Pages HTTPS origin 仍需相应环境验证。上述项目没有以 mock、Chromium 或构建成功冒充通过。
 

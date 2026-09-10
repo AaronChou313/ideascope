@@ -13,6 +13,23 @@ test("loads from a Pages-style subpath and keeps navigation in the hash", async 
   expect(errors).toEqual([]);
 });
 
+test("creates, restores and deletes a local project without a model call", async ({ page }) => {
+  const idea = "本地证据边界测试项目";
+  await page.goto("/ideascope/#/");
+  await page.getByLabel("先说说，你在想什么？").fill(idea);
+  await page.getByRole("button", { name: /开始探索/ }).click();
+  await expect(page.getByRole("heading", { name: "初始范围" })).toBeVisible();
+  await expect(page.getByText("用户写下的探索起点；尚未检索或由模型分析。")).toBeVisible();
+  await page.goto("/ideascope/#/");
+  const project = page.locator("article").filter({ hasText: idea });
+  await expect(project).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({ path: "reports/visual/local-projects-1440x1000.png", fullPage: true });
+  await project.getByLabel(`确认删除 ${idea}`).fill(idea);
+  await project.getByRole("button", { name: "删除" }).click();
+  await expect(project).toBeHidden();
+});
+
 test("does not enable paid provider probes without model and key", async ({
   page,
 }) => {
@@ -43,7 +60,7 @@ test("runs a bounded OpenAlex keyword query without invoking a model", async ({
 }) => {
   let requestedUrl = "";
   let requestCount = 0;
-  await page.route("**/works**", async (route) => {
+  await page.route("https://api.openalex.org/works**", async (route) => {
     requestedUrl = route.request().url();
     requestCount += 1;
     await route.fulfill({
