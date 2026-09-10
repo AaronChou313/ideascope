@@ -308,3 +308,25 @@
 风险与决策：一个 Controller，不引入多角色对话或框架。控制器实例每轮重置预算；外部文本不改变工具权限。失败只返回解释，不执行半成品。
 
 下一阶段入口：v0.4.0-B，实现 GraphPatch reducer、严格引用/图完整性/revision/锁定校验、全有或全无事务、checkpoint、提案与已提交回答一致性。
+
+## v0.4.0-B 阶段记录
+
+阶段 ID：v0.4.0-B
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：实现 GraphPatch 0.1 的纯 reducer、来源引用与图完整性校验、revision 乐观锁、Dexie 原子提交、提交前 checkpoint、幂等回执与运行摘要；在节点详情渲染可定位引用。不接入真实 Provider 自动提交，不创建 Paper/Evidence。
+
+实际修改文件：`src/domain/graph/apply-graph-patch.ts`、`src/infrastructure/storage/ideascope-database.ts`、`src/infrastructure/storage/graph-patch-repository.ts`、`src/features/evidence/CitationList.tsx`、工作区详情页、图补丁测试、`docs/GRAPH_PATCH_RUNTIME.md` 与本文件。
+
+已完成：补丁先在 branch 深拷贝执行并做最终完整性检查；workspace/branch/baseRevision 不匹配、未知节点/关系/判断/证据、重复 ID、自连接、空 sourced 引用和锁定节点改写均拒绝。Dexie v2 保留 v1 表并新增 branches/checkpoints/patchReceipts/runSummaries；一次事务写入全部提交产物，失败无部分写入。同一 patch 的合法重放不重复递增 revision。空检索演示补丁只生成明确标识的 hypothesis 与 question。详情页仅为 sourced 判断显示文献题名、立场、证据深度和 locator 链接，非 sourced 判断明确不显示为文献事实。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、10 个 unit/contract 文件共 43 项测试、production build、9 项 Playwright e2e 与 secret scan 均成功。图补丁测试覆盖纯 reducer 不改原值、非法操作全量拒绝、伪造 Evidence、锁定节点、过期 revision、原子事务和幂等重放。
+
+人工验收与截图：已检查更新后的 `reports/visual/workspace-1440x900.png`；右侧 hypothesis 判断明确显示“不是文献事实”，布局仍保持白/灰面板与单一蓝色选中态，未改变既有视觉系统。
+
+未完成 / 待实测：真实 Provider 输出到提案再由用户应用的 UI 流程尚未接入；多标签页同时提交同一 branch 与大图事务性能待浏览器压力验证；真实模型仍未调用。
+
+风险与决策：GraphPatch schema 是输入形状门槛，不能代替本地领域验证。checkpoint 保存提交前完整 branch，会增加 IndexedDB 占用；保留到 v0.6 的存储治理阶段处理。补丁无 Paper/Evidence 操作类型，从协议层阻止“补丁创造假论文”。
+
+下一阶段入口：v0.4.0-C，把 AgentController、检索工具和 GraphPatch 提案/应用 UI 串成一条可取消、可恢复、状态明确的单智能体流程；使用 mock Provider 完成端到端验收，并保留真实 Provider 待验证标记。

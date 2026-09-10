@@ -8,6 +8,7 @@ import {
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { GraphNode } from "../../contracts/domain";
+import { CitationList } from "../features/evidence/CitationList";
 import {
   WorkspaceContent,
   type DemoState,
@@ -170,6 +171,7 @@ export function WorkspacePage() {
                     <article key={claim.id}>
                       <b>{claim.epistemicStatus}</b>
                       <p>{claim.text}</p>
+                      <CitationList claim={claim} evidence={workspace.workspace.evidence} papers={workspace.workspace.papers} />
                     </article>
                   ))
                 ) : (
