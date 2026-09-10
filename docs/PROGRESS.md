@@ -9,6 +9,7 @@
 | v0.1.0-B | 待验收 | 探针与错误分类已实现；OpenAlex localhost 浏览器通过；真实 Provider/Pages origin 待凭证与部署验证 |
 | v0.1.0-C | 本地完成 | Hash 路由、Pages 子路径 production preview、CI/e2e 与手动部署 workflow 已验证；真实 Pages 待执行 |
 | v0.2.0-A | 已完成 | 首页、三栏工作台、设置页、基础组件、折叠/响应式与三档截图 |
+| v0.2.0-B | 已完成 | demo adapter、React Flow 语义节点、ELK 分层布局、列表视图与详情同步 |
 | 其余版本 | 计划中 | 按路线逐阶段执行 |
 
 ## 每阶段记录模板
@@ -153,3 +154,31 @@
 风险与决策：0.2-A 的中央画布刻意为空，不将原型示例冒充业务接入；点阵仅使用中性灰。v0.1 的真实 Provider 与 Pages 门禁仍保持待验证。
 
 下一阶段入口：v0.2.0-B，使用 demo adapter 读取现有示例数据，引入 React Flow 自定义语义节点、ELK 初始布局、关系列表替代视图与节点/右栏双向选择。
+
+## v0.2.0-B 阶段记录
+
+阶段 ID：v0.2.0-B
+
+实施日期 / commit：2026-09-10 / 见本阶段 Git 提交
+
+范围：React Flow 自定义语义节点、关系标签、缩放/适应画布、ELK 初始分层布局、结构列表、分支切换、节点与右栏详情同步；不实现真实模型或研究数据写入。
+
+实际修改文件：`src/features/graph/*`、`src/infrastructure/demo/workspace-demo.ts`、`src/pages/WorkspacePage.*`、图布局单测、e2e 与三档视觉截图。
+
+已完成：
+
+- 示例数据只通过 demo adapter 读取并以 `structuredClone` 隔离，不在组件中另造一套研究结果。
+- 图节点投影 question/approach/gap/direction 等语义实体，Paper 保持证据实体而非画布节点。
+- ELK 使用固定 RIGHT layered 布局，无力导向动画；React Flow 负责选择、缩放和 fit view。
+- 所有节点统一白底灰边；question 黑色左线、direction 蓝色左线、selected 蓝色细框，gap 仅用小面积待验证标签。
+- 地图点击与结构列表点击均同步右栏详情；分支切换保持各分支焦点。
+
+测试命令与结果：`npm run check` 通过；5 个 unit/contract 文件共 17 项测试、6 项 Playwright e2e 通过，包含 demo 深拷贝、ELK 坐标、节点/详情/列表联动和三档无横向溢出检查。构建成功；主入口 475.08 kB（gzip 152.20 kB），ELK 动态 chunk 1,431.53 kB（gzip 442.30 kB）。
+
+人工验收与截图：重新生成并检查 `reports/visual/workspace-{1600x1000,1440x900,1280x800}.png`，等待 ELK 节点真实出现后再截图。1440×900 下 7 个节点、8 条关系、右栏所选 gap 判断均可见，标签未裁切，无横向溢出。
+
+未完成 / 待实测：来源面板的 Paper/Evidence 展开、移动端右栏抽屉、关键加载/失败/取消/待应用状态、方向卡与导出弹窗留待 0.2-C。ELK bundle 虽已从主入口动态拆分，仍超过 500 kB warning；首次引入 Worker 时继续评估传输与缓存，不调高阈值掩盖警告。
+
+风险与决策：图渲染状态不作为业务数据源；React Flow nodes/edges 每次由 Branch GraphModel 投影。所有示例研究判断继续显示“示例整理、非完整调研”。
+
+下一阶段入口：v0.2.0-C，补齐关键演示状态、来源面板、方向卡、导出弹窗、移动端视图切换与完整 Dialog focus trap，并冻结视觉尺寸基准。
