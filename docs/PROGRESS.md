@@ -440,3 +440,25 @@
 风险与决策：Paper/Evidence 作为共享不可变记录不在删除单一 workspace 时物理删除，避免破坏其他项目引用；孤立记录的安全垃圾回收留给显式“清除全部数据”。
 
 下一阶段入口：v0.6.0-B，实现 JSON/Markdown/SVG/PNG 导出、可见图/完整分支选择、敏感内容预览、导入生成新项目与往返等价测试。
+
+## v0.6.0-B 阶段记录
+
+阶段 ID：v0.6.0-B
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：实现 WorkspaceExport v1 JSON、Markdown 理解提纲、纯 SVG 与浏览器 PNG 导出，可见图/完整分支语义、敏感内容审计和导入新项目 ID。更新工作区导出 UI，不上传文件。
+
+实际修改文件：`src/domain/export/workspace-export.ts`、`src/infrastructure/export/download.ts`、工作区导出 Dialog、unit/e2e 与本文件。
+
+已完成：JSON 导出覆盖完整 workspace 且不含凭证字段；Markdown 按节点/判断输出 epistemicStatus、编号引用与参考文献，并保留“推断/假设非事实”声明。SVG 只含文本、路径和矩形，不含脚本、HTML、远程图片；可选当前 visible IDs 或完整非归档分支。PNG 在安全尺寸内用本地 Canvas 栅格化，超 8192px 或无法解析尺寸时降级下载 SVG，不生成空文件。导出 Dialog 预览消息、用户笔记、证据 excerpt 数量和 credentials=0。导入经版本迁移后总是分配不冲突的新 workspace ID并标记为非 demo，避免覆盖。
+
+测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、16 个 unit/contract 文件共 61 项测试、production build、11 项 Playwright e2e 与 secret scan 均成功。unit 覆盖 JSON 往返/密钥扫描、Markdown 引用、visible/complete SVG、惰性 SVG、安全 PNG 降级与导入 ID 冲突；e2e 验证 JSON/SVG 实际下载及文件名。
+
+人工验收与截图：已检查 `reports/visual/export-dialog-1440x900.png`；导出仍使用既有 Dialog、按钮和黑白灰层级，敏感内容摘要先于下载操作，无新增大面积彩色区域。
+
+未完成 / 待实测：PNG 已在 Chromium 路径实现，Safari/Firefox 实机下载和极大图内存压力待跨浏览器验证；未部署 Pages。导入文件选择 UI 留在安全收尾阶段，核心迁移/克隆已实现并测试。
+
+风险与决策：导出前明确列出可能敏感的本地内容；SVG 作为大图可靠兜底。Paper/Evidence 题名和摘要一律转义为文本，不执行 HTML。
+
+下一阶段入口：v0.6.0-C，完成外部文本安全渲染、远程图片/endpoint 限制、导出审计、脱敏诊断、清除全部数据与三方数据流说明。

@@ -11,6 +11,8 @@ import type { GraphNode } from "../../contracts/domain";
 import type { Branch, GraphPatch } from "../../contracts/domain";
 import demoPatchJson from "../../examples/patch.demo.json";
 import { applyGraphPatch } from "../domain/graph/apply-graph-patch";
+import { auditWorkspaceExport, exportBranchSvg, exportWorkspaceJson, exportWorkspaceMarkdown } from "../domain/export/workspace-export";
+import { downloadPngOrSvg, downloadText } from "../infrastructure/export/download";
 import { CitationList } from "../features/evidence/CitationList";
 import {
   WorkspaceContent,
@@ -33,6 +35,8 @@ export function WorkspacePage() {
   const [demoState, setDemoState] = useState<DemoState>("ready");
   const [exportOpen, setExportOpen] = useState(false);
   const [mobilePane, setMobilePane] = useState<"main" | "details">("main");
+  const exportValue = { ...workspace, workspace: { ...workspace.workspace, branches, activeBranchId: branchId } };
+  const exportAudit = auditWorkspaceExport(exportValue);
   const branch =
     branches.find((item) => item.id === branchId) ?? branches[0];
   if (!branch) throw new Error("Demo workspace has no branch.");
@@ -70,6 +74,10 @@ export function WorkspacePage() {
     if (!branch) return;
     const targetId = branch.id;
     setBranches((items) => items.map((item) => item.id !== targetId ? item : { ...item, directions: item.directions.map((direction, index) => index ? direction : { ...direction, status, userEdited: true }) }));
+  }
+  function currentSvg() {
+    if (!branch) throw new Error("演示分支不存在。");
+    return exportBranchSvg(branch, "complete");
   }
   function showMobileSection(next: "map" | "papers" | "details") {
     if (next === "details") {
@@ -260,10 +268,12 @@ export function WorkspacePage() {
         title="带走当前的理解"
         onClose={() => setExportOpen(false)}
       >
-        <p>
-          当前分支：{branch.title} · {branch.graph.nodes.length} 个节点。完整
-          JSON/Markdown/SVG/PNG 导出将在 v0.6-B 实现；此演示不会生成不完整文件。
-        </p>
+        <p>当前分支：{branch.title} · {branch.graph.nodes.length} 个节点。导出包含 {exportAudit.messages} 条消息、{exportAudit.userNotes} 条用户笔记、{exportAudit.evidenceExcerpts} 条原文片段；凭证 0 项。</p>
+        <p>JSON 包含完整项目；Markdown 与图形导出当前完整分支。请在分享前检查研究内容与引用片段。</p>
+        <Button onClick={() => downloadText("ideascope-workspace.json", "application/json", exportWorkspaceJson(exportValue, "0.6.0"))}>下载 JSON</Button>
+        <Button onClick={() => downloadText("ideascope-outline.md", "text/markdown", exportWorkspaceMarkdown(exportValue, branch.id))}>下载 Markdown</Button>
+        <Button onClick={() => downloadText("ideascope-map.svg", "image/svg+xml", currentSvg())}>下载 SVG</Button>
+        <Button onClick={() => void downloadPngOrSvg("ideascope-map", currentSvg())}>下载 PNG</Button>
         <Button onClick={() => setExportOpen(false)}>了解</Button>
       </Dialog>
     </div>
