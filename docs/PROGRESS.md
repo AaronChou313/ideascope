@@ -464,7 +464,7 @@
 
 人工验收与截图：已检查 `reports/visual/export-dialog-1440x900.png`；导出仍使用既有 Dialog、按钮和黑白灰层级，敏感内容摘要先于下载操作，无新增大面积彩色区域。
 
-未完成 / 待实测：PNG 已在 Chromium 路径实现，Safari/Firefox 实机下载和极大图内存压力待跨浏览器验证；未部署 Pages。导入文件选择 UI 留在安全收尾阶段，核心迁移/克隆已实现并测试。
+未完成 / 待实测：PNG 已在 Chromium 路径实现，Safari/Firefox 实机下载和极大图内存压力待跨浏览器验证；未部署 Pages。导入文件选择在 v0.6-C 安全面板补齐，文件只在本地读取。
 
 风险与决策：导出前明确列出可能敏感的本地内容；SVG 作为大图可靠兜底。Paper/Evidence 题名和摘要一律转义为文本，不执行 HTML。
 
@@ -480,7 +480,7 @@
 
 实际修改文件：`SafeRichText`、Provider transports、`DiagnosticExporter`、`LocalDataService`、设置页安全面板、攻击夹具/测试、`docs/DATA_FLOWS_AND_SECURITY.md`、e2e/截图与本文件。
 
-已完成：不可信 HTML、Markdown image 和 javascript link 只作为文本显示；http(s) 明文 URL 才生成带 noreferrer/noopener 的链接，不使用 innerHTML，不自动加载图片。远程 Provider 强制 HTTPS，localhost 例外；URL 禁止内嵌 username/password，fetch 禁止 redirect，凭证只发往用户明确配置的 origin。脱敏诊断排除查询、cache key、完整 URL、headers、prompt、response 和消息。清除全部数据需输入完整确认文字，在单一 Dexie 事务清空所有表并清空内存 key。文档列出 Provider、OpenAlex 与本地下载的具体数据流，并明确纯前端不能安全保管长期密钥。
+已完成：不可信 HTML、Markdown image 和 javascript link 只作为文本显示；http(s) 明文 URL 才生成带 noreferrer/noopener 的链接，不使用 innerHTML，不自动加载图片。远程 Provider 强制 HTTPS，localhost 例外；URL 禁止内嵌 username/password，fetch 禁止 redirect，凭证只发往用户明确配置的 origin。脱敏诊断排除查询、cache key、完整 URL、headers、prompt、response 和消息。本地 JSON 文件经迁移校验后始终以新 UUID 导入，不覆盖现有项目，也不上传。清除全部数据需输入完整确认文字，在单一 Dexie 事务清空所有表并清空内存 key。文档列出 Provider、OpenAlex 与本地下载的具体数据流，并明确纯前端不能安全保管长期密钥。
 
 测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、17 个 unit/contract 文件共 65 项测试、production build、12 项 Playwright e2e 与 secret scan 均成功。阶段 unit 覆盖攻击渲染、endpoint、redirect 配置、诊断字段与全量清除，e2e 覆盖诊断下载和清除门禁。package 与演示导出版本已更新为 0.6.0；远端 CI 在提交后确认。
 

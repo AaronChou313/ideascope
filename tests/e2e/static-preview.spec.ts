@@ -26,6 +26,8 @@ test("exposes redacted diagnostics and guarded local data cleanup", async ({ pag
   await expect(page.getByText(/纯前端应用无法安全保管长期密钥/)).toBeVisible();
   const clear = page.getByRole("button", { name: "清除全部本地数据" });
   await expect(clear).toBeDisabled();
+  await page.getByLabel(/导入 IdeaScope JSON/).setInputFiles("examples/workspace.demo.json");
+  await expect(page.getByText(/已导入为新项目/)).toBeVisible();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "导出脱敏诊断" }).click();
   expect((await download).suggestedFilename()).toBe("ideascope-diagnostics.json");
