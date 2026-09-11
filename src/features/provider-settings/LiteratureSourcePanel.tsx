@@ -5,6 +5,11 @@ import { probeLiteratureSource, type SourceHealth } from "../../infrastructure/l
 import { normalizeConnectionError } from "../../infrastructure/network/errors";
 import { sourceCredentialStore } from "../../infrastructure/secrets/source-credential-store";
 import { SourceInstallationRepository } from "../../infrastructure/storage/source-installation-repository";
+import { ProviderProfileRepository } from "../../infrastructure/storage/provider-profile-repository";
+import { memoryKeyStore } from "../../infrastructure/secrets/memory-key-store";
+import { createAgentProvider } from "../../infrastructure/llm/agent-provider";
+import { proposeSourceConfiguration } from "../../application/literature/propose-source-configuration";
+import type { SourceAssistantProposal } from "../../domain/literature-source/source-assistant-proposal";
 import { Button } from "../../shared/ui";
 import styles from "./DataSafetyPanel.module.css";
 
@@ -20,6 +25,11 @@ export function LiteratureSourcePanel() {
   const [health, setHealth] = useState<Record<string, HealthState>>({});
   const [details, setDetails] = useState<Record<string, string>>({});
   const [ieeeKey, setIeeeKey] = useState(() => sourceCredentialStore.get("ieee-xplore.api-key") ?? "");
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantInput, setAssistantInput] = useState("");
+  const [proposal, setProposal] = useState<SourceAssistantProposal | null>(null);
+  const [assistantStatus, setAssistantStatus] = useState("");
+  const [assistantBusy, setAssistantBusy] = useState(false);
   const active = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -73,6 +83,50 @@ export function LiteratureSourcePanel() {
     }));
   }
 
+  async function askAssistant() {
+    setAssistantBusy(true);
+    setAssistantStatus("正在分析已有来源…");
+    try {
+      const profile = await new ProviderProfileRepository().getActive();
+      const key = memoryKeyStore.get();
+      if (!profile || !key) throw new Error("请先在模型 Provider 页面保存可用配置和 API Key。");
+      const next = await proposeSourceConfiguration({
+        requirement: assistantInput,
+        manifests: BUILTIN_LITERATURE_SOURCE_MANIFESTS,
+        provider: createAgentProvider(profile, () => memoryKeyStore.get(), profile.lastTestState === "supported"),
+        signal: new AbortController().signal,
+      });
+      setProposal(next);
+      setAssistantStatus("建议已通过结构校验。请先测试，再确认应用。");
+    } catch (error) {
+      setProposal(null);
+      setAssistantStatus(error instanceof Error ? error.message : "无法生成来源建议。");
+    } finally { setAssistantBusy(false); }
+  }
+
+  async function testProposal() {
+    if (!proposal) return;
+    setAssistantBusy(true);
+    const sourceIds = [...new Set(proposal.recommendations.map((item) => item.sourceId).filter((id): id is string => Boolean(id)))];
+    await Promise.all(sourceIds.map((sourceId) => testOne(sourceId)));
+    setAssistantStatus("建议来源测试完成。只有确认可用的自动来源会被应用。");
+    setAssistantBusy(false);
+  }
+
+  async function applyProposal() {
+    if (!proposal) return;
+    const applicable = proposal.recommendations.filter((item) =>
+      item.sourceId && item.action !== "external_search_only" && health[item.sourceId] === "available",
+    );
+    if (!applicable.length) {
+      setAssistantStatus("尚无通过连接测试的建议来源；配置所需凭证后请重新测试。");
+      return;
+    }
+    await Promise.all(applicable.map((item) => repository.setEnabled(item.sourceId!, true)));
+    setInstallations(await repository.list());
+    setAssistantStatus(`已确认应用 ${applicable.length} 个来源。`);
+  }
+
   return (
     <section className={styles.panel} aria-labelledby="literature-source-title">
       <p>LITERATURE SOURCES</p>
@@ -117,9 +171,31 @@ export function LiteratureSourcePanel() {
       </div>
       <div className={styles.sourceActions}>
         <Button type="button" onClick={() => void testAll()}>测试已启用来源</Button>
-        <Button type="button" disabled title="将在 Source Assistant 阶段启用">让 AI 帮我配置来源</Button>
+        <Button type="button" onClick={() => setAssistantOpen((value) => !value)}>让 AI 帮我配置来源</Button>
         <Button type="button" disabled title="将在来源导入阶段启用">导入 Source / Pack</Button>
       </div>
+      {assistantOpen ? (
+        <section className={styles.sourceRow} aria-label="AI 来源配置助手">
+          <h3>让 AI 帮我配置来源</h3>
+          <p>描述研究领域、常用会议或期刊。AI 只会先匹配当前内置来源，不会凭记忆创建 API 地址。</p>
+          <textarea value={assistantInput} onChange={(event) => setAssistantInput(event.target.value)} placeholder="例如：我主要做机器人定位导航，希望覆盖 ICRA、IROS、RA-L、T-RO。" />
+          <div className={styles.sourceActions}>
+            <Button type="button" disabled={assistantBusy || !assistantInput.trim()} onClick={() => void askAssistant()}>生成建议</Button>
+            {proposal ? <Button type="button" disabled={assistantBusy} onClick={() => void testProposal()}>测试建议来源</Button> : null}
+            {proposal ? <Button type="button" disabled={assistantBusy} onClick={() => void applyProposal()}>确认应用</Button> : null}
+          </div>
+          {proposal ? (
+            <div className={styles.sourceList}>
+              {proposal.recommendations.map((item, index) => {
+                const manifest = BUILTIN_LITERATURE_SOURCE_MANIFESTS.find((entry) => entry.id === item.sourceId);
+                return <article key={`${item.sourceId}-${index}`}><strong>{manifest?.name ?? item.sourceId}</strong><p>{item.reason}</p><small>{item.missingInputs.length ? `需要：${item.missingInputs.join("、")}` : "无需额外信息"} · 状态：{healthLabels[health[item.sourceId ?? ""] ?? "unknown"]}</small></article>;
+              })}
+              {proposal.warnings.map((warning) => <small key={warning}>注意：{warning}</small>)}
+            </div>
+          ) : null}
+          {assistantStatus ? <p role="status">{assistantStatus}</p> : null}
+        </section>
+      ) : null}
       <details className={styles.advanced}>
         <summary>高级设置</summary>
         <p>来源能力和认证方式由经过校验的 Manifest 管理。密钥与 Manifest 分离，不进入项目导出。</p>

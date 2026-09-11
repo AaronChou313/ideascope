@@ -297,7 +297,9 @@ test("literature source settings persist enabled state and expose honest source 
   await page.reload();
   await expect(page.getByText("Crossref", { exact: true })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "Crossref 启用" })).not.toBeChecked();
-  await expect(page.getByRole("button", { name: "让 AI 帮我配置来源" })).toBeDisabled();
+  await page.getByRole("button", { name: "让 AI 帮我配置来源" }).click();
+  await expect(page.getByRole("region", { name: "AI 来源配置助手" })).toBeVisible();
+  await expect(page.getByText("不会凭记忆创建 API 地址")).toBeVisible();
   await page.screenshot({ path: "reports/visual/v0.6.7/source-settings.png", fullPage: true });
 });
 

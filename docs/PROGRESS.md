@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.9-D 已完成：探索检索采用最多三轮、查询/来源/候选总预算受控的计划—观察—继续闭环。**
+当前状态：**v0.6.10-A 已完成：Source Assistant 可将自然语言需求转为内置来源建议，并经过 Schema、连接测试和用户确认门禁。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -41,6 +41,21 @@
 | v0.6.9-B   | 已完成                | 多来源/多查询并行执行、候选预算、DOI/arXiv/ID 精确合并、题名候选版本关联与部分失败保留                           |
 | v0.6.9-C   | 已完成                | 文本相关度优先、Profile Venue、recent、封顶引用、摘要完整性与来源多样性的可解释排序                             |
 | v0.6.9-D   | 已完成                | 最多三轮 PLAN → SEARCH → OBSERVE → REFINE、充分性提前停止、跨轮去重和用户可见轮次进度                           |
+| v0.6.10-A  | 已完成                | 自然语言 Source Assistant、built-in 优先建议、缺失凭证提示、严格 Proposal 校验与测试后确认应用                 |
+
+## v0.6.10-A 阶段记录
+
+实施日期：2026-09-11。
+
+Assistant：文献来源页启用“让 AI 帮我配置来源”。它使用当前已保存 Model Provider，把用户的研究领域、Venue 需求和只读 built-in capability 清单交给单一 Provider；Prompt 明确禁止在没有官方文档时臆造 endpoint、认证或字段映射。当前阶段只允许推荐现有 OpenAlex、Crossref、Semantic Scholar、arXiv、IEEE Xplore 和 Google Scholar 入口。
+
+安全流程：新增 Source Assistant Proposal JSON Schema 与等价 Zod 严格契约。未知字段、未知 sourceId 和无法修复的模型输出会被拒绝。建议卡显示推荐理由、所需 Key 和当前测试状态；用户必须先测试，只有 `available` 的自动来源才可在“确认应用”后启用。测试成功本身不改变安装状态；IEEE 未配置 Key 时不会被误装，external-search 不进入自动检索。
+
+界面验证：在真实本地 Vite 页面打开文献来源设置并展开 Assistant，确认自然语言输入、生成/测试/确认三级操作和克制的标准表单布局可见。没有使用真实 Provider 凭证生成建议，因此模型实调用仍列为待真实凭证复测。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、33 个 Vitest 文件 / 138 项测试、production build、7 项 Playwright E2E 与 secret scan。新增 JSON Schema/Zod 对齐、内置建议接受、臆造 sourceId 双次拒绝和 Assistant 展开 E2E。构建仍有既有约 2.20 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.10-B，支持粘贴或上传 `.ideascope-source.json`、`.ideascope-profile.json` 与 `.ideascope-pack.json`；所有外部文件均按不可信输入处理。
 
 ## v0.6.9-D 阶段记录
 

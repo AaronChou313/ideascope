@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ideascope.dev/schemas/source-assistant-proposal-v1.json",
+  "title": "IdeaScope Source Assistant Proposal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["proposalVersion", "requestSummary", "recommendations", "warnings"],
+  "properties": {
+    "proposalVersion": { "const": 1 },
+    "requestSummary": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "recommendations": { "type": "array", "maxItems": 20, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action", "reason", "missingInputs"],
+      "properties": {
+        "action": { "enum": ["use_builtin", "configure_builtin", "import_manifest", "propose_custom_manifest", "external_search_only"] },
+        "sourceId": { "type": "string", "maxLength": 100 },
+        "reason": { "type": "string", "maxLength": 2000 },
+        "missingInputs": { "type": "array", "maxItems": 20, "items": { "type": "string", "maxLength": 200 } }
+      }
+    } },
+    "warnings": { "type": "array", "maxItems": 20, "items": { "type": "string", "maxLength": 1000 } }
+  }
+}
