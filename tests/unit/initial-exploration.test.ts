@@ -42,7 +42,7 @@ const synthesis = {
       evidenceIds: [],
     },
     {
-      tempId: "fusion", parentRef: "slip-gap",
+      tempId: "fusion", parentRef: "route-estimation",
       kind: "direction",
       title: "触觉与惯性融合",
       summary: "联合足端触觉和惯性信息",

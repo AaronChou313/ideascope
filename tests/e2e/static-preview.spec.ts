@@ -39,7 +39,7 @@ const nodes = [
     evidenceIds: [],
   },
   {
-    tempId: "fusion", parentRef: "slip",
+    tempId: "fusion", parentRef: "route-estimation",
     kind: "direction",
     title: "足端触觉与惯性融合",
     summary: "联合多模态感知提升鲁棒性",
@@ -226,15 +226,18 @@ test("initial exploration creates evidence graph and node continuation updates i
   await expect(page.getByText("基于：接触辅助状态估计")).toBeVisible();
   await page.getByLabel("探索对话输入").fill("足端接触约束通常怎样进入 EKF 或优化框架？");
   await page.getByRole("button", { name: "发送" }).click();
+  await expect(page.getByText(/7 个节点 · 1 条 Evidence/)).toBeVisible({ timeout: 15000 });
+  await page.getByRole("button", { name: "Fit View" }).click();
   await expect(
     page.getByText("因子图接触约束", { exact: true }).first(),
   ).toBeVisible({ timeout: 15000 });
-  await expect(page.getByText(/7 个节点 · 1 条 Evidence/)).toBeVisible();
   await page.screenshot({
     path: "reports/visual/v0.6.6/04-focused-expansion.png",
     fullPage: true,
   });
   await page.reload();
+  await expect(page.getByText(/7 个节点 · 1 条 Evidence/)).toBeVisible();
+  await page.getByRole("button", { name: "Fit View" }).click();
   await expect(
     page.getByText("因子图接触约束", { exact: true }).first(),
   ).toBeVisible();

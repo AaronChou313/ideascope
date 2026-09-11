@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.5 已完成：研究进度可展开、文献源限流可降级、API Key 刷新保留、节点主上下文与整体上下文已接入，并完成真实 DeepSeek 流程复测。**
+当前状态：**v0.6.6 已完成工程实现：Research Map 改为 Tree-first / Graph-assisted，选择与研究上下文分离，旧 Workspace 可迁移；真实 DeepSeek 新契约仍待干净浏览器复测。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -28,6 +28,27 @@
 | v0.6.3     | 已完成                | Provider 非敏感配置持久化与 active guard、四个设置子页、来源健康检查、returnTo、探索历史列表与首次使用回归     |
 | v0.6.4     | 已完成                | 直接工作台、Session Sidebar、真实 Initial Exploration、节点继续、增量图、方向分支、真实 DeepSeek/OpenAlex 验收 |
 | v0.6.5     | 已完成                | 可展开研究进度、OpenAlex 部分结果容错与 Crossref/Semantic Scholar 降级、会话级 Key 恢复、节点主上下文          |
+| v0.6.6     | 工程完成 / 真实待复测 | Root/parent/depth、Primary/Cross、层级综合契约、节点上下文、稳定增量布局、短关系标签与 Workspace v2 迁移       |
+
+## v0.6.6 阶段记录
+
+实施日期 / commits：2026-09-11 / `6afd996`（Graph Contract、Agent Contract、交互与布局）及最终验收提交。
+
+范围：只重构 Research Map 数据结构、探索综合契约、节点上下文交互、布局和边渲染；未进入 v0.7.0，未改 Provider、文献来源、Session Sidebar 或 Settings 架构。
+
+Graph Contract：Workspace export 升为 formatVersion 2。GraphNode 新增 `parentId` 与 `depth`；GraphEdge 新增 `primary/cross` role。Root 唯一、父子 depth、Primary Edge 与无环结构由 Domain 校验。旧 v0/v1 Workspace 按 question/入度选择 Root，用有向 BFS 推断主树，无法纳入主树的关系降为 Cross；Paper、Evidence、Claim、Message 均保留，迁移后的旧 positions 清空一次并重新建立可持久化布局。
+
+Agent Contract：系统在 Intent Plan 后确保唯一 Root；模型只输出带 `tempId/parentRef/existingNodeId` 的层级节点草案和最多 5 条 Cross Link。首次探索限制为 Root 后最多两层；节点上下文探索默认向 anchor 右侧扩展。Evidence ID、已有节点引用、父引用、节点预算和树结构全部验证后转换为 GraphPatch 原子应用；非法结构不会部分写入。
+
+交互与布局：普通点击只更新 `selectedNodeId` 并打开详情，不改变 Agent 上下文。“基于此节点继续探索”仅设置 `composerContextNodeId`、Context Chip 和输入焦点，不自动请求；发送显式传入 contextNodeId。全图整理仅使用 Primary Edge；增量布局复用 `Branch.view.positions`，旧节点保持原位置，只在父节点右侧安置新增子树；viewport 持久化。Primary 使用 step 正交实线，Cross 使用低透明虚线；Canvas 默认不显示关系长句，选中/Context 直连关系只显示受控短标签。节点收紧为 228×148，Root、Selected、Context、Gap 使用克制的黑灰蓝/amber 标识。
+
+自动测试：`npm run lint`、`npm run typecheck`、`npm test`（21 files / 100 tests）、`npm run build` 与 `npm run test:e2e`（5/5）通过。覆盖旧格式迁移、唯一 Root、Primary/Cross、非法 depth 拒绝、depth 列布局、Cross 不参与层级、增量旧位置稳定、首次层级生成、anchor 子树、普通选择不改变 Context、Context Chip、刷新恢复。production build 仍有既有 2.15 MB chunk 非阻断警告。
+
+真实测试：用户授权的临时 DeepSeek `deepseek-chat` 与 OpenAlex 在本地完成 4 组查询、取得 27 条候选资料并返回综合；但该次 Chrome 标签复用了 v0.6.5 HMR 模块，模型返回旧自由网络格式，不能作为 v0.6.6 新层级契约的真实通过证据。v0.6.6 新契约已由 mock production E2E 通过，仍需在干净 origin 用真实凭证复测首次 Root/路线结构和第二轮 anchor 子树。
+
+截图：`reports/visual/v0.6.6/` 包含空工作台三档、首次层级图、节点选择、Context Chip、Focused Expansion、Provider Settings 与刷新恢复。截图来自最新 production E2E，不沿用旧版本图片。
+
+下一阶段入口：停止在 v0.6.6，等待真实使用反馈；不进入 v0.7.0。
 
 ## v0.6.5 阶段记录
 

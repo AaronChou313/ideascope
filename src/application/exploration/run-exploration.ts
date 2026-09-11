@@ -49,7 +49,7 @@ export interface ExplorationRunResult {
 }
 
 const planInstruction = `你是科研探索助手。只返回 JSON：{"title":"不超过20字的中文会话标题","understanding":"如何理解用户意图","queries":["2至4个适合OpenAlex的英文检索表达"]}。查询应覆盖对象、机制和应用，不要原样复制中文。`;
-const synthesisInstruction = `你是严谨的科研综述助手。只返回 JSON：answer、nodes、crossLinks、nextQuestions、summary。Root 已由系统创建，不能生成 Root。nodes 每项为 {tempId,parentRef,existingNodeId?,kind,title,summary,evidenceIds,aliases?}。首次探索：识别 3–5 条主要路线，parentRef 为 ROOT；必要时每条再展开 0–2 个子节点，parentRef 引用本轮 tempId，总计 6–12 个。基于节点继续：只扩展 anchor 局部，新节点默认挂在 anchorId 或本轮节点下，不得无故新增 Root 路线。existingGraph 提供真实 ID；已有概念应通过 existingNodeId 更新，不要重复新增。crossLinks 只表达少量跨分支关系，每项 {sourceRef,targetRef,relation}，最多 5 条。论文是 Evidence，不是一篇论文一个节点；只能引用输入出现的 evidenceId；没有直接证据则留空。不要声称读过全文。`;
+const synthesisInstruction = `你是严谨的科研综述助手。只返回 JSON：answer、nodes、crossLinks、nextQuestions、summary。Root 已由系统创建，不能生成 Root。nodes 每项为 {tempId,parentRef,existingNodeId?,kind,title,summary,evidenceIds,aliases?}。首次探索：识别 3–5 条主要路线，parentRef 为 ROOT；必要时每条再展开 0–2 个子节点，parentRef 只能引用一级路线的 tempId，首次最多到 depth 2，总计 6–12 个。基于节点继续：只扩展 anchor 局部，新节点默认挂在 anchorId 或本轮节点下，不得无故新增 Root 路线。existingGraph 提供真实 ID；已有概念应通过 existingNodeId 更新，不要重复新增。crossLinks 只表达少量跨分支关系，每项 {sourceRef,targetRef,relation}，最多 5 条。论文是 Evidence，不是一篇论文一个节点；只能引用输入出现的 evidenceId；没有直接证据则留空。不要声称读过全文。`;
 
 function parseJson(value: unknown): unknown {
   const raw = isProviderGeneration(value) ? value.value : value;
