@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.7-D 已完成：统一来源标准化、设置与真实网络回归完成；OpenAlex 浏览器可用，Crossref/Semantic Scholar/arXiv 的实际 CORS/限流状态已如实记录。下一阶段为 v0.6.8-A。**
+当前状态：**v0.6.8-A 已完成：Research Profile、Session Patch、Effective merge 与 provenance 契约建立；尚未接入 Agent 自动演化。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -33,6 +33,21 @@
 | v0.6.7-B   | 工程完成 / 外部待验收 | arXiv Atom、IEEE 可选凭证适配、Google Scholar 外部入口、六来源能力清单；浏览器 CORS/IEEE Key 待验证            |
 | v0.6.7-C   | 已完成                | 来源状态列表、启用持久化、健康检查、IEEE 会话 Key、Scholar 外部入口与高级设置折叠                              |
 | v0.6.7-D   | 已完成 / 外部项待验证 | 真实机器人主题检索、浏览器健康检查、429/timeout/empty/partial 回归、Source secret 审计                          |
+| v0.6.8-A   | 已完成                | Base/Session/Effective Profile、Session Patch、provenance、严格 Schema 与非覆盖合并规则                         |
+
+## v0.6.8-A 阶段记录
+
+实施日期：2026-09-11。
+
+契约：新增 Research Profile JSON Schema 与 Zod 严格模型，覆盖 Base/Session mode、domain/subfield/concept、Source preference、Venue group、Query vocabulary、arXiv category、language 和 provenance；新增受控 Session Profile Patch 七类操作及结构化 value 校验。
+
+合并规则：`mergeResearchProfiles` 只在运行时组合 Base + Session + 当前节点词汇，Session 后出现的同一 Source preference 可临时覆盖优先级，词汇与范围按大小写去重；结果携带 Base IDs、Session ID 和 context terms provenance，不反写 Base。`applySessionProfilePatch` 明确拒绝修改 Base Profile，并验证 target ID、优先级和字段预算。
+
+兼容：Workspace export formatVersion 保持 2；本阶段 Profile 尚未进入 Workspace 持久化，因此不需要 Workspace migration。应用版本和新建记录 `createdWith` 更新为 0.6.8。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、25 个 Vitest 文件 / 119 项测试、production build、6 项 Playwright E2E 与 secret scan。新增 JSON Schema/Zod 正反例、未知字段/非法优先级/错误 value 拒绝、Session Patch、Base 不可修改及 Effective merge 隔离测试。构建仍有既有 2.17 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.8-B，让首次探索自动形成并增量更新 Session Profile；Base 仍不得自动修改。
 
 ## v0.6.7-D 阶段记录
 

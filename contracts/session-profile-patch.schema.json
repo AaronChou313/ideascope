@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ideascope.local/contracts/session-profile-patch.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["patchVersion", "targetProfileId", "operations"],
+  "properties": {
+    "patchVersion": { "const": 1 },
+    "targetProfileId": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "operations": {
+      "type": "array", "maxItems": 100,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/stringOperation" },
+          { "$ref": "#/$defs/queryAlias" },
+          { "$ref": "#/$defs/venueSignal" },
+          { "$ref": "#/$defs/sourceHint" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "stringOperation": {
+      "type": "object", "additionalProperties": false, "required": ["op", "value"],
+      "properties": {
+        "op": { "enum": ["addDomainSignal", "addSubfield", "addConcept"] },
+        "value": { "type": "string", "minLength": 1, "maxLength": 160 }
+      }
+    },
+    "queryAlias": {
+      "type": "object", "additionalProperties": false, "required": ["op", "value"],
+      "properties": {
+        "op": { "const": "addQueryAlias" },
+        "value": { "type": "object", "additionalProperties": false, "required": ["term", "alias"], "properties": {
+          "term": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "alias": { "type": "string", "minLength": 1, "maxLength": 160 }
+        } }
+      }
+    },
+    "venueSignal": {
+      "type": "object", "additionalProperties": false, "required": ["op", "value"],
+      "properties": {
+        "op": { "const": "addVenueSignal" },
+        "value": { "type": "object", "additionalProperties": false, "required": ["groupId", "groupName", "venue"], "properties": {
+          "groupId": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "groupName": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "venue": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "aliases": { "type": "array", "maxItems": 30, "items": { "type": "string", "minLength": 1, "maxLength": 100 } }
+        } }
+      }
+    },
+    "sourceHint": {
+      "type": "object", "additionalProperties": false, "required": ["op", "value"],
+      "properties": {
+        "op": { "enum": ["addSourceHint", "adjustTemporaryPriority"] },
+        "value": { "type": "object", "additionalProperties": false, "required": ["sourceId", "priority"], "properties": {
+          "sourceId": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "priority": { "type": "number", "minimum": 0, "maximum": 100 },
+          "purposes": { "type": "array", "maxItems": 20, "items": { "type": "string", "minLength": 1, "maxLength": 80 } }
+        } }
+      }
+    }
+  }
+}
