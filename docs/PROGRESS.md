@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.10-A 已完成：Source Assistant 可将自然语言需求转为内置来源建议，并经过 Schema、连接测试和用户确认门禁。**
+当前状态：**v0.6.10-B 已完成：Source、Profile 与 Pack 支持粘贴/文件导入、严格识别、预览和显式确认。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -42,6 +42,19 @@
 | v0.6.9-C   | 已完成                | 文本相关度优先、Profile Venue、recent、封顶引用、摘要完整性与来源多样性的可解释排序                             |
 | v0.6.9-D   | 已完成                | 最多三轮 PLAN → SEARCH → OBSERVE → REFINE、充分性提前停止、跨轮去重和用户可见轮次进度                           |
 | v0.6.10-A  | 已完成                | 自然语言 Source Assistant、built-in 优先建议、缺失凭证提示、严格 Proposal 校验与测试后确认应用                 |
+| v0.6.10-B  | 已完成                | 外部 Source/Profile/Pack JSON 粘贴与上传、2 MB 预算、嵌套 Schema 校验、预览和非覆盖导入                         |
+
+## v0.6.10-B 阶段记录
+
+实施日期：2026-09-11。
+
+导入协议：新增 Source/Profile Pack JSON Schema 与 Zod 契约，以及统一 `parseConfigurationImport` application use case。输入按 `documentType` 识别 Literature Source、Research Profile 或 Pack；Pack 的嵌套 Source/Profile 同样严格校验。文本和文件均有 2 MB 上限，未知类型、额外字段、非法 JSON 或带 secret 的 Manifest 不会修改本地状态。
+
+交互：文献来源页“导入 Source / Pack”支持粘贴 JSON 和选择三类扩展名。校验后只显示名称、来源/Profile 数量、adapter 类型和无凭证说明，必须点击“确认导入”才应用。Profile 始终另存为带新 ID 的 imported Base 副本，不静默覆盖 active Base；与内置 Manifest 完全一致的 Source 可复用并启用，冲突或自定义 Source 在本阶段只预览，等待 Custom REST adapter 阶段处理。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、35 个 Vitest 文件 / 141 项测试、production build、7 项 Playwright E2E 与 secret scan。覆盖三类文档识别、嵌套双 Schema、未知类型、非法 JSON、大小预算和设置页粘贴预览。构建仍有既有约 2.20 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.10-C，实现受限声明式 Custom REST JSON Source、Manifest 持久化和安全字段映射；禁止 eval、用户脚本与远程脚本。
 
 ## v0.6.10-A 阶段记录
 

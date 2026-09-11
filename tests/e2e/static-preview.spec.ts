@@ -300,6 +300,11 @@ test("literature source settings persist enabled state and expose honest source 
   await page.getByRole("button", { name: "让 AI 帮我配置来源" }).click();
   await expect(page.getByRole("region", { name: "AI 来源配置助手" })).toBeVisible();
   await expect(page.getByText("不会凭记忆创建 API 地址")).toBeVisible();
+  await page.getByRole("button", { name: "导入 Source / Pack" }).click();
+  await page.getByLabel("配置 JSON").fill(JSON.stringify({ documentType: "ideascope.pack", packVersion: 1, id: "test-pack", name: "Test Pack", description: "", sources: [], profiles: [] }));
+  await page.getByRole("button", { name: "校验并预览" }).click();
+  await expect(page.getByText("Test Pack", { exact: true })).toBeVisible();
+  await expect(page.getByText("配置已通过结构校验")).toBeVisible();
   await page.screenshot({ path: "reports/visual/v0.6.7/source-settings.png", fullPage: true });
 });
 

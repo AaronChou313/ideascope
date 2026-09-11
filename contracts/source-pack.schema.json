@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ideascope.dev/schemas/source-pack-v1.json",
+  "title": "IdeaScope Source/Profile Pack v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["documentType", "packVersion", "id", "name", "description", "sources", "profiles"],
+  "properties": {
+    "documentType": { "const": "ideascope.pack" }, "packVersion": { "const": 1 },
+    "id": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "sources": { "type": "array", "maxItems": 100, "items": { "$ref": "https://ideascope.local/contracts/literature-source.schema.json" } },
+    "profiles": { "type": "array", "maxItems": 100, "items": { "$ref": "https://ideascope.local/contracts/research-profile.schema.json" } }
+  }
+}

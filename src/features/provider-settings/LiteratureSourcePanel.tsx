@@ -10,6 +10,8 @@ import { memoryKeyStore } from "../../infrastructure/secrets/memory-key-store";
 import { createAgentProvider } from "../../infrastructure/llm/agent-provider";
 import { proposeSourceConfiguration } from "../../application/literature/propose-source-configuration";
 import type { SourceAssistantProposal } from "../../domain/literature-source/source-assistant-proposal";
+import { parseConfigurationImport, type ConfigurationImport } from "../../application/import/parse-configuration-import";
+import { ResearchProfileRepository } from "../../infrastructure/storage/research-profile-repository";
 import { Button } from "../../shared/ui";
 import styles from "./DataSafetyPanel.module.css";
 
@@ -31,6 +33,11 @@ export function LiteratureSourcePanel() {
   const [assistantStatus, setAssistantStatus] = useState("");
   const [assistantBusy, setAssistantBusy] = useState(false);
   const active = useRef<AbortController | null>(null);
+  const importFile = useRef<HTMLInputElement>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importPreview, setImportPreview] = useState<ConfigurationImport | null>(null);
+  const [importStatus, setImportStatus] = useState("");
 
   useEffect(() => {
     void repository.list().then(setInstallations);
@@ -127,6 +134,49 @@ export function LiteratureSourcePanel() {
     setAssistantStatus(`已确认应用 ${applicable.length} 个来源。`);
   }
 
+  function previewImport(text: string) {
+    try {
+      const parsed = parseConfigurationImport(text);
+      setImportPreview(parsed);
+      setImportStatus("配置已通过结构校验。请核对预览后确认导入。");
+    } catch (error) {
+      setImportPreview(null);
+      setImportStatus(error instanceof Error ? error.message : "配置文件无效。");
+    }
+  }
+
+  async function readImportFile(file: File) {
+    if (file.size > 2_000_000) { setImportStatus("配置文件超过 2 MB 安全上限。"); return; }
+    const text = await file.text();
+    setImportText(text);
+    previewImport(text);
+    if (importFile.current) importFile.current.value = "";
+  }
+
+  async function confirmImport() {
+    if (!importPreview) return;
+    let enabled = 0;
+    let deferred = 0;
+    for (const source of importPreview.sources) {
+      const builtin = BUILTIN_LITERATURE_SOURCE_MANIFESTS.find((item) => item.id === source.id);
+      if (!builtin || JSON.stringify(builtin) !== JSON.stringify(source)) { deferred += 1; continue; }
+      await repository.setEnabled(source.id, true);
+      enabled += 1;
+    }
+    const profileRepository = new ResearchProfileRepository();
+    for (const profile of importPreview.profiles)
+      await profileRepository.save({
+        ...profile,
+        id: `imported:${profile.id}:${crypto.randomUUID()}`,
+        mode: "base",
+        provenance: "imported",
+        updatedAt: new Date().toISOString(),
+      });
+    setInstallations(await repository.list());
+    setImportStatus(`已导入 ${importPreview.profiles.length} 个 Profile 副本，启用 ${enabled} 个一致的内置来源。${deferred ? `${deferred} 个自定义或冲突来源仅完成预览，尚未安装。` : ""}`);
+    setImportPreview(null);
+  }
+
   return (
     <section className={styles.panel} aria-labelledby="literature-source-title">
       <p>LITERATURE SOURCES</p>
@@ -172,7 +222,7 @@ export function LiteratureSourcePanel() {
       <div className={styles.sourceActions}>
         <Button type="button" onClick={() => void testAll()}>测试已启用来源</Button>
         <Button type="button" onClick={() => setAssistantOpen((value) => !value)}>让 AI 帮我配置来源</Button>
-        <Button type="button" disabled title="将在来源导入阶段启用">导入 Source / Pack</Button>
+        <Button type="button" onClick={() => setImportOpen((value) => !value)}>导入 Source / Pack</Button>
       </div>
       {assistantOpen ? (
         <section className={styles.sourceRow} aria-label="AI 来源配置助手">
@@ -194,6 +244,21 @@ export function LiteratureSourcePanel() {
             </div>
           ) : null}
           {assistantStatus ? <p role="status">{assistantStatus}</p> : null}
+        </section>
+      ) : null}
+      {importOpen ? (
+        <section className={styles.sourceRow} aria-label="导入来源或研究领域配置">
+          <h3>导入配置</h3>
+          <p>粘贴 JSON，或选择 `.ideascope-source.json`、`.ideascope-profile.json`、`.ideascope-pack.json`。外部文件一律先校验和预览。</p>
+          <textarea aria-label="配置 JSON" value={importText} onChange={(event) => setImportText(event.target.value)} placeholder="粘贴 IdeaScope 配置 JSON" />
+          <div className={styles.sourceActions}>
+            <Button type="button" disabled={!importText.trim()} onClick={() => previewImport(importText)}>校验并预览</Button>
+            <Button type="button" onClick={() => importFile.current?.click()}>选择文件</Button>
+            {importPreview ? <Button type="button" onClick={() => void confirmImport()}>确认导入</Button> : null}
+            <input ref={importFile} hidden type="file" accept=".json,.ideascope-source.json,.ideascope-profile.json,.ideascope-pack.json,application/json" onChange={(event) => { const file = event.target.files?.[0]; if (file) void readImportFile(file); }} />
+          </div>
+          {importPreview ? <div><strong>{importPreview.name}</strong><p>{importPreview.sources.length} 个来源 · {importPreview.profiles.length} 个研究领域配置</p>{importPreview.sources.map((source) => <small key={source.id}>{source.name} · {source.adapter.kind} · 默认不携带凭证</small>)}</div> : null}
+          {importStatus ? <p role="status">{importStatus}</p> : null}
         </section>
       ) : null}
       <details className={styles.advanced}>
