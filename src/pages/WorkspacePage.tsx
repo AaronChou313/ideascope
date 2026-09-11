@@ -223,19 +223,29 @@ function WorkspaceShell({ id }: { id?: string }) {
 
   return (
     <div
-      className={`${styles.page} ${!left ? styles.noLeft : ""} ${!right ? styles.noRight : ""}`}
+      className={`${styles.page} workspace-root-shell ${!left ? styles.noLeft : ""} ${!right ? styles.noRight : ""}`}
     >
       <SessionSidebar activeId={id} refreshKey={refreshKey} />
       <section className={styles.center}>
         <header>
           <div className="workspace-title-bar">
-            <Button aria-label={left ? "折叠探索会话" : "展开探索会话"} title={left ? "折叠探索会话" : "展开探索会话"} onClick={() => setLeft(!left)}>{left ? <PanelLeftClose size={15} /> : <PanelLeftOpen size={15} />}</Button>
+            <Button
+              aria-label={left ? "折叠探索会话" : "展开探索会话"}
+              title={left ? "折叠探索会话" : "展开探索会话"}
+              onClick={() => setLeft(!left)}
+            >
+              {left ? (
+                <PanelLeftClose size={15} />
+              ) : (
+                <PanelLeftOpen size={15} />
+              )}
+            </Button>
             <div>
-            <h1>{workspace.workspace.title}</h1>
-            <p>
-              {branch.graph.nodes.length} 个节点 ·{" "}
-              {workspace.workspace.evidence.length} 条 Evidence · 本地已保存
-            </p>
+              <h1>{workspace.workspace.title}</h1>
+              <p>
+                {branch.graph.nodes.length} 个节点 ·{" "}
+                {workspace.workspace.evidence.length} 条 Evidence · 本地已保存
+              </p>
             </div>
           </div>
           <div className={styles.toolbar}>

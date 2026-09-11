@@ -164,6 +164,15 @@ test("provider guard preserves draft and protocol switching preserves common fie
   await page.getByRole("button", { name: "搜索对话记录" }).click();
   await expect(page.getByLabel("搜索对话记录")).toBeVisible();
   await page.getByRole("button", { name: /新建会话/ }).click();
+  const toggleBox = await page
+    .getByRole("button", { name: "折叠探索会话" })
+    .boundingBox();
+  const titleBox = await page
+    .getByRole("heading", { name: "未命名探索" })
+    .boundingBox();
+  expect(toggleBox).not.toBeNull();
+  expect(titleBox).not.toBeNull();
+  expect(toggleBox!.x + toggleBox!.width).toBeLessThanOrEqual(titleBox!.x);
   await page.getByLabel("探索对话输入").fill(idea);
   await page.getByRole("button", { name: "发送" }).click();
   await expect(
