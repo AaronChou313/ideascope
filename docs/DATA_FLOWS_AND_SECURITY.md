@@ -2,7 +2,7 @@
 
 IdeaScope 是纯前端静态应用，没有 IdeaScope 自建后端。浏览器中存在三类数据流：
 
-1. 用户填写的 Provider origin：仅在用户主动测试或运行单一研究智能体时，向该明确 origin 的 `/chat/completions` 发送系统约束、当前研究上下文和所需 Evidence ID。对应凭证只放 `Authorization` header，默认仅存模块内存；远程 origin 必须 HTTPS，禁止 URL 内嵌凭证和跨 origin redirect。
+1. 用户填写的 Provider origin：仅在用户主动测试或运行单一研究智能体时，按用户选择的协议向该明确 origin 的 `/chat/completions`、`/responses` 或 `/v1/messages` 发送系统约束、当前研究上下文和所需 Evidence ID。OpenAI 协议凭证只放 `Authorization` header，Anthropic 协议只放 `x-api-key` header；均默认仅存模块内存。远程 origin 必须 HTTPS，禁止 URL 内嵌凭证和跨 origin redirect。
 2. OpenAlex：仅在用户主动检索时向 `https://api.openalex.org/works` 发送实际关键词、筛选、游标和公开 API 参数；不发送 Provider 密钥、完整研究对话或 workspace 导出。
 3. 本地文件下载：JSON/Markdown/SVG/PNG 与脱敏诊断通过 Blob 在浏览器本地生成，不上传到第三方。导出可能包含用户消息、用户笔记和 Evidence excerpt，下载前显示数量审计。
 

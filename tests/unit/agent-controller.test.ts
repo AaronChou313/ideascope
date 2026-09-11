@@ -5,7 +5,7 @@ import type {
   ProviderRequest,
 } from "../../src/agent/provider-adapter";
 import type { AgentRunContext } from "../../src/agent/types";
-import { OpenAICompatibleAgentProvider } from "../../src/infrastructure/llm/agent-provider";
+import { AnthropicMessagesProvider, OpenAICompatibleAgentProvider, OpenAIResponsesProvider } from "../../src/infrastructure/llm/agent-provider";
 
 const context: AgentRunContext = {
   runId: "run-1",
@@ -158,6 +158,30 @@ describe("OpenAI-compatible Agent Provider", () => {
     );
     expect(init?.redirect).toBe("error");
     if (typeof init?.body !== "string") throw new Error("Expected JSON body");
-    expect(init.body).toContain("json_schema");
+    expect(init.body).toContain("json_object");
+  });
+
+  it("adapts Responses input, strict schema and nested output text", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify(complete) }] }], usage: { input_tokens: 11, output_tokens: 7 } }), { status: 200 }));
+    const provider = new OpenAIResponsesProvider({ format: "openai-responses", baseUrl: "https://api.openai.com/v1", model: "gpt-test" }, () => "test-only-key", true, fetcher);
+    const output = await provider.generate({ mode: "structured", messages: [{ role: "system", content: "system" }, { role: "user", content: "input" }], schemaName: "agent_output", signal: new AbortController().signal });
+    expect(output).toMatchObject({ value: JSON.stringify(complete), usage: { inputTokens: 11, outputTokens: 7 } });
+    const [url, init] = fetcher.mock.calls[0] ?? [];
+    expect(url).toBe("https://api.openai.com/v1/responses");
+    if (typeof init?.body !== "string") throw new Error("Expected JSON body");
+    expect(init.body).toContain('"text":{"format":{"type":"json_schema"');
+  });
+
+  it("adapts Anthropic system/messages, headers and text blocks", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ content: [{ type: "text", text: JSON.stringify(complete) }], usage: { input_tokens: 13, output_tokens: 8 } }), { status: 200 }));
+    const provider = new AnthropicMessagesProvider({ format: "anthropic-messages", baseUrl: "https://api.anthropic.com", model: "claude-test" }, () => "test-only-key", false, fetcher);
+    await provider.generate({ mode: "json", messages: [{ role: "system", content: "system" }, { role: "user", content: "input" }], schemaName: "agent_output", signal: new AbortController().signal });
+    const [url, init] = fetcher.mock.calls[0] ?? [];
+    if (typeof init?.body !== "string") throw new Error("Expected JSON body");
+    const body = JSON.parse(init.body) as { system?: string; messages: Array<{ role: string }> };
+    expect(url).toBe("https://api.anthropic.com/v1/messages");
+    expect(body.system).toBe("system");
+    expect(body.messages.every(({ role }) => role === "user")).toBe(true);
+    expect(new Headers(init?.headers).get("anthropic-version")).toBe("2023-06-01");
   });
 });

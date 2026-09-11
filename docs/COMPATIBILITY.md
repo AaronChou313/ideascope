@@ -22,20 +22,28 @@
 
 数字与题名是测试时的实时返回值，不是稳定产品数据或质量结论。429、空结果、超时、取消和异常响应均使用 mock 测试了受控状态；尚未真实触发 OpenAlex 429，也未测试 OpenAlex key、Authorization header、语义检索与长期额度。Pages HTTPS origin 的匿名基础 CORS 已验证。
 
-## OpenAI-compatible Provider
+## 模型 Provider 协议
 
-实现了由用户明确输入 Base URL、Model ID 和仅内存 API Key 后运行的逐项探针。远程地址强制 HTTPS；localhost/127.0.0.1 允许 HTTP。请求只发送到用户填写并规范化后的 origin，不读取 `/models`，不会重复拼接 `/v1/v1`。
+用户明确选择 Provider Format，并输入 Base URL、Model ID 和仅内存 API Key 后运行逐项探针。远程地址强制 HTTPS；localhost/127.0.0.1 允许 HTTP。请求只发送到用户填写并规范化后的 origin，不读取 `/models`，不会重复拼接协议路径。
 
-| 能力 | localhost preview | Pages HTTPS origin | 说明 |
+| Provider Format | Endpoint | 结构化输出策略 | 认证 | mock 验证 | 真实凭证验证 |
+|---|---|---|---|---|---|
+| OpenAI Chat Completions | `/chat/completions` | `json_object`；不假定兼容服务支持 OpenAI `json_schema` | `Authorization: Bearer` | 请求、文本/reasoning/tool/finish、usage 已通过 | DeepSeek `deepseek-chat` 完成与 JSON 已通过；OpenAI/其他服务待验证 |
+| OpenAI Responses API | `/responses` | `text.format: json_schema` | `Authorization: Bearer` | input、嵌套 output_text、function_call、usage 已通过 | 待 OpenAI 真实凭证与预算授权 |
+| Anthropic Messages API | `/v1/messages` | 纯 JSON prompt fallback + 本地严格校验 | `x-api-key` + `anthropic-version` | system/messages、text/tool_use、usage 已通过 | 待 Anthropic 真实凭证与预算授权 |
+
+DeepSeek 实测日期为 2026-09-11。普通完成与结构化输出均从本地 production build 的系统 Chrome 发起；普通完成收到文本，结构化输出收到有效 JSON。探针使用 64 output tokens，并请求关闭 thinking；不保存临时 key、响应正文或完整请求。流式、工具、取消及 `deepseek-reasoner` 未额外消耗用户预算实测。
+
+| 能力 | mock/本地实现 | 真实服务 | 说明 |
 |---|---|---|---|
-| 普通完成 | 待真实凭证 | 待验证 | 最小非敏感 prompt |
-| 流式响应 | 待真实凭证 | 待验证 | 以收到首个 response body chunk 为基础信号 |
-| 结构化输出 | 待真实凭证 | 待验证 | 使用最小 JSON Schema；不能推断所有 schema 均支持 |
-| 工具调用 | 待真实凭证 | 待验证 | 只请求无参数 `probe_ok`，不执行外部工具 |
-| 取消 | fake transport 自动测试通过；真实端点待验证 | 待验证 | AbortSignal 阻止客户端继续处理；不保证供应商停止计费 |
-| usage reporting | 待真实凭证 | 待验证 | 只有响应包含 usage 时才标 supported |
+| 普通完成 | 三协议通过 | DeepSeek Chat 通过；其余待验证 | Chat 同时识别 content、reasoning_content、tool_calls、finish_reason |
+| 流式响应 | 三协议请求通过 | 待验证 | 以收到首个 response body chunk 为基础信号 |
+| 结构化输出 | 三策略通过 | DeepSeek json_object 通过；Responses/Messages 待验证 | 返回 JSON 仍需本地契约校验 |
+| 工具调用 | 三协议响应形状通过 | 待验证 | 只请求无参数 `probe_ok`，不执行外部工具 |
+| 取消 | fake transport 自动测试通过 | 待验证 | AbortSignal 阻止客户端继续处理；不保证供应商停止计费 |
+| usage reporting | 三协议字段解析通过 | DeepSeek 响应包含 usage；其余待验证 | 只有响应包含有效 usage 时才标 supported |
 
-未提供或授权使用真实模型凭证，因此没有发起付费模型请求，不能把本阶段整体标记为真实 Provider 验收通过。
+除用户明确授权的 DeepSeek 两项最小探针外，没有使用其他真实模型凭证；不能把 OpenAI Responses、Anthropic Messages 或未实测能力标记为真实 Provider 验收通过。
 
 ## 错误与安全行为
 

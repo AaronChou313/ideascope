@@ -3,6 +3,7 @@ import { probeProvider } from "../../infrastructure/llm/openai-compatible";
 import type {
   ProbeCapability,
   ProbeResult,
+  ProviderFormat,
 } from "../../infrastructure/llm/types";
 import {
   probeOpenAlex,
@@ -21,6 +22,7 @@ const capabilities: Array<{ id: ProbeCapability; label: string }> = [
 
 export function ConnectionLab() {
   const [baseUrl, setBaseUrl] = useState("https://api.openai.com/v1");
+  const [format, setFormat] = useState<ProviderFormat>("openai-chat");
   const [model, setModel] = useState("");
   const [keyPresent, setKeyPresent] = useState(false);
   const [results, setResults] = useState<ProbeResult[]>([]);
@@ -44,7 +46,7 @@ export function ConnectionLab() {
     );
     try {
       const result = await probeProvider(
-        { baseUrl, model },
+        { format, baseUrl, model },
         memoryKeyStore.get(),
         capability,
         active.current.signal,
@@ -83,10 +85,28 @@ export function ConnectionLab() {
       </div>
       <div className={styles.grid}>
         <div className={styles.provider}>
-          <h3>OpenAI-compatible Provider</h3>
+          <h3>模型 Provider</h3>
           <p className={styles.help}>
             每次能力测试会向你填写的服务发送一条最小请求，可能产生费用。密钥只保存在当前页面内存中。
           </p>
+          <label>
+            Provider Format
+            <select
+              value={format}
+              onChange={(event) => {
+                const next = event.target.value as ProviderFormat;
+                setFormat(next);
+                setResults([]);
+                if (next === "openai-chat") setBaseUrl("https://api.openai.com/v1");
+                if (next === "openai-responses") setBaseUrl("https://api.openai.com/v1");
+                if (next === "anthropic-messages") setBaseUrl("https://api.anthropic.com");
+              }}
+            >
+              <option value="openai-chat">OpenAI Chat Completions</option>
+              <option value="openai-responses">OpenAI Responses API</option>
+              <option value="anthropic-messages">Anthropic Messages API</option>
+            </select>
+          </label>
           <label>
             Base URL
             <input

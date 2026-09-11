@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.0 工程范围与 GitHub Pages origin 已完成验证；真实 Provider 与跨浏览器仍待外部验收。**
+当前状态：**v0.6.1 Provider 协议兼容修复已完成；DeepSeek Chat Completions 最小实测通过，OpenAI Responses 与 Anthropic Messages 待真实凭证验证。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
@@ -23,6 +23,7 @@
 | v0.6.0-A | 已完成 | workspace 持久化、刷新/中断恢复、quota、版本迁移、项目生命周期与单写者租约 |
 | v0.6.0-B | 已完成 | JSON/Markdown/SVG/PNG、敏感内容审计、SVG 降级、导入新项目与下载 e2e |
 | v0.6.0-C | 已完成 | 安全文本、endpoint/redirect 限制、脱敏诊断、全量清除、攻击夹具与数据流说明 |
+| v0.6.1 | 已完成 | Chat Completions、Responses、Anthropic Messages 三协议 Adapter；DeepSeek 完成/JSON 实测与三类 mock 契约 |
 
 ## 每阶段记录模板
 
@@ -493,3 +494,27 @@
 风险与决策：纯前端只能降低凭证暴露面，不能承诺长期 key 安全。清除全部数据不可撤销，因此 UI 强制精确确认并持续提示先导出项目；单项目删除不会误删共享 Evidence。
 
 下一阶段入口：v1.0.0-A；先补齐真实 Provider/Pages/跨浏览器外部门禁，再执行跨学科任务集、20 轮稳定性和科研质量人工抽查，不以本次 v0.6 构建结果代替 v1.0 验收。
+
+## v0.6.1 阶段记录
+
+阶段 ID：v0.6.1
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：仅修复 Provider 协议与连接可靠性，支持 OpenAI Chat Completions、OpenAI Responses API、Anthropic Messages API；不改变产品结构、研究工作流或视觉体系，不扩展 v0.7.0 功能。
+
+实际修改文件：`src/infrastructure/llm/{types,provider-protocol,openai-compatible,agent-provider}.ts`、网络错误分类、连接实验室格式选择、Provider mock/unit 测试、版本与兼容/安全文档。
+
+已完成：三类协议分别生成 endpoint、header、请求体、结构化输出、工具和返回解析；统一 factory 映射到 `OpenAIChatCompletionsProvider`、`OpenAIResponsesProvider`、`AnthropicMessagesProvider`。Chat 普通探针从 4 提升为 64 output tokens，优先发送通用 thinking disabled 扩展并在格式拒绝时无该字段重试；成功识别 content、reasoning_content、tool_calls 与 finish_reason。Chat 结构化输出使用兼容面更广的 `json_object`，Responses 使用原生 JSON Schema，Anthropic 使用严格 JSON prompt fallback。错误细分 401、403、404 endpoint、429、模型不存在、请求格式不兼容、返回格式异常、离线网络、疑似 CORS 与取消。
+
+真实验收：经用户明确提供临时凭证并授权 2 元预算，在本地 production build 的系统 Chrome 中对 `https://api.deepseek.com/chat/completions` / `deepseek-chat` 执行普通完成与结构化输出最小探针。普通完成收到文本；结构化输出收到有效 `{ok:true}` JSON。请求使用 `max_tokens: 64`、`thinking: {type:"disabled"}` 与 `response_format: {type:"json_object"}`。未记录凭证、Authorization、模型原文或完整响应，测试页面随后清空内存 key；未调用其他付费 Provider。
+
+测试命令与结果：最终 `npm run check` 通过；ESLint、严格 typecheck、18 个 unit/contract 文件共 76 项测试、production build、13 项 Playwright e2e 与 secret scan 全部成功。首次完整检查时既有图谱撤销 e2e 因新增 select 样式选择器作用域过宽而超时；将样式限制到 Provider 面板后，该项单独复跑与完整门禁均通过。既有 ELK 动态 chunk 体积警告仍为非阻断项。
+
+人工验收与截图：检查 `reports/visual/provider-formats-1440x1000.png`；Provider Format、Base URL、Model ID、API Key 与四项探针保持原有双栏布局、黑白灰层级和蓝色主操作，没有改变设置页或研究工作流结构。
+
+未完成 / 待实测：OpenAI Chat Completions、OpenAI Responses 与 Anthropic Messages 尚无对应真实凭证授权；DeepSeek 流式、工具、取消与 reasoner 模型未额外消耗预算实测。三类协议的这些能力均有 mock 请求/响应覆盖，不能记作真实服务验收。
+
+风险与决策：不按厂商散布硬编码逻辑；常见服务通过三种协议格式、Base URL 和 Model ID 映射。浏览器 fetch 对在线状态下的网络失败与 CORS 无法取得服务端诊断，当前以 `navigator.onLine` 区分明确离线，其余 Fetch TypeError 标为疑似 CORS，不伪造确定原因。
+
+下一阶段入口：仍为 v1.0.0-A 外部门禁；如用户提供 OpenAI/Anthropic 凭证与预算授权，再补真实 Responses/Messages 能力矩阵。否则保持待验证，不以 mock 替代。

@@ -302,7 +302,7 @@ function WorkspaceView({ workspace: initialWorkspace }: { workspace: WorkspaceEx
             <option value="complete">完整分支（含折叠节点）</option>
           </select>
         </label>
-        <Button onClick={() => downloadText("ideascope-workspace.json", "application/json", exportWorkspaceJson(exportValue, "0.6.0"))}>下载 JSON</Button>
+        <Button onClick={() => downloadText("ideascope-workspace.json", "application/json", exportWorkspaceJson(exportValue, "0.6.1"))}>下载 JSON</Button>
         <Button onClick={() => downloadText("ideascope-outline.md", "text/markdown", exportWorkspaceMarkdown(exportValue, branch.id))}>下载 Markdown</Button>
         <Button onClick={() => downloadText("ideascope-map.svg", "image/svg+xml", currentSvg())}>下载 SVG</Button>
         <Button onClick={() => void downloadPngOrSvg("ideascope-map", currentSvg())}>下载 PNG</Button>
