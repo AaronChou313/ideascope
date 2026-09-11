@@ -1,313 +1,89 @@
-import {
-  Library,
-  Map,
-  MessageSquare,
-  PanelLeftClose,
-  PanelRightClose,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import type { WorkspaceExport } from "../../contracts/domain";
-import type { GraphNode } from "../../contracts/domain";
-import type { Branch, GraphPatch } from "../../contracts/domain";
-import demoPatchJson from "../../examples/patch.demo.json";
-import { applyGraphPatch } from "../domain/graph/apply-graph-patch";
-import { planCompaction } from "../domain/graph/compaction";
-import { auditWorkspaceExport, exportBranchSvg, exportWorkspaceJson, exportWorkspaceMarkdown } from "../domain/export/workspace-export";
-import { downloadPngOrSvg, downloadText } from "../infrastructure/export/download";
-import { CitationList } from "../features/evidence/CitationList";
-import {
-  WorkspaceContent,
-  type DemoState,
-} from "../features/workspace/WorkspaceContent";
-import { loadDemoWorkspace } from "../infrastructure/demo/workspace-demo";
-import { AppHeader } from "../shared/ui/AppHeader";
-import { Button, Dialog, Tabs } from "../shared/ui";
-import { SafeRichText } from "../shared/ui/SafeRichText";
+import { Download, Map, MessageSquare, PanelLeftClose, PanelRightClose, Search, Settings, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import type { GraphNode, WorkspaceExport } from "../../contracts/domain";
+import { runExploration, type ExplorationProgress } from "../application/exploration/run-exploration";
+import { exportWorkspaceJson } from "../domain/export/workspace-export";
+import { ResearchMap } from "../features/graph/ResearchMap";
+import { SessionSidebar } from "../features/workspace/SessionSidebar";
+import { downloadText } from "../infrastructure/export/download";
+import { WorkspaceRepository } from "../infrastructure/storage/workspace-repository";
+import { Button, Dialog } from "../shared/ui";
 import styles from "./WorkspacePage.module.css";
 
-export function WorkspacePage() {
-  const { id = "demo" } = useParams();
-  return <WorkspaceLoader key={id} id={id} />;
-}
+export function WorkspacePage() { const { id } = useParams(); return <WorkspaceShell key={id ?? "root"} id={id} />; }
 
-function WorkspaceLoader({ id }: { id: string }) {
-  const [workspace, setWorkspace] = useState<WorkspaceExport | null>(() => id === "demo" ? loadDemoWorkspace() : null);
+function WorkspaceShell({ id }: { id?: string }) {
+  const navigate = useNavigate();
+  const [workspace, setWorkspace] = useState<WorkspaceExport | null>(null);
+  const [loading, setLoading] = useState(Boolean(id));
+  const [loadError, setLoadError] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tab, setTab] = useState<"chat" | "detail">("chat");
+  const [draft, setDraft] = useState(() => id ? sessionStorage.getItem(`ideascope.draft.${id}`) ?? "" : "");
+  const [progress, setProgress] = useState<ExplorationProgress | null>(null);
   const [error, setError] = useState("");
-  useEffect(() => {
-    if (id === "demo") return;
-    let active = true;
-    void import("../infrastructure/storage/workspace-repository").then(({ WorkspaceRepository }) => new WorkspaceRepository().get(id)).then((value) => {
-      if (!active) return;
-      if (value) setWorkspace(value); else setError("本地项目不存在或已被清除。");
-    });
-    return () => { active = false; };
-  }, [id]);
-  if (!workspace) return <><AppHeader context="本地研究工作区"/><main role="status">{error || "正在恢复本地项目…"}</main></>;
-  return <WorkspaceView key={workspace.workspace.id} workspace={workspace} />;
-}
+  const [providerDialog, setProviderDialog] = useState(false);
+  const [left, setLeft] = useState(true); const [right, setRight] = useState(true); const [refreshKey, setRefreshKey] = useState(0);
+  const abortRef = useRef<AbortController | null>(null);
 
-function WorkspaceView({ workspace: initialWorkspace }: { workspace: WorkspaceExport }) {
-  const workspace = useMemo(() => structuredClone(initialWorkspace), [initialWorkspace]);
-  const [branches, setBranches] = useState<Branch[]>(() => workspace.workspace.branches);
-  const [undoBranch, setUndoBranch] = useState<Branch | null>(null);
-  const [branchId, setBranchId] = useState(workspace.workspace.activeBranchId);
-  const [selectedId, setSelectedId] = useState<string | null>("g-sufficient");
-  const [left, setLeft] = useState(true);
-  const [right, setRight] = useState(true);
-  const [view, setView] = useState("map");
-  const [demoState, setDemoState] = useState<DemoState>("ready");
-  const [exportOpen, setExportOpen] = useState(false);
-  const [exportScope, setExportScope] = useState<"visible" | "complete">("complete");
-  const [mobilePane, setMobilePane] = useState<"main" | "details">("main");
-  const exportValue = { ...workspace, workspace: { ...workspace.workspace, branches, activeBranchId: branchId } };
-  const exportAudit = auditWorkspaceExport(exportValue);
-  const branch =
-    branches.find((item) => item.id === branchId) ?? branches[0];
-  if (!branch) throw new Error("Demo workspace has no branch.");
-  const selected =
-    branch.graph.nodes.find((node) => node.id === selectedId) ?? null;
-  const claims =
-    selected?.claimIds
-      .map((id) => branch.graph.claims.find((claim) => claim.id === id))
-      .filter((item) => item !== undefined) ?? [];
-  function selectNode(node: GraphNode) {
-    setSelectedId(node.id);
-    setRight(true);
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    void new WorkspaceRepository().get(id).then((value) => {
+      if (!active) return;
+      if (value) { setWorkspace(value); const restored = value.workspace.branches.find((item) => item.id === value.workspace.activeBranchId); setSelectedId(restored?.focusNodeId ?? null); }
+      else setLoadError("探索会话不存在或已被删除。现有其他会话没有受到影响。");
+      setLoading(false);
+    });
+    return () => { active = false; abortRef.current?.abort(); };
+  }, [id]);
+  useEffect(() => { if (id) sessionStorage.setItem(`ideascope.draft.${id}`, draft); }, [draft, id]);
+
+  const branch = workspace?.workspace.branches.find((item) => item.id === workspace.workspace.activeBranchId) ?? null;
+  const selected = branch?.graph.nodes.find((node) => node.id === selectedId) ?? null;
+  const selectedEvidence = useMemo(() => {
+    if (!workspace || !branch || !selected) return [];
+    const ids = new Set(branch.graph.claims.filter((claim) => selected.claimIds.includes(claim.id)).flatMap((claim) => claim.evidenceLinks.map((link) => link.evidenceId)));
+    return workspace.workspace.evidence.filter((item) => ids.has(item.id)).map((evidence) => ({ evidence, paper: workspace.workspace.papers.find((paper) => paper.id === evidence.paperId) })).filter((item) => item.paper);
+  }, [workspace, branch, selected]);
+
+  async function send(text = draft, sourceWorkspace = workspace) {
+    if (!sourceWorkspace || progress || !text.trim()) return;
+    setError(""); const controller = new AbortController(); abortRef.current = controller;
+    try {
+      const active = sourceWorkspace.workspace.branches.find((item) => item.id === sourceWorkspace.workspace.activeBranchId);
+      const result = await runExploration(sourceWorkspace, text, { signal: controller.signal, focusNodeId: active?.focusNodeId, onProgress: setProgress });
+      setWorkspace(result.workspace); setDraft(""); sessionStorage.removeItem(`ideascope.draft.${id}`); setSelectedId(result.workspace.workspace.branches.find((item) => item.id === result.workspace.workspace.activeBranchId)?.focusNodeId ?? null); setTab("chat"); setRefreshKey((value) => value + 1);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "研究请求失败。";
+      if (message === "需要配置模型") setProviderDialog(true);
+      else if (caught instanceof DOMException && caught.name === "AbortError") setError("已取消本次研究；取消前保存的对话仍然保留。");
+      else setError(message);
+    } finally { setProgress(null); abortRef.current = null; }
   }
-  function selectBranch(id: string) {
-    setBranchId(id);
-    const next = branches.find((item) => item.id === id);
-    setSelectedId(next?.focusNodeId ?? next?.graph.nodes[0]?.id ?? null);
+  function chooseNode(node: GraphNode) { setSelectedId(node.id); setTab("detail"); }
+  function updateFocus(nodeId: string | null) {
+    if (!workspace) return workspace;
+    const next = structuredClone(workspace); const active = next.workspace.branches.find((item) => item.id === next.workspace.activeBranchId); if (active) active.focusNodeId = nodeId; setWorkspace(next); void new WorkspaceRepository().save(next); return next;
   }
-  function applyDemoProposal() {
-    if (!branch) return;
-    const proposal = { ...(demoPatchJson as GraphPatch), baseRevision: branch.revision };
-    const next = applyGraphPatch(proposal, { workspaceId: workspace.workspace.id, branch, evidenceIds: new Set(workspace.workspace.evidence.map(({ id }) => id)) });
-    setUndoBranch(structuredClone(branch));
-    setBranches((items) => items.map((item) => item.id === next.id ? next : item));
-    setDemoState("ready");
-    setSelectedId("q-evidence-criteria");
-  }
-  function undoDemoProposal() {
-    if (!undoBranch) return;
-    setBranches((items) => items.map((item) => item.id === undoBranch.id ? undoBranch : item));
-    setUndoBranch(null);
-    setSelectedId(undoBranch.focusNodeId);
-  }
-  function setDirectionStatus(status: "saved" | "excluded") {
-    if (!branch) return;
-    const targetId = branch.id;
-    setBranches((items) => items.map((item) => item.id !== targetId ? item : { ...item, directions: item.directions.map((direction, index) => index ? direction : { ...direction, status, userEdited: true }) }));
-  }
-  function currentSvg() {
-    if (!branch) throw new Error("演示分支不存在。");
-    return exportBranchSvg(branch, exportScope, planCompaction(branch).visibleIds);
-  }
-  function showMobileSection(next: "map" | "papers" | "details") {
-    if (next === "details") {
-      setMobilePane("details");
-      return;
-    }
-    setMobilePane("main");
-    setView(next);
-  }
-  return (
-    <div className={styles.page}>
-      <AppHeader context="演示研究工作区" />
-      <main
-        className={`${styles.workspace} ${!left ? styles.noLeft : ""} ${!right ? styles.noRight : ""} ${mobilePane === "details" ? styles.mobileDetails : ""}`}
-      >
-        <aside className={styles.left}>
-          <Link to="/">← 所有探索</Link>
-          <p>研究轨迹</p>
-          {branches.map((item) => (
-            <button
-              key={item.id}
-              className={item.id === branch.id ? styles.active : ""}
-              onClick={() => selectBranch(item.id)}
-            >
-              {item.title}
-            </button>
-          ))}
-          <nav>
-            <button onClick={() => setView("map")}>
-              <Map />
-              研究地图
-            </button>
-            <button onClick={() => setView("papers")}>
-              <Library />
-              文献与证据
-            </button>
-            <button onClick={() => setView("directions")}>◎ 候选方向</button>
-          </nav>
-        </aside>
-        <section className={styles.center}>
-          <header>
-            <div>
-              <h1>{branch.title}</h1>
-              <p>
-                {branch.graph.nodes.length} 个语义节点 · 示例整理，非完整调研
-              </p>
-            </div>
-            <div className={styles.tools}>
-              <Tabs
-                label="中央视图"
-                value={view}
-                onChange={setView}
-                items={[
-                  { id: "map", label: "地图" },
-                  { id: "list", label: "结构" },
-                ]}
-              />
-              <select
-                aria-label="演示状态"
-                value={demoState}
-                onChange={(event) =>
-                  setDemoState(event.target.value as DemoState)
-                }
-              >
-                <option value="ready">正常</option>
-                <option value="firstVisit">首访</option>
-                <option value="loading">加载</option>
-                <option value="empty">无结果</option>
-                <option value="error">失败</option>
-                <option value="cancelled">已取消</option>
-                <option value="proposal">待应用</option>
-              </select>
-              <Button aria-label="导出演示" onClick={() => setExportOpen(true)}>
-                导出
-              </Button>
-              {undoBranch && <Button variant="ghost" onClick={undoDemoProposal}>撤销上次应用</Button>}
-            </div>
-          </header>
-          <div className={styles.canvas}>
-            {view === "list" && demoState === "ready" ? (
-              <div className={styles.list}>
-                {branch.graph.nodes.map((node) => (
-                  <button
-                    key={node.id}
-                    className={
-                      node.id === selectedId ? styles.listSelected : ""
-                    }
-                    onClick={() => selectNode(node)}
-                  >
-                    <span>{node.kind}</span>
-                    <strong>{node.title}</strong>
-                    <p>{node.summary}</p>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <WorkspaceContent
-                section={
-                  view === "papers" || view === "directions" ? view : "map"
-                }
-                state={demoState}
-                workspace={workspace}
-                branch={branch}
-                selectedId={selectedId}
-                onSelect={selectNode}
-                onApplyProposal={applyDemoProposal}
-                onDismissProposal={() => setDemoState("ready")}
-                onDirectionStatus={setDirectionStatus}
-              />
-            )}
-          </div>
-        </section>
-        <aside className={styles.right}>
-          <header>
-            <MessageSquare />
-            节点详情 <span>演示</span>
-          </header>
-          <div>
-            {selected ? (
-              <>
-                <small className={styles.kind}>{selected.kind}</small>
-                <h2>{selected.title}</h2>
-                <p>{selected.summary}</p>
-                <h3>相关判断</h3>
-                {claims.length ? (
-                  claims.map((claim) => (
-                    <article key={claim.id}>
-                      <b>{claim.epistemicStatus}</b>
-                      <p><SafeRichText text={claim.text} /></p>
-                      <CitationList claim={claim} evidence={workspace.workspace.evidence} papers={workspace.workspace.papers} />
-                    </article>
-                  ))
-                ) : (
-                  <p>这是研究问题，不是已经被文献证明的事实。</p>
-                )}
-                <Button variant="primary">围绕此处继续</Button>
-              </>
-            ) : (
-              <>
-                <h2>选择一个节点</h2>
-                <p>查看含义、判断与证据范围。</p>
-              </>
-            )}
-          </div>
-        </aside>
-        <nav className={styles.mobileNav} aria-label="移动端工作区视图">
-          <button
-            aria-pressed={mobilePane === "main" && view !== "papers"}
-            onClick={() => showMobileSection("map")}
-          >
-            <Map />
-            地图
-          </button>
-          <button
-            aria-pressed={mobilePane === "main" && view === "papers"}
-            onClick={() => showMobileSection("papers")}
-          >
-            <Library />
-            资料
-          </button>
-          <button
-            aria-pressed={mobilePane === "details"}
-            onClick={() => showMobileSection("details")}
-          >
-            <MessageSquare />
-            详情
-          </button>
-        </nav>
-        <Button
-          className={styles.lt}
-          variant="ghost"
-          aria-label="折叠左侧面板"
-          onClick={() => setLeft(!left)}
-        >
-          <PanelLeftClose size={17} />
-        </Button>
-        <Button
-          className={styles.rt}
-          variant="ghost"
-          aria-label="折叠右侧面板"
-          onClick={() => setRight(!right)}
-        >
-          <PanelRightClose size={17} />
-        </Button>
-      </main>
-      <Dialog
-        open={exportOpen}
-        title="带走当前的理解"
-        onClose={() => setExportOpen(false)}
-      >
-        <p>当前分支：{branch.title} · {branch.graph.nodes.length} 个节点。导出包含 {exportAudit.messages} 条消息、{exportAudit.userNotes} 条用户笔记、{exportAudit.evidenceExcerpts} 条原文片段；凭证 0 项。</p>
-        <p>JSON 包含完整项目；Markdown 使用当前分支。请在分享前检查研究内容与引用片段。</p>
-        <label>
-          图导出范围
-          <select aria-label="图导出范围" value={exportScope} onChange={(event) => setExportScope(event.target.value as "visible" | "complete") }>
-            <option value="visible">当前可见图</option>
-            <option value="complete">完整分支（含折叠节点）</option>
-          </select>
-        </label>
-        <Button onClick={() => downloadText("ideascope-workspace.json", "application/json", exportWorkspaceJson(exportValue, "0.6.2"))}>下载 JSON</Button>
-        <Button onClick={() => downloadText("ideascope-outline.md", "text/markdown", exportWorkspaceMarkdown(exportValue, branch.id))}>下载 Markdown</Button>
-        <Button onClick={() => downloadText("ideascope-map.svg", "image/svg+xml", currentSvg())}>下载 SVG</Button>
-        <Button onClick={() => void downloadPngOrSvg("ideascope-map", currentSvg())}>下载 PNG</Button>
-        <Button onClick={() => setExportOpen(false)}>了解</Button>
-      </Dialog>
-    </div>
-  );
+  async function continueNode() { if (!selected) return; const next = updateFocus(selected.id); setTab("chat"); await send(`围绕「${selected.title}」继续调研，必要时检索更多文献并增量更新研究地图。`, next); }
+
+  if (!id) return <div className={styles.page}><SessionSidebar /><main className={styles.blank}><Map /><h1>从一个模糊的研究想法开始</h1><p>点击“新建探索”，然后在右侧对话中输入问题、概念或还不成熟的研究念头。</p></main><aside className={styles.blankChat}><h2>探索对话</h2><p>先新建一个探索会话。</p></aside></div>;
+  if (loading) return <main className={styles.loading} role="status">正在恢复研究会话…</main>;
+  if (!workspace || !branch) return <div className={styles.page}><SessionSidebar activeId={id} /><main className={styles.blank}><h1>无法恢复会话</h1><p>{loadError}</p><Link to="/">返回工作台</Link></main></div>;
+
+  return <div className={`${styles.page} ${!left ? styles.noLeft : ""} ${!right ? styles.noRight : ""}`}>
+    <SessionSidebar activeId={id} refreshKey={refreshKey} />
+    <section className={styles.center}><header><div><h1>{workspace.workspace.title}</h1><p>{branch.graph.nodes.length} 个节点 · {workspace.workspace.evidence.length} 条 Evidence · 本地已保存</p></div><div className={styles.toolbar}><label><Search size={14} /><input placeholder="搜索节点" onChange={(event) => { const term = event.target.value.trim().toLocaleLowerCase(); const node = branch.graph.nodes.find((item) => item.title.toLocaleLowerCase().includes(term)); if (node && term) chooseNode(node); }} /></label><Button aria-label="导出当前探索" onClick={() => downloadText(`${workspace.workspace.title}.json`, "application/json", exportWorkspaceJson(workspace, "0.6.4"))}><Download size={15} /></Button><Link aria-label="设置" to="/settings/provider" state={{ returnTo: `/workspace/${id}` }}><Settings size={16} /></Link></div></header>
+      <div className={styles.canvas}>{branch.graph.nodes.length ? <ResearchMap branch={branch} selectedId={selectedId} onSelect={chooseNode} /> : <div className={styles.canvasEmpty}><Map /><h2>从一个模糊的研究想法开始</h2><p>你可以从一个问题、概念或还不成熟的研究念头开始。</p><small>例如：机器人足端感知能为状态估计提供什么信息？</small></div>}</div>
+    </section>
+    <aside className={styles.right}><div className={styles.tabs}><button aria-selected={tab === "chat"} onClick={() => setTab("chat")}><MessageSquare size={14} />探索对话</button><button aria-selected={tab === "detail"} onClick={() => setTab("detail")}>节点详情</button></div>
+      {tab === "chat" ? <div className={styles.chat}><div className={styles.messages}>{workspace.workspace.messages.filter((message) => message.branchId === branch.id).map((message) => <article key={message.id} className={message.role === "user" ? styles.user : styles.assistant}><small>{message.role === "user" ? "你" : "IdeaScope"}</small><p>{message.text}</p></article>)}{progress && <div className={styles.progress} role="status"><span /><strong>{progress.message}</strong>{progress.candidates !== undefined && <small>{progress.queries} 组查询 · {progress.candidates} 条候选资料</small>}</div>}{error && <div className={styles.error} role="alert">{error}</div>}</div>
+        <div className={styles.composer}>{branch.focusNodeId && <div className={styles.focus}>正在围绕：{branch.graph.nodes.find((node) => node.id === branch.focusNodeId)?.title}<button aria-label="清除研究焦点" onClick={() => updateFocus(null)}><X size={12} /></button></div>}<textarea autoFocus aria-label="探索对话输入" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }} placeholder="输入研究问题，Enter 发送，Shift+Enter 换行" /><div><small>请求会发送给已配置 Provider；检索使用 OpenAlex。</small>{progress ? <Button onClick={() => abortRef.current?.abort()}>取消</Button> : <Button variant="primary" disabled={!draft.trim()} onClick={() => void send()}>发送</Button>}</div></div>
+      </div> : <div className={styles.detail}>{selected ? <><small>{selected.kind}</small><h2>{selected.title}</h2><p>{selected.summary}</p><h3>为什么重要</h3><p>{selected.summary}</p><h3>当前证据</h3>{selectedEvidence.length ? selectedEvidence.map(({ evidence, paper }) => <article key={evidence.id}><a href={paper!.url} target="_blank" rel="noreferrer noopener">{paper!.title}</a><small>{paper!.authors.slice(0, 3).join(", ")} · {paper!.year ?? "年份未知"} · {paper!.venue ?? paper!.source}</small><p>{evidence.paraphrase}</p><em>{evidence.level === "abstract" ? "摘要可用" : "仅元数据"}</em></article>) : <p>暂无直接文献证据；此节点属于模型归纳或待核查问题。</p>}<Button variant="primary" onClick={() => void continueNode()}>围绕此处继续</Button></> : <div className={styles.detailEmpty}>选择研究地图中的节点查看详情。</div>}</div>}
+    </aside>
+    <Button className={styles.leftToggle} aria-label="折叠探索会话" onClick={() => setLeft(!left)}><PanelLeftClose size={15} /></Button><Button className={styles.rightToggle} aria-label="折叠右侧面板" onClick={() => setRight(!right)}><PanelRightClose size={15} /></Button>
+    <Dialog open={providerDialog} title="需要配置模型" onClose={() => setProviderDialog(false)}><p>IdeaScope 需要连接模型 Provider 才能开始研究探索。</p><div className={styles.dialogActions}><Button onClick={() => setProviderDialog(false)}>暂不配置</Button><Button variant="primary" onClick={() => void navigate("/settings/provider", { state: { returnTo: `/workspace/${id}` } })}>前往模型设置</Button></div></Dialog>
+  </div>;
 }

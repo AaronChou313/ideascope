@@ -4,6 +4,8 @@ export interface ProviderRequest {
   schemaName: string;
   signal: AbortSignal;
   repair?: boolean;
+  outputSchema?: Record<string, unknown>;
+  jsonInstruction?: string;
 }
 export interface ProviderAdapter {
   readonly structuredOutput: boolean;

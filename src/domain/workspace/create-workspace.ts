@@ -26,3 +26,8 @@ export function createWorkspaceFromIdea(idea: string, id: string = crypto.random
     },
   };
 }
+
+export function createEmptyWorkspace(id: string = crypto.randomUUID()): WorkspaceExport {
+  const now = new Date().toISOString();
+  return { documentType: "ideascope.workspace", formatVersion: 1, createdWith: "0.6.4", exportedAt: now, isDemo: false, workspace: { id, title: "未命名探索", seedIdea: "", activeBranchId: "branch-main", branches: [{ id: "branch-main", title: "主要探索", parentBranchId: null, forkedFromRevision: null, revision: 0, focusNodeId: null, scope: { object: "", question: "", constraints: [], assumptions: [] }, summary: { understood: [], decisions: [], openQuestions: [] }, graph: { nodes: [], edges: [], claims: [] }, view: { positions: {}, collapsedIds: [], viewport: { x: 0, y: 0, zoom: 1 } }, directions: [] }], papers: [], evidence: [], messages: [], runs: [] } };
+}
