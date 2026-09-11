@@ -24,6 +24,13 @@
 
 本文件只记录实际运行过的结果。Node/curl 成功不计作浏览器成功；模型 mock 不计作真实 Provider 成功。凭证值、Authorization header 与原始响应不写入记录。
 
+## v0.6.12 集成 Dogfooding
+
+- 2026-09-11 直接访问公开 API：OpenAlex、Crossref、arXiv 均为 HTTP 200；Semantic Scholar 匿名 API 返回 HTTP 429。该 429 被视为单来源限流而不是整次研究失败，已有多来源 partial/fallback 自动化覆盖。
+- OpenAlex 三主题实时抽样：Robotics、Localization、Geomatics 查询各返回 5 条；其中分别有 4、4、5 条摘要可用。实时总命中数仅作连通性证据，不作为产品质量承诺。
+- 生产构建 E2E 已覆盖 Initial Exploration、节点上下文继续、刷新恢复、Provider guard、来源设置、Profile 保存、多会话切换以及档案入口；模型与文献响应使用受控 mock，因此不记作真实 Provider 验收。
+- 本次运行时 macOS 交互桌面锁定，进程环境没有 Provider 凭证。未读取浏览器存储中的密钥、未把旧凭证复制进命令，故 v0.6.12 没有新增真实 Provider 消耗记录；v0.7.0 仍需用户解锁并确认产品体验稳定后才能开始。
+
 ## 测试环境
 
 | 项目               | 值                                                                       |

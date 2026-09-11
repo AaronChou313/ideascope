@@ -297,6 +297,26 @@ test("session and data menus expose the supported export and archive actions", a
   await page.screenshot({ path: "reports/visual/v0.6.11/data-archive.png", fullPage: true });
 });
 
+test("multiple research sessions remain independently addressable after refresh", async ({ page }) => {
+  await page.goto("/ideascope/#/");
+  await page.getByRole("button", { name: /新建探索/ }).click();
+  await expect(page).toHaveURL(/#\/workspace\//);
+  const firstUrl = page.url();
+  page.once("dialog", (dialog) => dialog.accept("机器人定位"));
+  await page.getByLabel(/未命名探索 的更多操作/).click();
+  await page.getByRole("button", { name: "重命名" }).click();
+  await expect(page.getByText("机器人定位", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.waitForURL((url) => url.toString() !== firstUrl);
+  const secondUrl = page.url();
+  expect(secondUrl).not.toBe(firstUrl);
+  await page.reload();
+  await page.getByText("机器人定位", { exact: true }).click();
+  await expect(page).toHaveURL(firstUrl);
+  await page.getByRole("button", { name: /未命名探索/ }).click();
+  await expect(page).toHaveURL(secondUrl);
+});
+
 test("literature source settings persist enabled state and expose honest source status", async ({ page }) => {
   await page.route("https://api.openalex.org/**", (route) =>
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ meta: { count: 0 }, results: [] }) }),
