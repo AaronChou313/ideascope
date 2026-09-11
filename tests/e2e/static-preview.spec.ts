@@ -1,18 +1,271 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const idea="我想研究四足机器人足端传感器对于定位导航的作用";
-const plan={title:"四足机器人足端传感与定位",understanding:"研究足端接触感知对定位与状态估计的作用",queries:["quadruped robot foot contact state estimation","legged robot foot sensing localization"]};
-const nodes=[{kind:"question",title:"足端感知如何支持定位",summary:"核心研究问题",evidenceIds:["evidence:openalex:W1"]},{kind:"approach",title:"接触辅助状态估计",summary:"利用稳定接触构造运动约束",evidenceIds:["evidence:openalex:W1"]},{kind:"concept",title:"接触状态识别",summary:"判断足端接触是否可信",evidenceIds:["evidence:openalex:W1"]},{kind:"finding",title:"接触约束抑制漂移",summary:"可靠接触可以约束累积误差",evidenceIds:["evidence:openalex:W1"]},{kind:"gap",title:"打滑导致约束失效",summary:"打滑会让错误约束污染估计",evidenceIds:[]},{kind:"direction",title:"足端触觉与惯性融合",summary:"联合多模态感知提升鲁棒性",evidenceIds:[]}];
-const synthesis={answer:"当前文献可从接触识别、状态估计和打滑鲁棒性三个层面组织。",nodes,edges:[{source:0,target:1,relation:"addressed_by",label:"通过"},{source:1,target:2,relation:"requires",label:"依赖"},{source:1,target:3,relation:"related_to",label:"带来"},{source:1,target:4,relation:"limited_by",label:"受限于"},{source:4,target:5,relation:"motivates",label:"推动"}],nextQuestions:["接触信息如何进入状态估计？"],summary:["足端接触是状态估计的重要约束"]};
-async function configure(page:Page){await page.goto("/ideascope/#/settings/provider");await page.getByLabel("Base URL").fill("https://provider.test/v1");await page.getByLabel("Model ID").fill("mock-model");await page.getByLabel("API Key").fill("browser-test-key");await page.getByRole("button",{name:"保存配置"}).click();}
-async function mockResearch(page:Page){let calls=0;await page.route("https://provider.test/v1/chat/completions",async route=>{const value=calls++%2===0?plan:calls===2?synthesis:{...synthesis,answer:"围绕接触辅助状态估计完成了局部深入。",nodes:[{kind:"approach",title:"因子图接触约束",summary:"把足端接触加入因子图",evidenceIds:["evidence:openalex:W1"]}],edges:[],summary:["接触约束可进入因子图"]};await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({choices:[{message:{content:JSON.stringify(value)}}]})});});await page.route("https://api.openalex.org/works**",async route=>{await new Promise(resolve=>setTimeout(resolve,180));await route.fulfill({status:200,contentType:"application/json",headers:{"Access-Control-Allow-Origin":"*"},body:JSON.stringify({meta:{count:1,next_cursor:null},results:[{id:"https://openalex.org/W1",doi:"https://doi.org/10.1000/test",title:"Contact-Aided State Estimation for Legged Robots",publication_year:2024,authorships:[{author:{display_name:"A. Researcher"}}],primary_location:{source:{display_name:"Robotics Journal"},landing_page_url:"https://example.test/paper"},best_oa_location:null,abstract_inverted_index:{Contact:[0],aided:[1],state:[2],estimation:[3]}}]})});});}
+const idea = "我想研究四足机器人足端传感器对于定位导航的作用";
+const plan = {
+  title: "四足机器人足端传感与定位",
+  understanding: "研究足端接触感知对定位与状态估计的作用",
+  queries: [
+    "quadruped robot foot contact state estimation",
+    "legged robot foot sensing localization",
+  ],
+};
+const nodes = [
+  {
+    kind: "question",
+    title: "足端感知如何支持定位",
+    summary: "核心研究问题",
+    evidenceIds: ["evidence:openalex:W1"],
+  },
+  {
+    kind: "approach",
+    title: "接触辅助状态估计",
+    summary: "利用稳定接触构造运动约束",
+    evidenceIds: ["evidence:openalex:W1"],
+  },
+  {
+    kind: "concept",
+    title: "接触状态识别",
+    summary: "判断足端接触是否可信",
+    evidenceIds: ["evidence:openalex:W1"],
+  },
+  {
+    kind: "finding",
+    title: "接触约束抑制漂移",
+    summary: "可靠接触可以约束累积误差",
+    evidenceIds: ["evidence:openalex:W1"],
+  },
+  {
+    kind: "gap",
+    title: "打滑导致约束失效",
+    summary: "打滑会让错误约束污染估计",
+    evidenceIds: [],
+  },
+  {
+    kind: "direction",
+    title: "足端触觉与惯性融合",
+    summary: "联合多模态感知提升鲁棒性",
+    evidenceIds: [],
+  },
+];
+const synthesis = {
+  answer: "当前文献可从接触识别、状态估计和打滑鲁棒性三个层面组织。",
+  nodes,
+  edges: [
+    { source: 0, target: 1, relation: "addressed_by", label: "通过" },
+    { source: 1, target: 2, relation: "requires", label: "依赖" },
+    { source: 1, target: 3, relation: "related_to", label: "带来" },
+    { source: 1, target: 4, relation: "limited_by", label: "受限于" },
+    { source: 4, target: 5, relation: "motivates", label: "推动" },
+  ],
+  nextQuestions: ["接触信息如何进入状态估计？"],
+  summary: ["足端接触是状态估计的重要约束"],
+};
+async function configure(page: Page) {
+  await page.goto("/ideascope/#/settings/provider");
+  await page.getByLabel("Base URL").fill("https://provider.test/v1");
+  await page.getByLabel("Model ID").fill("mock-model");
+  await page.getByLabel("API Key").fill("browser-test-key");
+  await page.getByRole("button", { name: "保存配置" }).click();
+}
+async function mockResearch(page: Page) {
+  let calls = 0;
+  await page.route(
+    "https://provider.test/v1/chat/completions",
+    async (route) => {
+      const value =
+        calls++ % 2 === 0
+          ? plan
+          : calls === 2
+            ? synthesis
+            : {
+                ...synthesis,
+                answer: "围绕接触辅助状态估计完成了局部深入。",
+                nodes: [
+                  {
+                    kind: "approach",
+                    title: "因子图接触约束",
+                    summary: "把足端接触加入因子图",
+                    evidenceIds: ["evidence:openalex:W1"],
+                  },
+                ],
+                edges: [],
+                summary: ["接触约束可进入因子图"],
+              };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          choices: [{ message: { content: JSON.stringify(value) } }],
+        }),
+      });
+    },
+  );
+  await page.route("https://api.openalex.org/works**", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({
+        meta: { count: 1, next_cursor: null },
+        results: [
+          {
+            id: "https://openalex.org/W1",
+            doi: "https://doi.org/10.1000/test",
+            title: "Contact-Aided State Estimation for Legged Robots",
+            publication_year: 2024,
+            authorships: [{ author: { display_name: "A. Researcher" } }],
+            primary_location: {
+              source: { display_name: "Robotics Journal" },
+              landing_page_url: "https://example.test/paper",
+            },
+            best_oa_location: null,
+            abstract_inverted_index: {
+              Contact: [0],
+              aided: [1],
+              state: [2],
+              estimation: [3],
+            },
+          },
+        ],
+      }),
+    });
+  });
+}
 
-test("root is the direct empty research workspace at desktop widths",async({page})=>{for(const [width,name] of [[1440,"01-empty-workspace"],[1920,"01-empty-workspace-1920"],[1100,"01-empty-workspace-1100"]] as const){await page.setViewportSize({width,height:900});await page.goto("/ideascope/#/");await expect(page.getByRole("heading",{name:"从一个模糊的研究想法开始"})).toBeVisible();await page.screenshot({path:`reports/visual/v0.6.4/${name}.png`,fullPage:true});}});
+test("root is the direct empty research workspace at desktop widths", async ({
+  page,
+}) => {
+  for (const [width, name] of [
+    [1440, "01-empty-workspace"],
+    [1920, "01-empty-workspace-1920"],
+    [1100, "01-empty-workspace-1100"],
+  ] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/ideascope/#/");
+    await expect(
+      page.getByRole("heading", { name: "从一个模糊的研究想法开始" }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: `reports/visual/v0.6.4/${name}.png`,
+      fullPage: true,
+    });
+  }
+});
 
-test("provider guard preserves draft and protocol switching preserves common fields",async({page})=>{await page.goto("/ideascope/#/");await page.getByRole("button",{name:/新建探索/}).click();await page.getByLabel("探索对话输入").fill(idea);await page.getByRole("button",{name:"发送"}).click();await expect(page.getByRole("dialog",{name:"需要配置模型"})).toBeVisible();await page.getByRole("button",{name:"前往模型设置"}).click();await page.getByLabel("Base URL").fill("https://provider.test/v1");await page.getByLabel("Model ID").fill("model-x");await page.getByLabel("API Key").fill("session-only-key");await page.getByLabel("Provider Format").selectOption("openai-responses");await page.getByLabel("Provider Format").selectOption("openai-chat");await expect(page.getByLabel("Base URL")).toHaveValue("https://provider.test/v1");await expect(page.getByLabel("Model ID")).toHaveValue("model-x");await page.screenshot({path:"reports/visual/v0.6.4/06-settings-provider.png",fullPage:true});await page.getByRole("button",{name:"保存配置"}).click();await page.getByRole("link",{name:"返回研究工作区"}).click();await expect(page.getByLabel("探索对话输入")).toHaveValue(idea);});
+test("provider guard preserves draft and protocol switching preserves common fields", async ({
+  page,
+}) => {
+  await page.goto("/ideascope/#/");
+  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByLabel("探索对话输入").fill(idea);
+  await page.getByRole("button", { name: "发送" }).click();
+  await expect(
+    page.getByRole("dialog", { name: "需要配置模型" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "前往模型设置" }).click();
+  await page.getByLabel("Base URL").fill("https://provider.test/v1");
+  await page.getByLabel("Model ID").fill("model-x");
+  await page.getByLabel("API Key").fill("session-only-key");
+  await page.getByLabel("Provider Format").selectOption("openai-responses");
+  await page.getByLabel("Provider Format").selectOption("openai-chat");
+  await expect(page.getByLabel("Base URL")).toHaveValue(
+    "https://provider.test/v1",
+  );
+  await expect(page.getByLabel("Model ID")).toHaveValue("model-x");
+  await page.screenshot({
+    path: "reports/visual/v0.6.4/06-settings-provider.png",
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "保存配置" }).click();
+  await page.reload();
+  await expect(page.getByLabel("API Key")).toHaveAttribute(
+    "placeholder",
+    "已在当前会话保存",
+  );
+  await page.getByRole("link", { name: "返回研究工作区" }).click();
+  await expect(page.getByLabel("探索对话输入")).toHaveValue(idea);
+});
 
-test("initial exploration creates evidence graph and node continuation updates it incrementally",async({page})=>{await mockResearch(page);await configure(page);await page.goto("/ideascope/#/");await page.getByRole("button",{name:/新建探索/}).click();await page.getByLabel("探索对话输入").fill(idea);await page.getByRole("button",{name:"发送"}).click();await expect(page.getByText(/正在检索|正在整理/)).toBeVisible();await page.screenshot({path:"reports/visual/v0.6.4/02-initial-exploration-running.png",fullPage:true});await expect(page.getByText("接触辅助状态估计",{exact:true}).first()).toBeVisible({timeout:15000});await expect(page.getByText(/6 个节点 · 1 条 Evidence/)).toBeVisible();await page.screenshot({path:"reports/visual/v0.6.4/03-research-graph.png",fullPage:true});await page.getByText("接触辅助状态估计",{exact:true}).first().click();await expect(page.getByRole("heading",{name:"接触辅助状态估计"})).toBeVisible();await expect(page.getByText("Contact-Aided State Estimation for Legged Robots")).toBeVisible();await page.screenshot({path:"reports/visual/v0.6.4/04-node-detail.png",fullPage:true});await page.getByRole("button",{name:"围绕此处继续"}).click();await expect(page.getByText("因子图接触约束",{exact:true}).first()).toBeVisible({timeout:15000});await expect(page.getByText(/7 个节点 · 1 条 Evidence/)).toBeVisible();await page.screenshot({path:"reports/visual/v0.6.4/05-continue-from-node.png",fullPage:true});await page.reload();await expect(page.getByText("因子图接触约束",{exact:true}).first()).toBeVisible();await page.screenshot({path:"reports/visual/v0.6.4/07-session-history.png",fullPage:true});});
+test("initial exploration creates evidence graph and node continuation updates it incrementally", async ({
+  page,
+}) => {
+  await mockResearch(page);
+  await configure(page);
+  await page.goto("/ideascope/#/");
+  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByLabel("探索对话输入").fill(idea);
+  await page.getByRole("button", { name: "发送" }).click();
+  await expect(page.getByRole("status")).toHaveAttribute("open", "");
+  await expect(page.getByText(/正在检索|正在整理/).first()).toBeVisible();
+  await page.screenshot({
+    path: "reports/visual/v0.6.4/02-initial-exploration-running.png",
+    fullPage: true,
+  });
+  await expect(
+    page.getByText("接触辅助状态估计", { exact: true }).first(),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/6 个节点 · 1 条 Evidence/)).toBeVisible();
+  await expect(page.getByRole("status")).not.toHaveAttribute("open", "");
+  await page.getByRole("status").locator("summary").click();
+  await expect(page.getByText("正在理解问题")).toBeVisible();
+  await page.screenshot({
+    path: "reports/visual/v0.6.4/03-research-graph.png",
+    fullPage: true,
+  });
+  await page.getByText("接触辅助状态估计", { exact: true }).first().click();
+  await expect(
+    page.getByRole("heading", { name: "接触辅助状态估计" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Contact-Aided State Estimation for Legged Robots"),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "reports/visual/v0.6.4/04-node-detail.png",
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "围绕此处继续" }).click();
+  await expect(
+    page.getByText("因子图接触约束", { exact: true }).first(),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/7 个节点 · 1 条 Evidence/)).toBeVisible();
+  await page.screenshot({
+    path: "reports/visual/v0.6.4/05-continue-from-node.png",
+    fullPage: true,
+  });
+  await page.reload();
+  await expect(
+    page.getByText("因子图接触约束", { exact: true }).first(),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "reports/visual/v0.6.4/07-session-history.png",
+    fullPage: true,
+  });
+});
 
-test("settings return to the same session and invalid settings return falls back to root",async({page})=>{await configure(page);await page.goto("/ideascope/#/");await page.getByRole("button",{name:/新建探索/}).click();await expect(page).toHaveURL(/#\/workspace\//);const url=page.url();await page.getByLabel("设置").click();await page.getByRole("link",{name:"返回研究工作区"}).click();await expect(page).toHaveURL(url);await page.goto("/ideascope/#/settings/about");await page.getByRole("link",{name:"返回首页"}).click();await expect(page).toHaveURL(/#\/$/);});
+test("settings return to the same session and invalid settings return falls back to root", async ({
+  page,
+}) => {
+  await configure(page);
+  await page.goto("/ideascope/#/");
+  await page.getByRole("button", { name: /新建探索/ }).click();
+  await expect(page).toHaveURL(/#\/workspace\//);
+  const url = page.url();
+  await page.getByLabel("设置").click();
+  await page.getByRole("link", { name: "返回研究工作区" }).click();
+  await expect(page).toHaveURL(url);
+  await page.goto("/ideascope/#/settings/about");
+  await page.getByRole("link", { name: "返回首页" }).click();
+  await expect(page).toHaveURL(/#\/$/);
+});
 
-test("session delete requires exact confirmation",async({page})=>{await page.goto("/ideascope/#/");await page.getByRole("button",{name:/新建探索/}).click();await page.getByLabel(/未命名探索 的更多操作/).click();await page.getByRole("button",{name:"删除"}).click();await expect(page.getByRole("button",{name:"确认删除"})).toBeDisabled();await page.getByLabel("输入会话名称确认删除").fill("未命名探索");await page.getByRole("button",{name:"确认删除"}).click();await expect(page.getByText("还没有探索会话")).toBeVisible();});
+test("session delete requires exact confirmation", async ({ page }) => {
+  await page.goto("/ideascope/#/");
+  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByLabel(/未命名探索 的更多操作/).click();
+  await page.getByRole("button", { name: "删除" }).click();
+  await expect(page.getByRole("button", { name: "确认删除" })).toBeDisabled();
+  await page.getByLabel("输入会话名称确认删除").fill("未命名探索");
+  await page.getByRole("button", { name: "确认删除" }).click();
+  await expect(page.getByText("还没有探索会话")).toBeVisible();
+});

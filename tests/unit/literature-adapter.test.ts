@@ -10,6 +10,7 @@ import {
   OPENALEX_FIELDS,
 } from "../../src/infrastructure/literature/openalex";
 import { RequestThrottle } from "../../src/infrastructure/literature/request-throttle";
+import { CrossrefLiteratureAdapter } from "../../src/infrastructure/literature/crossref";
 
 const query: LiteratureQuery = {
   originalIdea: "怎样让研究型问答更可靠？",
@@ -222,6 +223,40 @@ describe("OpenAlex literature adapter", () => {
 });
 
 describe("literature query contract", () => {
+  it("normalizes Crossref publication metadata for fallback search", async () => {
+    const adapter = new CrossrefLiteratureAdapter({
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(
+        response({
+          message: {
+            "total-results": 1,
+            items: [
+              {
+                DOI: "10.1/LIDAR",
+                title: ["Lidar Robot Localization"],
+                author: [{ given: "Ada", family: "Li" }],
+                published: { "date-parts": [[2025]] },
+                "container-title": ["Robotics"],
+                URL: "https://doi.org/10.1/lidar",
+              },
+            ],
+          },
+        }),
+      ),
+      throttle: new RequestThrottle(0),
+    });
+    const result = await adapter.search(
+      query,
+      { ...options, fields: [] },
+      new AbortController().signal,
+    );
+    expect(result.record.status).toBe("completed");
+    expect(result.papers[0]).toMatchObject({
+      id: "doi:10.1/lidar",
+      title: "Lidar Robot Localization",
+      authors: ["Ada Li"],
+      source: "crossref",
+    });
+  });
   it("rejects using an unchanged Chinese idea as the keyword query", () => {
     expect(() =>
       validateLiteratureQuery({ ...query, keywords: query.originalIdea }),

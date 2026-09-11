@@ -1,32 +1,49 @@
 # 开发进度
 
-当前状态：**v0.6.4 核心研究体验重构已完成；根路径直接进入持久工作台，真实 Provider→OpenAlex→Evidence→Graph→对话闭环已在浏览器验证。**
+当前状态：**v0.6.5 已完成：研究进度可展开、文献源限流可降级、API Key 刷新保留、节点主上下文与整体上下文已接入，并完成真实 DeepSeek 流程复测。**
 
-| 阶段 | 状态 | 产物/证据 |
-|---|---|---|
-| 计划与设计 | 已形成文档包 | README、专题文档、契约草案、原型、包内检查报告 |
-| v0.1.0-A | 已完成 | React/TypeScript/Vite 空壳、lockfile、严格检查、契约/示例测试、ADR 与依赖基线 |
-| v0.1.0-B | 待验收 | 探针与错误分类已实现；OpenAlex localhost 与 Pages origin 浏览器通过；真实 Provider 待凭证与调用授权 |
-| v0.1.0-C | 已完成 | Hash 路由、Pages 子路径、CI/e2e 与手动部署 workflow 已验证；真实 Pages HTTPS origin 与 OpenAlex CORS 通过 |
-| v0.2.0-A | 已完成 | 首页、三栏工作台、设置页、基础组件、折叠/响应式与三档截图 |
-| v0.2.0-B | 已完成 | demo adapter、React Flow 语义节点、ELK 分层布局、列表视图与详情同步 |
-| v0.2.0-C | 已完成 | 关键演示状态、来源与方向视图、可访问导出弹窗、移动视图切换、四档视觉基准与组件尺寸表 |
-| v0.3.0-A | 已完成 | LiteratureAdapter、OpenAlex 普通关键词/游标/节流/取消/归一化、SearchRecord、脱敏诊断与真实 localhost 查询 |
-| v0.3.0-B | 已完成 | DOI/arXiv/OpenAlex 规范化、精确/候选去重、Dexie Paper/Evidence/SearchRecord、版本关联与审阅界面 |
-| v0.3.0-C | 已完成 | 四类检索配方、4 查询/60 候选预算、部分失败聚合、三学科离线夹具与质量审阅 |
-| v0.4.0-A | 已完成 | 单一 AgentController、状态轨迹、ProviderAdapter、结构化/JSON 回退、预算、上下文、工具校验与 mock 测试 |
-| v0.4.0-B | 已完成 | GraphPatch reducer、证据/锁定/revision 校验、原子事务、checkpoint、幂等回执与引用渲染 |
-| v0.4.0-C | 工程完成 / 外部待验收 | 运行状态与中断恢复、reported/unknown usage、端到端审查；真实 Provider 未调用 |
-| v0.5.0-A | 已完成 | 追问意图门禁、焦点邻域、补丁预览/应用/撤销与多轮 e2e |
-| v0.5.0-B | 已完成 | BranchService、快照/消息/运行隔离、活动运行门禁与晚到响应拒绝 |
-| v0.5.0-C | 已完成 | 非破坏折叠、合并建议、完整方向卡片与用户保存/排除状态 |
-| v0.6.0-A | 已完成 | workspace 持久化、刷新/中断恢复、quota、版本迁移、项目生命周期与单写者租约 |
-| v0.6.0-B | 已完成 | JSON/Markdown/SVG/PNG、敏感内容审计、SVG 降级、导入新项目与下载 e2e |
-| v0.6.0-C | 已完成 | 安全文本、endpoint/redirect 限制、脱敏诊断、全量清除、攻击夹具与数据流说明 |
-| v0.6.1 | 已完成 | Chat Completions、Responses、Anthropic Messages 三协议 Adapter；DeepSeek 完成/JSON 实测与三类 mock 契约 |
-| v0.6.2 | 已完成 | 四项探针严格判定、完整流事件解析、failed 状态、脱敏错误诊断与一键测试 |
-| v0.6.3 | 已完成 | Provider 非敏感配置持久化与 active guard、四个设置子页、来源健康检查、returnTo、探索历史列表与首次使用回归 |
-| v0.6.4 | 已完成 | 直接工作台、Session Sidebar、真实 Initial Exploration、节点继续、增量图、方向分支、真实 DeepSeek/OpenAlex 验收 |
+| 阶段       | 状态                  | 产物/证据                                                                                                      |
+| ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 计划与设计 | 已形成文档包          | README、专题文档、契约草案、原型、包内检查报告                                                                 |
+| v0.1.0-A   | 已完成                | React/TypeScript/Vite 空壳、lockfile、严格检查、契约/示例测试、ADR 与依赖基线                                  |
+| v0.1.0-B   | 待验收                | 探针与错误分类已实现；OpenAlex localhost 与 Pages origin 浏览器通过；真实 Provider 待凭证与调用授权            |
+| v0.1.0-C   | 已完成                | Hash 路由、Pages 子路径、CI/e2e 与手动部署 workflow 已验证；真实 Pages HTTPS origin 与 OpenAlex CORS 通过      |
+| v0.2.0-A   | 已完成                | 首页、三栏工作台、设置页、基础组件、折叠/响应式与三档截图                                                      |
+| v0.2.0-B   | 已完成                | demo adapter、React Flow 语义节点、ELK 分层布局、列表视图与详情同步                                            |
+| v0.2.0-C   | 已完成                | 关键演示状态、来源与方向视图、可访问导出弹窗、移动视图切换、四档视觉基准与组件尺寸表                           |
+| v0.3.0-A   | 已完成                | LiteratureAdapter、OpenAlex 普通关键词/游标/节流/取消/归一化、SearchRecord、脱敏诊断与真实 localhost 查询      |
+| v0.3.0-B   | 已完成                | DOI/arXiv/OpenAlex 规范化、精确/候选去重、Dexie Paper/Evidence/SearchRecord、版本关联与审阅界面                |
+| v0.3.0-C   | 已完成                | 四类检索配方、4 查询/60 候选预算、部分失败聚合、三学科离线夹具与质量审阅                                       |
+| v0.4.0-A   | 已完成                | 单一 AgentController、状态轨迹、ProviderAdapter、结构化/JSON 回退、预算、上下文、工具校验与 mock 测试          |
+| v0.4.0-B   | 已完成                | GraphPatch reducer、证据/锁定/revision 校验、原子事务、checkpoint、幂等回执与引用渲染                          |
+| v0.4.0-C   | 工程完成 / 外部待验收 | 运行状态与中断恢复、reported/unknown usage、端到端审查；真实 Provider 未调用                                   |
+| v0.5.0-A   | 已完成                | 追问意图门禁、焦点邻域、补丁预览/应用/撤销与多轮 e2e                                                           |
+| v0.5.0-B   | 已完成                | BranchService、快照/消息/运行隔离、活动运行门禁与晚到响应拒绝                                                  |
+| v0.5.0-C   | 已完成                | 非破坏折叠、合并建议、完整方向卡片与用户保存/排除状态                                                          |
+| v0.6.0-A   | 已完成                | workspace 持久化、刷新/中断恢复、quota、版本迁移、项目生命周期与单写者租约                                     |
+| v0.6.0-B   | 已完成                | JSON/Markdown/SVG/PNG、敏感内容审计、SVG 降级、导入新项目与下载 e2e                                            |
+| v0.6.0-C   | 已完成                | 安全文本、endpoint/redirect 限制、脱敏诊断、全量清除、攻击夹具与数据流说明                                     |
+| v0.6.1     | 已完成                | Chat Completions、Responses、Anthropic Messages 三协议 Adapter；DeepSeek 完成/JSON 实测与三类 mock 契约        |
+| v0.6.2     | 已完成                | 四项探针严格判定、完整流事件解析、failed 状态、脱敏错误诊断与一键测试                                          |
+| v0.6.3     | 已完成                | Provider 非敏感配置持久化与 active guard、四个设置子页、来源健康检查、returnTo、探索历史列表与首次使用回归     |
+| v0.6.4     | 已完成                | 直接工作台、Session Sidebar、真实 Initial Exploration、节点继续、增量图、方向分支、真实 DeepSeek/OpenAlex 验收 |
+| v0.6.5     | 已完成                | 可展开研究进度、OpenAlex 部分结果容错与 Crossref/Semantic Scholar 降级、会话级 Key 恢复、节点主上下文          |
+
+## v0.6.5 阶段记录
+
+实施日期：2026-09-11。
+
+问题与修复：OpenAlex 公共 API 返回 429 时，旧逻辑会把任意一次查询失败升级为整轮失败，即使此前已有候选也会停止。现在保留已成功候选、停止继续请求受限来源，并按 Crossref、Semantic Scholar 顺序尝试补充；只有所有来源都没有取得可分析资料才停止。部分检索受限会作为进度警告和最终回复限制说明呈现，不再伪装完整成功。
+
+体验变化：对话中的单一瞬时状态改为运行时自动展开、完成后可折叠的步骤记录，展示意图理解、检索计划、候选数量、来源降级、综合和地图更新。API Key 使用 sessionStorage 与内存双层会话存储，刷新恢复、关闭标签页清除，仍不进入 IndexedDB、导出、URL、日志或源码。点击节点即更新 active focus；Agent 输入明确拆分为主要上下文（节点、邻域、节点 Evidence）和整体上下文（Research Summary、Scope、图谱轮廓、近期对话）。
+
+真实验收：使用用户授权的临时 DeepSeek `deepseek-chat` 凭证与真实公网来源，在 localhost 输入“我想研究激光雷达在机器人定位导航方面的作用”。当 OpenAlex 返回 429 时，Crossref 降级成功；首次探索生成 4 组查询、15 条 Evidence、12 个节点，并正常完成回复和本地保存。随后从节点执行“围绕此处继续”，图增量扩展到 23 个节点、38 条 Evidence，首轮节点与对话保留。刷新设置页后 Provider 显示仍可使用。未记录或提交凭证；未测得 Provider 返回的精确计费金额。
+
+自动测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、21 个 Vitest 文件 / 94 项测试、production build、5 项 Playwright E2E 与 secret scan。新增部分成功限流、完全无资料失败、Crossref 归一化、会话 Key 存取和可展开进度覆盖。构建仍有既有大 chunk 非阻断警告。
+
+限制：sessionStorage 并非操作系统安全钥匙串，同源脚本若被攻破仍可能读取；这是在纯前端静态部署与刷新可用性之间的明确折中。Semantic Scholar 已接入并有契约测试，真实本轮因 Crossref 已取得足量资料而未继续调用。当前“节点式对话”实现为节点焦点化上下文，消息仍按 Branch 保存为时间序列，尚未改成每节点独立消息树。
+
+下一阶段入口：停止在 v0.6.5，等待真实使用反馈；不进入 v0.7.0。
 
 ## v0.6.4 阶段记录
 
@@ -145,7 +162,7 @@
 
 测试命令与结果：`npm run lint`、`npm run typecheck`、`npm run test`、`npm run build`、`npm run check:secrets` 均通过；4 个测试文件、13 项测试通过。production preview 的内置 Chromium 从 `http://127.0.0.1:4173` 直接读取 OpenAlex 响应成功，控制台 0 error / 0 warning。
 
-人工验收与截图：1280px 浏览器视图检查通过；Provider 表单、四项能力按钮、取消入口、OpenAlex 状态与长题名无横向溢出。OpenAlex 实测返回 count 187,295，首条题名为 *Retrieval-Augmented Generation for Large Language Models: A Survey*；这是当时 API 响应，不是稳定数据或研究结论。
+人工验收与截图：1280px 浏览器视图检查通过；Provider 表单、四项能力按钮、取消入口、OpenAlex 状态与长题名无横向溢出。OpenAlex 实测返回 count 187,295，首条题名为 _Retrieval-Augmented Generation for Large Language Models: A Survey_；这是当时 API 响应，不是稳定数据或研究结论。
 
 未完成 / 待实测：未获得并获准使用真实 Provider 凭证，因此普通完成、流式、结构化输出、工具调用、真实取消与 usage reporting 保持待验证；目标 Pages HTTPS origin 也未验证。
 
@@ -282,7 +299,7 @@
 
 测试命令与结果：`npm run check` 全部通过；ESLint、严格 typecheck、6 个 unit/contract 文件共 25 项测试、production build、9 项 Playwright e2e 与 secret scan 均成功。新增 8 项适配器/契约单测覆盖请求参数、归一化、游标与 60 条上限、429/503、空结果、异常响应、超时、取消、中文查询边界及缓存键；Playwright 增加真实查询 UI 的受控响应测试，并验证实际网络 URL 不含中文原始想法。
 
-人工验收与截图：`reports/visual/literature-search-1440x1000.png` 已检查；检索表单、来源/状态/数量与结果层级清晰，延续黑白灰与克制蓝色主操作。localhost production preview 使用 Chromium 从页面真实请求 OpenAlex 成功，查询为 `retrieval augmented generation reliability evidence`、`cursor=*`、`per_page=10`，归一化 10 条记录；首条题名为 *Retrieval-Augmented Generation for Large Language Models: A Survey*。
+人工验收与截图：`reports/visual/literature-search-1440x1000.png` 已检查；检索表单、来源/状态/数量与结果层级清晰，延续黑白灰与克制蓝色主操作。localhost production preview 使用 Chromium 从页面真实请求 OpenAlex 成功，查询为 `retrieval augmented generation reliability evidence`、`cursor=*`、`per_page=10`，归一化 10 条记录；首条题名为 _Retrieval-Augmented Generation for Large Language Models: A Survey_。
 
 未完成 / 待实测：未真实触发 OpenAlex 429；API key、Authorization header、长期额度、GitHub Pages HTTPS origin 和 Pages CORS 待验证。SearchRecord 与结果尚未写 Dexie；缓存策略、去重、版本关联与证据片段属于后续阶段。
 
