@@ -9,7 +9,7 @@ import {
 export type LiteratureSourceRegistration = {
   manifest: LiteratureSourceManifest;
   installation: SourceInstallation;
-  createAdapter: () => LiteratureAdapter;
+  createAdapter?: () => LiteratureAdapter;
 };
 
 export class SourceRegistry {
@@ -38,7 +38,8 @@ export class SourceRegistry {
 
   getAdapter(sourceId: string) {
     const registration = this.registrations.get(sourceId);
-    if (!registration?.installation.enabled) return null;
+    if (!registration?.installation.enabled || !registration.createAdapter)
+      return null;
     return registration.createAdapter();
   }
 

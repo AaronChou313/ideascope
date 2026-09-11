@@ -12,6 +12,9 @@ import {
 import { RequestThrottle } from "../../src/infrastructure/literature/request-throttle";
 import { CrossrefLiteratureAdapter } from "../../src/infrastructure/literature/crossref";
 import { SemanticScholarLiteratureAdapter } from "../../src/infrastructure/literature/semantic-scholar";
+import { ArxivLiteratureAdapter } from "../../src/infrastructure/literature/arxiv";
+import { IeeeXploreLiteratureAdapter } from "../../src/infrastructure/literature/ieee-xplore";
+import { buildExternalSourceSearchUrl } from "../../src/infrastructure/literature/builtin-source-registry";
 
 const query: LiteratureQuery = {
   originalIdea: "怎样让研究型问答更可靠？",
@@ -299,5 +302,41 @@ describe("literature query contract", () => {
     expect(
       createSearchCacheKey("openalex", query, { ...options, fields: ["id"] }),
     ).not.toBe(base);
+  });
+});
+
+describe("additional built-in literature sources", () => {
+  it("searches and normalizes an arXiv Atom response", async () => {
+    const xml = `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">
+      <entry><id>https://arxiv.org/abs/2401.12345v2</id><title> Contact Aided Estimation </title>
+      <summary> A useful abstract. </summary><published>2024-01-20T00:00:00Z</published>
+      <author><name>Ada Li</name></author></entry></feed>`;
+    const adapter = new ArxivLiteratureAdapter({
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(new Response(xml, { status: 200 })),
+      throttle: new RequestThrottle(0),
+    });
+    const result = await adapter.search(query, { ...options, fields: [] }, new AbortController().signal);
+    expect(result.record.status).toBe("completed");
+    expect(result.papers[0]).toMatchObject({
+      id: "arxiv:2401.12345", externalIds: { arxiv: "2401.12345" },
+      title: "Contact Aided Estimation", authors: ["Ada Li"], year: 2024,
+      abstract: "A useful abstract.", source: "arxiv",
+    });
+  });
+
+  it("does not call IEEE Xplore without a user credential", async () => {
+    const fetcher = vi.fn<typeof fetch>();
+    const adapter = new IeeeXploreLiteratureAdapter({ getApiKey: () => null, fetcher });
+    const result = await adapter.search(query, { ...options, fields: [] }, new AbortController().signal);
+    expect(result.record.status).toBe("source_unavailable");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(result.record.diagnostic.endpoint).not.toContain("apikey");
+  });
+
+  it("builds only an external Google Scholar link and never an automated adapter", () => {
+    expect(buildExternalSourceSearchUrl("google-scholar", "robot contact sensing")).toBe(
+      "https://scholar.google.com/scholar?q=robot%20contact%20sensing",
+    );
+    expect(buildExternalSourceSearchUrl("openalex", "query")).toBeNull();
   });
 });

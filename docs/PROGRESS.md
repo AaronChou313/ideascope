@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.7-A 已完成：建立文献来源 Manifest、Capability、Installation 与 Registry 基线，三类内置来源经注册表供探索流程使用；未进入后续 Source Assistant 或复杂路由阶段。**
+当前状态：**v0.6.7-B 已完成工程实现：六类文献入口进入统一 Registry，arXiv/IEEE adapter 与 Google Scholar 外部入口已建立；arXiv 官方 API 的浏览器 CORS、IEEE 真实凭证仍待外部门禁验证。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -30,6 +30,21 @@
 | v0.6.5     | 已完成                | 可展开研究进度、OpenAlex 部分结果容错与 Crossref/Semantic Scholar 降级、会话级 Key 恢复、节点主上下文          |
 | v0.6.6     | 工程完成 / 真实待复测 | Root/parent/depth、Primary/Cross、层级综合契约、节点上下文、稳定增量布局、短关系标签与 Workspace v2 迁移       |
 | v0.6.7-A   | 已完成                | Literature Source Manifest/Capability/Installation/Registry、三类内置来源注册与既有降级路径回归              |
+| v0.6.7-B   | 工程完成 / 外部待验收 | arXiv Atom、IEEE 可选凭证适配、Google Scholar 外部入口、六来源能力清单；浏览器 CORS/IEEE Key 待验证            |
+
+## v0.6.7-B 阶段记录
+
+实施日期：2026-09-11。
+
+范围：扩展内置 Literature Source，不改变探索流程的当前主源/降级语义，不实现 Source 设置 UX 或复杂 Router。
+
+已完成：新增 arXiv Atom adapter，归一化版本 ID、标题、作者、年份、摘要与 DOI；新增 IEEE Xplore 声明式认证描述和可选 adapter，API Key 只由运行时 credential callback 提供，缺失时 installation 默认禁用且不发请求，诊断 endpoint 不含 query secret；Google Scholar 仅提供安全编码的外部搜索 URL，不创建自动抓取 adapter。Registry 现在枚举 OpenAlex、Crossref、Semantic Scholar、arXiv、IEEE Xplore 与 Google Scholar 六类入口。
+
+真实检查：2026-09-11 从开发环境请求 arXiv 官方 Atom endpoint，返回 HTTP 200 和真实结果；响应头未见 `Access-Control-Allow-Origin`，因此静态 Pages 浏览器直连可能被 CORS 阻止，不能标记为真实浏览器已验证。IEEE 未提供独立 API Key，保持“未配置/待验证”，且不会阻塞现有来源。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、23 个 Vitest 文件 / 111 项测试、production build、5 项 Playwright E2E 与 secret scan。覆盖 Manifest contract、Registry、arXiv Atom 归一化、IEEE 无 Key 零请求、Google Scholar 仅外部链接，以及既有三来源 adapter 回归。构建仍有既有 2.17 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.7-C，简化文献来源设置体验；arXiv 浏览器 CORS 和 IEEE 凭证不得在 UI 中伪装可用。
 
 ## v0.6.7-A 阶段记录
 

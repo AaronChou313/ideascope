@@ -4,15 +4,18 @@ import type { LiteratureAdapter } from "../../src/domain/search/literature";
 import { BUILTIN_LITERATURE_SOURCE_MANIFESTS, createBuiltInSourceRegistry } from "../../src/infrastructure/literature/builtin-source-registry";
 
 describe("literature source registry", () => {
-  it("lists the three built-in sources without credentials", () => {
+  it("lists all built-in and external sources without credentials", () => {
     const entries = createBuiltInSourceRegistry().list();
     expect(entries.map((entry) => entry.manifest.id)).toEqual([
       "openalex",
       "crossref",
       "semantic-scholar",
+      "arxiv",
+      "ieee-xplore",
+      "google-scholar",
     ]);
     const serialized = JSON.stringify(entries);
-    expect(serialized).not.toMatch(/apiKey|authorization|secret-value/i);
+    expect(serialized).not.toMatch(/authorization|secret-value|sk-[a-z0-9]/i);
   });
 
   it("routes capability checks and excludes disabled sources", () => {
@@ -25,6 +28,7 @@ describe("literature source registry", () => {
     expect(registry.enabledAdapters().map((adapter) => adapter.source)).toEqual([
       "openalex",
       "crossref",
+      "arxiv",
     ]);
   });
 
