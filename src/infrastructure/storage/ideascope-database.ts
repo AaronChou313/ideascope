@@ -134,6 +134,23 @@ export class IdeaScopeDatabase extends Dexie {
       researchProfiles: "id,mode,updatedAt",
       sourceManifests: "id,adapter.kind",
     });
+    this.version(10).stores({
+      papers: "id,externalIds.doi,externalIds.arxiv,externalIds.openalex,fetchedAt",
+      evidence: "id,paperId,level,fetchedAt",
+      searchRecords: "id,workspaceId,source,status,endedAt,cacheKey",
+      branches: "key,workspaceId,branch.id,branch.revision",
+      checkpoints: "id,workspaceId,branchId,revision,createdAt",
+      patchReceipts: "patchId,workspaceId,branchId,runId,committedAt",
+      runSummaries: "runId,workspaceId,branchId,status,endedAt",
+      runExecutions: "id,workspaceId,branchId,status,startedAt,endedAt",
+      messages: "id,branchId,createdAt",
+      workspaces: "id,title,updatedAt,archivedAt",
+      writerLeases: "workspaceId,ownerId,expiresAt",
+      providerProfiles: "id,updatedAt",
+      sourceInstallations: "sourceId,enabled,updatedAt",
+      researchProfiles: "id,mode,updatedAt",
+      sourceManifests: "id,adapter.kind",
+    });
   }
 }
 

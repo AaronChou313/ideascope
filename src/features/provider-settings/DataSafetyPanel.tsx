@@ -4,6 +4,7 @@ import { downloadText } from "../../infrastructure/export/download";
 import { LocalDataService } from "../../infrastructure/storage/local-data-service";
 import { WorkspaceRepository } from "../../infrastructure/storage/workspace-repository";
 import { Button } from "../../shared/ui";
+import { WorkspaceArchiveService } from "../../application/archive/workspace-archive-service";
 import styles from "./DataSafetyPanel.module.css";
 
 type Summary = Awaited<ReturnType<LocalDataService["summary"]>>;
@@ -26,6 +27,10 @@ export function DataSafetyPanel() {
     try {
       const repository = new WorkspaceRepository();
       const raw = JSON.parse(await file.text()) as { documentType?: string; workspaces?: unknown[] };
+      if (raw.documentType === "ideascope.workspace-archive") {
+        await new WorkspaceArchiveService().import(raw);
+        setStatus("完整探索档案已导入为新项目；原项目未被覆盖。"); refresh(); return;
+      }
       const values = raw.documentType === "ideascope.backup" && Array.isArray(raw.workspaces) ? raw.workspaces : [raw];
       const existing = new Set((await repository.list()).map(({ id }) => id));
       for (const value of values) {

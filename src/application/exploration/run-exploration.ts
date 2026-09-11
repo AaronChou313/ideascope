@@ -274,7 +274,7 @@ export async function runExploration(
     registry: sourceRegistry,
     effectiveProfile: overallContext.effectiveProfile,
     signal: options.signal,
-    onRecord: async (record) => { await new SearchRecordStore().save(record); },
+    onRecord: async (record) => { await new SearchRecordStore().save({ ...record, workspaceId: workspace.workspace.id }); },
     onRound: (round) => options.onProgress?.({
       stage: "searching",
       message: `第 ${round.round} 轮检索完成：累计保留 ${round.deduplicated} 条候选资料`,

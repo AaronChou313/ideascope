@@ -32,6 +32,7 @@ export interface SearchDiagnostic {
 }
 export interface SearchRecord {
   id: string;
+  workspaceId?: string;
   source: string;
   query: LiteratureQuery;
   cacheKey: string;

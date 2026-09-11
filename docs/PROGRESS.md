@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.10-D 已完成：Source Assistant 的官方文档自动搜索受显式 Provider/独立 Source 能力门禁控制。**
+当前状态：**v0.6.11-A 已完成：单探索完整 Archive 覆盖研究结构、运行/Search provenance、Profile 与无秘密 Source 快照。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -45,6 +45,23 @@
 | v0.6.10-B  | 已完成                | 外部 Source/Profile/Pack JSON 粘贴与上传、2 MB 预算、嵌套 Schema 校验、预览和非覆盖导入                         |
 | v0.6.10-C  | 已完成                | Custom Manifest 持久化、受限 REST JSON GET/POST/认证/字段映射、默认停用、连接测试与 Router 接入                  |
 | v0.6.10-D  | 已完成                | Provider Web Search 显式能力门禁、unknown 默认拒绝、无名称猜测、Assistant 清晰降级指引                           |
+| v0.6.11-A  | 已完成                | 单 Workspace 完整档案、相关 Search/运行记录、Session/Base Profile、Source 快照与非覆盖恢复                       |
+
+## v0.6.11-A 阶段记录
+
+实施日期：2026-09-11。
+
+Archive：新增 `ideascope.workspace-archive` v1 领域契约与 `WorkspaceArchiveService`。单会话菜单可导出完整档案，包含 Workspace 的 branches、Graph positions/viewport、claims、directions、messages、papers、evidence，以及按 workspaceId 关联的 Search Records、运行执行/摘要、Session Profile、Base Profile 快照、Source Manifest/Installation 快照和导出 provenance。
+
+恢复：数据与存储页可导入完整档案。导入先复用 Workspace v2 migration/validation，再生成新 Workspace ID 和“（导入）”标题，避免覆盖已有项目；Session Profile 与 Search/运行记录改绑新 Workspace，Base Profile 作为 imported 副本保存，自定义 Source Manifest 可恢复但不覆盖冲突项。Graph hierarchy、positions 和 viewport 保持原样。
+
+持久化关联：SearchRecord 新增可选 `workspaceId`，新探索写入时自动标记；Dexie v10 为其建立索引。旧 SearchRecord 没有关联字段时仍可读取，但无法可靠归入某个旧档案，因此不会错误导出其它会话的检索历史。
+
+安全：Archive 不包含 Model API Key、Source API Key、Authorization Header 或 session secret；Provider credential store 没有进入服务依赖。Source snapshot 只有声明式 Manifest/Installation，credential slot 只是非秘密引用。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、38 个 Vitest 文件 / 148 项测试、production build、7 项 Playwright E2E 与 secret scan。新增完整导出/恢复、viewport、Session Profile、相关 SearchRecord、新 ID 和非法版本零写入测试。构建仍有既有约 2.22 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.11-B，实现多 Workspace ZIP Bundle、条目预览和资源去重；不把 credential 写入 ZIP。
 
 ## v0.6.10-D 阶段记录
 
