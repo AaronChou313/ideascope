@@ -18,6 +18,7 @@ export class ProviderProfileRepository {
       lastTestState: test?.state ?? existing?.lastTestState ?? "unknown",
       lastTestedAt: test?.testedAt ?? existing?.lastTestedAt ?? null,
       updatedAt: new Date().toISOString(),
+      webSearchState: existing?.webSearchState ?? "unknown",
     };
     await this.db.transaction("rw", this.db.providerProfiles, async () => {
       await this.db.providerProfiles.toCollection().modify({ active: false });

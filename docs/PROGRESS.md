@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.10-C 已完成：声明式 Custom REST JSON Source 可安全导入、持久化、测试并加入统一 Router。**
+当前状态：**v0.6.10-D 已完成：Source Assistant 的官方文档自动搜索受显式 Provider/独立 Source 能力门禁控制。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -44,6 +44,19 @@
 | v0.6.10-A  | 已完成                | 自然语言 Source Assistant、built-in 优先建议、缺失凭证提示、严格 Proposal 校验与测试后确认应用                 |
 | v0.6.10-B  | 已完成                | 外部 Source/Profile/Pack JSON 粘贴与上传、2 MB 预算、嵌套 Schema 校验、预览和非覆盖导入                         |
 | v0.6.10-C  | 已完成                | Custom Manifest 持久化、受限 REST JSON GET/POST/认证/字段映射、默认停用、连接测试与 Router 接入                  |
+| v0.6.10-D  | 已完成                | Provider Web Search 显式能力门禁、unknown 默认拒绝、无名称猜测、Assistant 清晰降级指引                           |
+
+## v0.6.10-D 阶段记录
+
+实施日期：2026-09-11。
+
+能力门禁：Provider 保存模型新增向后兼容的 `webSearchState`，默认 `unknown`。`providerWebSearchGate` 只有在 Provider 明确标记为 `supported`，或调用方明确报告独立安全 Web Search Source ready 时才允许自动查找官方 API 文档。Provider 类型、模型名称、Chat/Responses/Messages 协议和普通 toolCalling 成功都不会被推断为 Web Search 能力。
+
+降级体验：Source Assistant 展示“自动查找官方 API 文档：可用/不可用”和具体原因。当前三协议没有 Web Search 探针，因此正常状态为不可用；Assistant 继续只匹配 built-in，并引导用户粘贴官方文档或导入由外部智能体生成、仍需本地校验的 Manifest。代码没有加入隐式网络浏览或模型记忆生成 endpoint 的路径。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、37 个 Vitest 文件 / 146 项测试、production build、7 项 Playwright E2E 与 secret scan。新增名称不得推断、unknown/unsupported 拒绝、显式 supported 和独立来源放行测试。构建仍有既有约 2.21 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.11-A，设计和实现可完整恢复的单 Workspace Archive，包含非秘密 Profile/Source/Search provenance，绝不包含任何 credential。
 
 ## v0.6.10-C 阶段记录
 

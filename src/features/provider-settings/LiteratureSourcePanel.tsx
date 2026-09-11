@@ -13,6 +13,7 @@ import type { SourceAssistantProposal } from "../../domain/literature-source/sou
 import { parseConfigurationImport, type ConfigurationImport } from "../../application/import/parse-configuration-import";
 import { ResearchProfileRepository } from "../../infrastructure/storage/research-profile-repository";
 import { SourceManifestRepository } from "../../infrastructure/storage/source-manifest-repository";
+import { providerWebSearchGate } from "../../domain/provider/provider-profile";
 import { Button } from "../../shared/ui";
 import styles from "./DataSafetyPanel.module.css";
 
@@ -41,10 +42,11 @@ export function LiteratureSourcePanel() {
   const [importText, setImportText] = useState("");
   const [importPreview, setImportPreview] = useState<ConfigurationImport | null>(null);
   const [importStatus, setImportStatus] = useState("");
+  const [webSearchGate, setWebSearchGate] = useState(() => providerWebSearchGate(null));
 
   useEffect(() => {
-    void Promise.all([repository.list(), new SourceManifestRepository().list()]).then(([nextInstallations, nextManifests]) => {
-      setInstallations(nextInstallations); setManifests(nextManifests);
+    void Promise.all([repository.list(), new SourceManifestRepository().list(), new ProviderProfileRepository().getActive()]).then(([nextInstallations, nextManifests, provider]) => {
+      setInstallations(nextInstallations); setManifests(nextManifests); setWebSearchGate(providerWebSearchGate(provider ?? null));
     });
     return () => active.current?.abort();
   }, [repository]);
@@ -255,6 +257,7 @@ export function LiteratureSourcePanel() {
         <section className={styles.sourceRow} aria-label="AI 来源配置助手">
           <h3>让 AI 帮我配置来源</h3>
           <p>描述研究领域、常用会议或期刊。AI 只会先匹配当前内置来源，不会凭记忆创建 API 地址。</p>
+          <small>自动查找官方 API 文档：{webSearchGate.allowed ? "可用" : "不可用"} · {webSearchGate.reason}</small>
           <textarea value={assistantInput} onChange={(event) => setAssistantInput(event.target.value)} placeholder="例如：我主要做机器人定位导航，希望覆盖 ICRA、IROS、RA-L、T-RO。" />
           <div className={styles.sourceActions}>
             <Button type="button" disabled={assistantBusy || !assistantInput.trim()} onClick={() => void askAssistant()}>生成建议</Button>
