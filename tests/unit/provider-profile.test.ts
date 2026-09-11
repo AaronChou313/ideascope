@@ -39,4 +39,26 @@ describe("saved active provider", () => {
     expect(JSON.stringify(restored)).not.toContain("apiKey");
     await db.delete();
   });
+
+  it("stores multiple profiles while enforcing a single active provider", async () => {
+    const db = new IdeaScopeDatabase(`provider-list-${crypto.randomUUID()}`);
+    const repository = new ProviderProfileRepository(db);
+    const first = await repository.saveProfile(draft, { activate: true });
+    const second = await repository.saveProfile({ ...draft, name: "Second", model: "model-2" });
+    expect(await repository.list()).toHaveLength(2);
+    expect((await repository.getActive())?.id).toBe(first.id);
+    await repository.setActive(second.id);
+    const profiles = await repository.list();
+    expect(profiles.filter((profile) => profile.active)).toHaveLength(1);
+    expect((await repository.getActive())?.id).toBe(second.id);
+    await db.delete();
+  });
+
+  it("keeps session keys isolated by provider profile", () => {
+    memoryKeyStore.set("key-a", "provider-a");
+    memoryKeyStore.set("key-b", "provider-b");
+    memoryKeyStore.activate("provider-b");
+    expect(memoryKeyStore.get("provider-a")).toBe("key-a");
+    expect(memoryKeyStore.get()).toBe("key-b");
+  });
 });

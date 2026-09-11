@@ -20,7 +20,7 @@ describe("ConnectionLab capability status", () => {
     fireEvent.change(screen.getByLabelText("Provider Format"), { target: { value: "openai-chat" } });
     expect(screen.getByLabelText("Base URL")).toHaveValue("https://custom.example/api");
     expect(screen.getByLabelText("Model ID")).toHaveValue("custom-model");
-    expect(memoryKeyStore.get()).toBe("test-only-key");
+    expect(screen.getByLabelText("API Key")).toHaveValue("test-only-key");
   });
   it("shows failed after a request error instead of leaving the capability pending", async () => {
     vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ error: { type: "invalid_request_error", message: "bad input" } }), { status: 400 })));

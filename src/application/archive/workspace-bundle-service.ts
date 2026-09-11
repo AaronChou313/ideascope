@@ -34,7 +34,7 @@ export class WorkspaceBundleService {
       for (const [id, profile] of profiles) { const path = `resources/profiles/${safeName(id)}.ideascope-profile.json`; files[path] = strToU8(JSON.stringify(profile)); profilePaths.push(path); }
     }
     const manifest = workspaceBundleManifestSchema.parse({
-      documentType: "ideascope.bundle", bundleVersion: 1, createdWith: "0.6.14", exportedAt: new Date().toISOString(), workspaces,
+      documentType: "ideascope.bundle", bundleVersion: 1, createdWith: "0.6.15", exportedAt: new Date().toISOString(), workspaces,
       ...(includeResources ? { resources: { sources: sourcePaths, profiles: profilePaths } } : {}),
     });
     files["ideascope-bundle.json"] = strToU8(JSON.stringify(manifest, null, 2));

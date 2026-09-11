@@ -1,4 +1,4 @@
-import { MoreHorizontal, Plus, Search, Settings, Upload } from "lucide-react";
+import { FileInput, MoreHorizontal, Plus, Search, Settings } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { WorkspaceArchiveService } from "../../application/archive/workspace-archive-service";
@@ -88,7 +88,7 @@ export function SessionSidebar({ activeId, refreshKey = 0 }: { activeId?: string
 
   return <aside className={styles.sidebar}>
     <div className={styles.brandRow}><div className={styles.brand}>IdeaScope</div><Link className={styles.iconButton} aria-label="设置" to="/settings/provider" state={{ returnTo: location.pathname }}><Settings size={16} /></Link></div>
-    <div className={styles.createRow}><button className={styles.newButton} onClick={() => void create()}><Plus size={16} />新建会话</button><button className={styles.iconButton} aria-label="导入会话" title="导入单个会话" onClick={() => importFile.current?.click()}><Upload size={16} /></button><input ref={importFile} hidden type="file" accept=".json,.ideascope-archive.json,application/json" onChange={(event) => void importSession(event.target.files?.[0])} /></div>
+    <div className={styles.createRow}><button className={styles.newButton} onClick={() => void create()}><Plus size={16} />新建会话</button><button className={styles.iconButton} aria-label="导入会话" title="从外部导入单个会话" onClick={() => importFile.current?.click()}><FileInput size={16} /></button><input ref={importFile} hidden type="file" accept=".json,.ideascope-archive.json,application/json" onChange={(event) => void importSession(event.target.files?.[0])} /></div>
     <div className={styles.labelRow}><p className={styles.label}>探索会话</p><button className={styles.searchToggle} aria-label={searchOpen ? "关闭会话搜索" : "搜索对话记录"} onClick={() => { setSearchOpen((value) => !value); requestAnimationFrame(() => searchInput.current?.focus()); }}><Search size={14} /></button></div>
     {searchOpen ? <label className={styles.searchBox}><Search size={13} /><input ref={searchInput} aria-label="搜索对话记录" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索标题或对话内容" /></label> : null}
     <nav>{visibleItems.map((item) => <div key={item.id} className={`${styles.item} ${item.id === activeId ? styles.active : ""}`}>

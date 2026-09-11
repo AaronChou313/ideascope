@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { probeProvider } from "../../infrastructure/llm/openai-compatible";
 import type {
   ProbeCapability,
@@ -43,8 +43,9 @@ export function ConnectionLab({
     defaultProviderDraft.format,
   );
   const [model, setModel] = useState(defaultProviderDraft.model);
-  const [keyPresent, setKeyPresent] = useState(Boolean(memoryKeyStore.get()));
+  const [apiKey, setApiKey] = useState("");
   const [saved, setSaved] = useState<SavedProviderProfile | null>(null);
+  const [profiles, setProfiles] = useState<SavedProviderProfile[]>([]);
   const [lastTest, setLastTest] = useState<{
     state: ProbeResult["state"];
     testedAt: string;
@@ -52,23 +53,57 @@ export function ConnectionLab({
   const [results, setResults] = useState<ProbeResult[]>([]);
   const [message, setMessage] = useState("所有能力均待验证。");
   const active = useRef<AbortController | null>(null);
+  const repository = useMemo(() => new ProviderProfileRepository(), []);
+  const keyPresent = Boolean(apiKey);
+  const activeProfile = profiles.find((profile) => profile.active) ?? null;
+  const activeKeyPresent = Boolean(
+    activeProfile && memoryKeyStore.get(activeProfile.id),
+  );
+
+  const editProfile = useCallback((profile: SavedProviderProfile) => {
+    setSaved(profile);
+    setName(profile.name);
+    setProviderType(profile.providerType);
+    setFormat(profile.format);
+    setBaseUrl(profile.baseUrl);
+    setModel(profile.model);
+    const scopedKey = memoryKeyStore.get(profile.id);
+    const key = scopedKey || (profile.active ? memoryKeyStore.get() : "");
+    if (key && !scopedKey) memoryKeyStore.set(key, profile.id);
+    setApiKey(key);
+    setLastTest(
+      profile.lastTestedAt
+        ? { state: profile.lastTestState, testedAt: profile.lastTestedAt }
+        : null,
+    );
+    setResults([]);
+  }, []);
+
+  function newProfile() {
+    setSaved(null);
+    setName(defaultProviderDraft.name);
+    setProviderType(defaultProviderDraft.providerType);
+    setFormat(defaultProviderDraft.format);
+    setBaseUrl(defaultProviderDraft.baseUrl);
+    setModel(defaultProviderDraft.model);
+    setApiKey("");
+    setLastTest(null);
+    setResults([]);
+    setMessage("正在创建新的 Provider 配置。");
+  }
 
   useEffect(() => {
     let mounted = true;
-    void new ProviderProfileRepository().getActive().then((profile) => {
-      if (!mounted || !profile) return;
-      setSaved(profile);
-      setName(profile.name);
-      setProviderType(profile.providerType);
-      setFormat(profile.format);
-      setBaseUrl(profile.baseUrl);
-      setModel(profile.model);
+    void Promise.all([repository.list(), repository.getActive()]).then(([items, profile]) => {
+      if (!mounted) return;
+      setProfiles(items);
+      if (profile) editProfile(profile);
     });
     return () => {
       mounted = false;
       active.current?.abort();
     };
-  }, []);
+  }, [editProfile, repository]);
 
   async function executeProviderProbe(
     capability: ProbeCapability,
@@ -80,7 +115,7 @@ export function ConnectionLab({
     try {
       const result = await probeProvider(
         { format, baseUrl, model },
-        memoryKeyStore.get(),
+        apiKey,
         capability,
         controller.signal,
       );
@@ -142,24 +177,70 @@ export function ConnectionLab({
         saved.format !== format ||
         saved.baseUrl !== baseUrl ||
         saved.model !== model;
-      const profile = await new ProviderProfileRepository().saveActive(
+      const activate = saved?.active ?? profiles.length === 0;
+      const profile = await repository.saveProfile(
         { name, providerType, format, baseUrl, model },
-        lastTest
-          ? { state: lastTest.state, testedAt: lastTest.testedAt }
-          : draftChanged
-            ? { state: "unknown", testedAt: null }
-            : undefined,
+        {
+          id: saved?.id,
+          activate,
+          test: lastTest
+            ? { state: lastTest.state, testedAt: lastTest.testedAt }
+            : draftChanged
+              ? { state: "unknown", testedAt: null }
+              : undefined,
+        },
       );
+      memoryKeyStore.set(apiKey, profile.id);
+      if (profile.active) memoryKeyStore.activate(profile.id);
       setSaved(profile);
+      setProfiles(await repository.list());
       setMessage(
         keyPresent
-          ? "Provider 配置已保存并设为当前使用。"
+          ? profile.active
+            ? "Provider 配置已保存并设为当前使用。"
+            : "Provider 配置已保存；可在列表中设为当前使用。"
           : "非敏感配置已保存；使用前请重新输入 API Key。",
       );
       onSaved?.(profile);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "保存配置失败。");
     }
+  }
+
+  async function activateProfile(profile: SavedProviderProfile) {
+    const next = await repository.setActive(profile.id);
+    memoryKeyStore.activate(profile.id);
+    setProfiles(await repository.list());
+    editProfile(next);
+    setMessage(
+      memoryKeyStore.get(profile.id)
+        ? `已切换到 ${profile.name}。`
+        : `已切换到 ${profile.name}；使用前请补充 API Key。`,
+    );
+  }
+
+  async function deleteProfile(profile: SavedProviderProfile) {
+    if (
+      !window.confirm(
+        `删除 Provider“${profile.name}”？此操作不会删除研究会话。`,
+      )
+    )
+      return;
+    await repository.delete(profile.id);
+    memoryKeyStore.remove(profile.id);
+    let next = await repository.list();
+    if (profile.active && next[0]) {
+      const fallback = await repository.setActive(next[0].id);
+      memoryKeyStore.activate(fallback.id);
+      next = await repository.list();
+    }
+    setProfiles(next);
+    if (saved?.id === profile.id) {
+      const fallback = next.find((item) => item.active) ?? next[0];
+      if (fallback) editProfile(fallback);
+      else newProfile();
+    }
+    setMessage(`已删除 ${profile.name} 配置。`);
   }
 
   return (
@@ -177,29 +258,78 @@ export function ConnectionLab({
           <p className={styles.help}>
             每项能力测试会发送一条最小请求；一键测试会顺序发送四次，可能产生费用。密钥只保存在当前浏览器会话中，刷新后可继续使用，关闭标签页后清除。
           </p>
+          <div className={styles.profileManager}>
+            <div className={styles.profileManagerHeading}>
+              <strong>已保存 Provider</strong>
+              <Button type="button" onClick={newProfile}>
+                添加 Provider
+              </Button>
+            </div>
+            {profiles.length ? (
+              <div className={styles.profileList}>
+                {profiles.map((profile) => (
+                  <div
+                    key={profile.id}
+                    className={`${styles.profileItem} ${saved?.id === profile.id ? styles.editing : ""}`}
+                  >
+                    <button type="button" onClick={() => editProfile(profile)}>
+                      <strong>{profile.name}</strong>
+                      <small>
+                        {profile.model || "未填写模型"} ·{" "}
+                        {profile.active
+                          ? "当前使用"
+                          : stateLabels[profile.lastTestState]}
+                      </small>
+                    </button>
+                    <div>
+                      {!profile.active ? (
+                        <Button
+                          type="button"
+                          onClick={() => void activateProfile(profile)}
+                        >
+                          设为当前
+                        </Button>
+                      ) : (
+                        <span>当前</span>
+                      )}
+                      <button
+                        type="button"
+                        className={styles.deleteProfile}
+                        onClick={() => void deleteProfile(profile)}
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={styles.emptyProfiles}>还没有保存的 Provider。</p>
+            )}
+          </div>
           <dl>
             <div>
               <dt>当前 Provider</dt>
-              <dd>{saved?.name ?? "尚未保存"}</dd>
+              <dd>{activeProfile?.name ?? "尚未保存"}</dd>
             </div>
             <div>
               <dt>Provider 类型</dt>
-              <dd>{saved?.providerType ?? "—"}</dd>
+              <dd>{activeProfile?.providerType ?? "—"}</dd>
             </div>
             <div>
               <dt>请求协议</dt>
-              <dd>{saved?.format ?? "—"}</dd>
+              <dd>{activeProfile?.format ?? "—"}</dd>
             </div>
             <div>
               <dt>模型</dt>
-              <dd>{saved?.model || "—"}</dd>
+              <dd>{activeProfile?.model || "—"}</dd>
             </div>
             <div>
               <dt>状态</dt>
               <dd>
-                {saved
-                  ? keyPresent
-                    ? `可使用 · 最近测试${stateLabels[saved.lastTestState]}`
+                {activeProfile
+                  ? activeKeyPresent
+                    ? `可使用 · 最近测试${stateLabels[activeProfile.lastTestState]}`
                     : "需要重新输入 API Key"
                   : "未配置"}
               </dd>
@@ -264,9 +394,9 @@ export function ConnectionLab({
             <input
               type="password"
               autoComplete="off"
+              value={apiKey}
               onChange={(event) => {
-                memoryKeyStore.set(event.target.value);
-                setKeyPresent(Boolean(event.target.value));
+                setApiKey(event.target.value);
               }}
               placeholder={keyPresent ? "已在当前会话保存" : "关闭标签页后清除"}
             />

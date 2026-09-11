@@ -184,6 +184,9 @@ test("provider guard preserves draft and protocol switching preserves common fie
     fullPage: true,
   });
   await page.getByRole("button", { name: "保存配置" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "Provider 配置已保存并设为当前使用",
+  );
   await page.reload();
   await expect(page.getByLabel("API Key")).toHaveAttribute(
     "placeholder",
@@ -191,6 +194,25 @@ test("provider guard preserves draft and protocol switching preserves common fie
   );
   await page.getByRole("link", { name: "返回研究工作区" }).click();
   await expect(page.getByLabel("探索对话输入")).toHaveValue(idea);
+});
+
+test("multiple provider profiles can be saved and one is explicitly active", async ({ page }) => {
+  await page.goto("/ideascope/#/settings/provider");
+  await page.getByLabel("Model ID").fill("model-one");
+  await page.getByLabel("API Key").fill("key-one");
+  await page.getByRole("button", { name: "保存配置" }).click();
+  await page.getByRole("button", { name: "添加 Provider" }).click();
+  await page.getByLabel("Provider 名称").fill("Second Provider");
+  await page.getByLabel("Base URL").fill("https://second.example/v1");
+  await page.getByLabel("Model ID").fill("model-two");
+  await page.getByLabel("API Key").fill("key-two");
+  await page.getByRole("button", { name: "保存配置" }).click();
+  await expect(page.getByText("Second Provider", { exact: true }).first()).toBeVisible();
+  await page.getByRole("button", { name: "设为当前" }).click();
+  await expect(page.getByText("已切换到 Second Provider。", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Provider 名称")).toHaveValue("Second Provider");
+  await expect(page.getByLabel("API Key")).toHaveValue("key-two");
 });
 
 test("initial exploration creates evidence graph and node continuation updates it incrementally", async ({

@@ -1,10 +1,12 @@
 import {
-  Download,
   Map,
   MessageSquare,
   PanelLeftClose,
+  PanelLeftOpen,
   PanelRightClose,
+  PanelRightOpen,
   Search,
+  Upload,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -226,12 +228,15 @@ function WorkspaceShell({ id }: { id?: string }) {
       <SessionSidebar activeId={id} refreshKey={refreshKey} />
       <section className={styles.center}>
         <header>
-          <div>
+          <div className="workspace-title-bar">
+            <Button aria-label={left ? "折叠探索会话" : "展开探索会话"} title={left ? "折叠探索会话" : "展开探索会话"} onClick={() => setLeft(!left)}>{left ? <PanelLeftClose size={15} /> : <PanelLeftOpen size={15} />}</Button>
+            <div>
             <h1>{workspace.workspace.title}</h1>
             <p>
               {branch.graph.nodes.length} 个节点 ·{" "}
               {workspace.workspace.evidence.length} 条 Evidence · 本地已保存
             </p>
+            </div>
           </div>
           <div className={styles.toolbar}>
             {nodeSearchOpen ? <label className={styles.nodeSearch}>
@@ -255,8 +260,9 @@ function WorkspaceShell({ id }: { id?: string }) {
               title="导出当前会话完整档案"
               onClick={() => void exportCurrentSession()}
             >
-              <Download size={15} />
+              <Upload size={15} />
             </Button>
+            <Button aria-label={right ? "折叠右侧面板" : "展开右侧面板"} title={right ? "折叠右侧面板" : "展开右侧面板"} onClick={() => setRight(!right)}>{right ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}</Button>
           </div>
         </header>
         <div className={styles.canvas}>
@@ -454,20 +460,6 @@ function WorkspaceShell({ id }: { id?: string }) {
           </div>
         )}
       </aside>
-      <Button
-        className={styles.leftToggle}
-        aria-label="折叠探索会话"
-        onClick={() => setLeft(!left)}
-      >
-        <PanelLeftClose size={15} />
-      </Button>
-      <Button
-        className={styles.rightToggle}
-        aria-label="折叠右侧面板"
-        onClick={() => setRight(!right)}
-      >
-        <PanelRightClose size={15} />
-      </Button>
       <Dialog
         open={providerDialog}
         title="需要配置模型"

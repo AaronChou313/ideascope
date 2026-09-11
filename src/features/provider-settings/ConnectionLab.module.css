@@ -8,6 +8,9 @@
 .source { border-left:1px solid var(--line); background:var(--surface-subtle); }
 .grid h3 { margin:0 0 8px; font-size:16px; }
 .help { min-height:44px; margin:0 0 22px; color:var(--muted); font-size:12px; line-height:1.7; }
+.profileManager { margin-bottom:18px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+.profileManagerHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:9px; }
+.profileList { display:grid; gap:6px; }.profileItem { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px; padding:7px 8px; border:1px solid var(--line); border-radius:var(--radius-sm); }.profileItem.editing { border-color:var(--accent); background:var(--accent-soft); }.profileItem>button { min-width:0; padding:3px; border:0; background:transparent; display:grid; gap:2px; text-align:left; }.profileItem>button strong,.profileItem>button small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.profileItem>button small { color:var(--muted); }.profileItem>div { display:flex; align-items:center; gap:6px; }.profileItem>div span { color:var(--accent); font-size:11px; font-weight:650; }.profileItem .deleteProfile { padding:7px; border:0; background:transparent; color:var(--muted); }.profileItem .deleteProfile:hover { color:var(--danger); }.emptyProfiles { margin:0; padding:12px; border:1px dashed var(--line-strong); color:var(--muted); font-size:12px; text-align:center; }
 .provider dl { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); margin:0 0 26px; padding:14px 16px; border:1px solid var(--line); border-radius:var(--radius-md); background:var(--surface-subtle); }
 .provider dl div { min-width:0; padding:0 13px; border-right:1px solid var(--line); }
 .provider dl div:first-child { padding-left:0; }.provider dl div:last-child { padding-right:0; border-right:0; }
