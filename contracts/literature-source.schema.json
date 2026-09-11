@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ideascope.local/contracts/literature-source.schema.json",
+  "title": "IdeaScope Literature Source Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["documentType", "manifestVersion", "id", "name", "description", "adapter", "auth", "capabilities"],
+  "properties": {
+    "documentType": { "const": "ideascope.literature-source" },
+    "manifestVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,63}$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "description": { "type": "string", "maxLength": 1000 },
+    "adapter": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "driver"],
+          "properties": { "kind": { "const": "builtin" }, "driver": { "type": "string", "minLength": 1 } }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "baseUrl", "search"],
+          "properties": {
+            "kind": { "const": "rest-json" }, "baseUrl": { "type": "string", "format": "uri" },
+            "search": {
+              "type": "object", "additionalProperties": false,
+              "required": ["path", "method", "itemsPath", "fields"],
+              "properties": {
+                "path": { "type": "string", "minLength": 1 }, "method": { "enum": ["GET", "POST"] },
+                "queryParameter": { "type": "string", "minLength": 1 }, "itemsPath": { "type": "string", "minLength": 1 },
+                "fields": {
+                  "type": "object", "additionalProperties": false, "required": ["title"],
+                  "properties": {
+                    "externalId": { "$ref": "#/$defs/nonEmpty" }, "title": { "$ref": "#/$defs/nonEmpty" },
+                    "authors": { "$ref": "#/$defs/nonEmpty" }, "abstract": { "$ref": "#/$defs/nonEmpty" },
+                    "year": { "$ref": "#/$defs/nonEmpty" }, "venue": { "$ref": "#/$defs/nonEmpty" },
+                    "doi": { "$ref": "#/$defs/nonEmpty" }, "arxiv": { "$ref": "#/$defs/nonEmpty" }, "url": { "$ref": "#/$defs/nonEmpty" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "urlTemplate"],
+          "properties": { "kind": { "const": "external-search" }, "urlTemplate": { "type": "string", "minLength": 1 } }
+        }
+      ]
+    },
+    "auth": {
+      "type": "object", "additionalProperties": false, "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["none", "api-key-header", "bearer", "query-param"] },
+        "credentialSlot": { "$ref": "#/$defs/nonEmpty" }, "headerName": { "$ref": "#/$defs/nonEmpty" },
+        "queryParamName": { "$ref": "#/$defs/nonEmpty" }
+      }
+    },
+    "capabilities": {
+      "type": "object", "additionalProperties": false,
+      "required": ["search", "abstract", "citations", "references", "venueFilter", "yearFilter", "authorFilter", "fullText", "directLookup"],
+      "properties": {
+        "search": { "$ref": "#/$defs/capability" }, "abstract": { "$ref": "#/$defs/capability" },
+        "citations": { "$ref": "#/$defs/capability" }, "references": { "$ref": "#/$defs/capability" },
+        "venueFilter": { "$ref": "#/$defs/capability" }, "yearFilter": { "$ref": "#/$defs/capability" },
+        "authorFilter": { "$ref": "#/$defs/capability" }, "fullText": { "$ref": "#/$defs/capability" },
+        "directLookup": { "$ref": "#/$defs/capability" }
+      }
+    },
+    "metadata": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "homepage": { "type": "string", "format": "uri" }, "documentation": { "type": "string", "format": "uri" },
+        "terms": { "type": "string", "format": "uri" }, "publisher": { "$ref": "#/$defs/nonEmpty" }
+      }
+    }
+  },
+  "$defs": {
+    "nonEmpty": { "type": "string", "minLength": 1 },
+    "capability": { "enum": ["supported", "unsupported", "unknown"] }
+  }
+}

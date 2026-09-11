@@ -11,6 +11,7 @@ import {
 } from "../../src/infrastructure/literature/openalex";
 import { RequestThrottle } from "../../src/infrastructure/literature/request-throttle";
 import { CrossrefLiteratureAdapter } from "../../src/infrastructure/literature/crossref";
+import { SemanticScholarLiteratureAdapter } from "../../src/infrastructure/literature/semantic-scholar";
 
 const query: LiteratureQuery = {
   originalIdea: "怎样让研究型问答更可靠？",
@@ -255,6 +256,33 @@ describe("literature query contract", () => {
       title: "Lidar Robot Localization",
       authors: ["Ada Li"],
       source: "crossref",
+    });
+  });
+  it("normalizes Semantic Scholar metadata for fallback search", async () => {
+    const adapter = new SemanticScholarLiteratureAdapter({
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(
+        response({
+          total: 1,
+          data: [{
+            paperId: "S1", title: "Contact-aware localization", abstract: "Abstract",
+            year: 2025, authors: [{ name: "Ada Li" }], venue: "Robotics",
+            url: "https://example.test/s1", externalIds: { DOI: "10.1/CONTACT" },
+          }],
+        }),
+      ),
+      throttle: new RequestThrottle(0),
+    });
+    const result = await adapter.search(
+      query,
+      { ...options, fields: [] },
+      new AbortController().signal,
+    );
+    expect(result.record.status).toBe("completed");
+    expect(result.papers[0]).toMatchObject({
+      id: "semantic-scholar:S1",
+      externalIds: { doi: "10.1/contact" },
+      abstract: "Abstract",
+      source: "semantic-scholar",
     });
   });
   it("rejects using an unchanged Chinese idea as the keyword query", () => {

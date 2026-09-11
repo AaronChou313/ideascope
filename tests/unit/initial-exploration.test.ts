@@ -252,6 +252,48 @@ describe("initial exploration pipeline", () => {
       ),
     ).rejects.toThrow("尚未取得可供分析的资料");
   });
+  it.each(["crossref", "semantic-scholar"] as const)(
+    "uses the registry fallback order and accepts %s results",
+    async (successfulSource) => {
+      let providerCalls = 0;
+      const fallbackSynthesis = {
+        ...synthesis,
+        nodes: synthesis.nodes.map((node) => ({ ...node, evidenceIds: [] })),
+      };
+      const providerFetcher: typeof fetch = () =>
+        Promise.resolve(new Response(JSON.stringify({ choices: [{ message: {
+          content: JSON.stringify(providerCalls++ ? fallbackSynthesis : plan),
+        } }] }), { status: 200 }));
+      const literatureFetcher: typeof fetch = (input) => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+        if (url.includes("openalex.org"))
+          return Promise.resolve(responseWith({ error: "limited" }, 429));
+        if (url.includes("crossref.org"))
+          return Promise.resolve(successfulSource === "crossref"
+            ? responseWith({ message: { "total-results": 1, items: [{
+                DOI: "10.1/FALLBACK", title: ["Fallback paper"],
+                published: { "date-parts": [[2025]] }, URL: "https://doi.org/10.1/fallback",
+              }] } })
+            : responseWith({ error: "unavailable" }, 503));
+        return Promise.resolve(responseWith({ total: 1, data: [{
+          paperId: "S-FALLBACK", title: "Semantic fallback paper", abstract: "Useful abstract",
+          year: 2025, authors: [], venue: "Robotics", externalIds: {},
+        }] }));
+      };
+      const result = await runExploration(
+        createEmptyWorkspace(`fallback-${successfulSource}`),
+        "研究机器人定位中的接触信息",
+        { signal: new AbortController().signal, fetcher: literatureFetcher, providerFetcher },
+      );
+      expect(result.candidates).toBeGreaterThan(0);
+      expect(result.workspace.workspace.papers.some((paper) => paper.source === successfulSource)).toBe(true);
+    },
+  );
   it("continues from a focused node with an incremental graph and preserves prior branches on a direction shift", async () => {
     let call = 0;
     const continuation = {
@@ -366,3 +408,10 @@ describe("initial exploration pipeline", () => {
     expect(shifted.workspace.workspace.activeBranchId).not.toBe("branch-main");
   });
 });
+
+function responseWith(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}

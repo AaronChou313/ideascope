@@ -12,11 +12,10 @@ import {
   type ResearchSynthesis,
 } from "../../domain/exploration/exploration-output";
 import {
-  OpenAlexLiteratureAdapter,
   OPENALEX_FIELDS,
 } from "../../infrastructure/literature/openalex";
-import { CrossrefLiteratureAdapter } from "../../infrastructure/literature/crossref";
-import { SemanticScholarLiteratureAdapter } from "../../infrastructure/literature/semantic-scholar";
+import { createBuiltInSourceRegistry } from "../../infrastructure/literature/builtin-source-registry";
+import type { SourceRegistry } from "../literature/literature-source-registry";
 import { createAgentProvider } from "../../infrastructure/llm/agent-provider";
 import { memoryKeyStore } from "../../infrastructure/secrets/memory-key-store";
 import { ProviderProfileRepository } from "../../infrastructure/storage/provider-profile-repository";
@@ -132,6 +131,7 @@ export async function runExploration(
     onProgress?: (progress: ExplorationProgress) => void;
     fetcher?: typeof fetch;
     providerFetcher?: typeof fetch;
+    literatureRegistry?: SourceRegistry;
   },
 ): Promise<ExplorationRunResult> {
   const text = userText.trim();
@@ -224,13 +224,12 @@ export async function runExploration(
   if (workspace.workspace.title === "未命名探索")
     workspace.workspace.title = plan.title || text.slice(0, 24);
   const root = ensureRootNode(branch, plan.title || text.slice(0, 40), plan.understanding);
-  const adapter = new OpenAlexLiteratureAdapter({ fetcher: options.fetcher });
-  const fallbackAdapter = new CrossrefLiteratureAdapter({
-    fetcher: options.fetcher,
-  });
-  const semanticScholarAdapter = new SemanticScholarLiteratureAdapter({
-    fetcher: options.fetcher,
-  });
+  const sourceRegistry =
+    options.literatureRegistry ??
+    createBuiltInSourceRegistry({ fetcher: options.fetcher });
+  const adapter = sourceRegistry.getAdapter("openalex");
+  if (!adapter)
+    throw new Error("主文献来源 OpenAlex 未启用；研究想法和已有数据未丢失。");
   const papers: Paper[] = [];
   const warnings: string[] = [];
   options.onProgress?.({
@@ -287,7 +286,10 @@ export async function runExploration(
     });
   }
   if (warnings.length) {
-    for (const source of [fallbackAdapter, semanticScholarAdapter]) {
+    for (const source of sourceRegistry.enabledAdapters([
+      "crossref",
+      "semantic-scholar",
+    ])) {
       const label =
         source.source === "crossref" ? "Crossref" : "Semantic Scholar";
       options.onProgress?.({

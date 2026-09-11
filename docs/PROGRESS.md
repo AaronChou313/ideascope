@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.6 已完成工程实现：Research Map 改为 Tree-first / Graph-assisted，选择与研究上下文分离，旧 Workspace 可迁移；真实 DeepSeek 新契约仍待干净浏览器复测。**
+当前状态：**v0.6.7-A 已完成：建立文献来源 Manifest、Capability、Installation 与 Registry 基线，三类内置来源经注册表供探索流程使用；未进入后续 Source Assistant 或复杂路由阶段。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -29,6 +29,25 @@
 | v0.6.4     | 已完成                | 直接工作台、Session Sidebar、真实 Initial Exploration、节点继续、增量图、方向分支、真实 DeepSeek/OpenAlex 验收 |
 | v0.6.5     | 已完成                | 可展开研究进度、OpenAlex 部分结果容错与 Crossref/Semantic Scholar 降级、会话级 Key 恢复、节点主上下文          |
 | v0.6.6     | 工程完成 / 真实待复测 | Root/parent/depth、Primary/Cross、层级综合契约、节点上下文、稳定增量布局、短关系标签与 Workspace v2 迁移       |
+| v0.6.7-A   | 已完成                | Literature Source Manifest/Capability/Installation/Registry、三类内置来源注册与既有降级路径回归              |
+
+## v0.6.7-A 阶段记录
+
+实施日期：2026-09-11。
+
+范围：只建立 Literature Source Contract 与 Registry 基线；未实现来源商店、Source Assistant、第三方清单导入 UI、复杂多来源排序或 v0.6.7-B 之后的能力。
+
+契约与注册表：新增 `ideascope.literature-source` manifest 的 JSON Schema 与等价 Zod 严格校验，定义来源身份、适配器描述、认证描述和 search/abstract/citations/references/filter/fullText/directLookup 能力状态。`SourceInstallation` 只保存启用状态、时间和凭证槽位引用；Manifest 不允许 API Key、Authorization 或任意额外字段。`SourceRegistry` 负责注册、枚举、能力查询、启用门禁与统一 `LiteratureAdapter` 创建。
+
+内置来源与探索行为：OpenAlex、Crossref、Semantic Scholar 以只读 built-in manifest 注册。`runExploration` 不再直接实例化具体适配器，而从 Registry 获取 OpenAlex 主来源，并在出现既有检索警告时按 Crossref、Semantic Scholar 顺序降级。部分成功候选继续保留；禁用来源不会实例化或执行；本阶段没有改变查询预算、去重、Evidence 映射或综合流程。
+
+兼容与迁移：Workspace formatVersion 保持 2，不需要业务数据迁移；新建/恢复记录的 `createdWith` 更新为 0.6.7。当前三个来源默认视为内置启用安装，尚未持久化用户可编辑来源安装，也未改变 Provider/API Key 的既有会话存储策略。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、23 个 Vitest 文件 / 108 项测试、production build、5 项 Playwright E2E 与 secret scan。新增 Manifest JSON Schema/Zod 正反例、额外 secret 字段拒绝、内置来源枚举、能力查询、disabled 门禁、OpenAlex 回归、Crossref 与 Semantic Scholar 降级归一化和探索路径回归。构建仍有既有 2.16 MB 主 chunk 非阻断警告。
+
+人工验收：本阶段没有修改页面结构或视觉，不生成新的产品截图；浏览器行为由既有 production E2E 回归覆盖。
+
+下一阶段入口：停止在 v0.6.7-A，等待确认后再进入 v0.6.7-B；不自动继续实现 Source Assistant、来源导入 UI 或 v0.7.0。
 
 ## v0.6.6 阶段记录
 
