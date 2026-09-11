@@ -3,6 +3,7 @@ import type { Branch, Evidence, GraphPatch, Message, Paper } from "../../../cont
 import type { SearchRecord } from "../../domain/search/literature";
 import type { SavedProviderProfile } from "../../domain/provider/provider-profile";
 import type { SourceInstallation } from "../../domain/literature-source/literature-source";
+import type { ResearchProfile } from "../../domain/research-profile/research-profile";
 
 export class IdeaScopeDatabase extends Dexie {
   papers!: EntityTable<Paper, "id">;
@@ -18,6 +19,7 @@ export class IdeaScopeDatabase extends Dexie {
   writerLeases!: EntityTable<WriterLease, "workspaceId">;
   providerProfiles!: EntityTable<SavedProviderProfile, "id">;
   sourceInstallations!: EntityTable<SourceInstallation, "sourceId">;
+  researchProfiles!: EntityTable<ResearchProfile, "id">;
   constructor(name = "ideascope") {
     super(name);
     this.version(1).stores({
@@ -97,6 +99,22 @@ export class IdeaScopeDatabase extends Dexie {
       writerLeases: "workspaceId,ownerId,expiresAt",
       providerProfiles: "id,updatedAt",
       sourceInstallations: "sourceId,enabled,updatedAt",
+    });
+    this.version(8).stores({
+      papers: "id,externalIds.doi,externalIds.arxiv,externalIds.openalex,fetchedAt",
+      evidence: "id,paperId,level,fetchedAt",
+      searchRecords: "id,source,status,endedAt,cacheKey",
+      branches: "key,workspaceId,branch.id,branch.revision",
+      checkpoints: "id,workspaceId,branchId,revision,createdAt",
+      patchReceipts: "patchId,workspaceId,branchId,runId,committedAt",
+      runSummaries: "runId,workspaceId,branchId,status,endedAt",
+      runExecutions: "id,workspaceId,branchId,status,startedAt,endedAt",
+      messages: "id,branchId,createdAt",
+      workspaces: "id,title,updatedAt,archivedAt",
+      writerLeases: "workspaceId,ownerId,expiresAt",
+      providerProfiles: "id,updatedAt",
+      sourceInstallations: "sourceId,enabled,updatedAt",
+      researchProfiles: "id,mode,updatedAt",
     });
   }
 }

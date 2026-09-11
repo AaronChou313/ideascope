@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.8-A 已完成：Research Profile、Session Patch、Effective merge 与 provenance 契约建立；尚未接入 Agent 自动演化。**
+当前状态：**v0.6.8-B 已完成：Agent 首轮自动形成 Session Profile，后续以受控 Patch 演化并持久化；Base Profile 保持不可自动修改。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -34,6 +34,21 @@
 | v0.6.7-C   | 已完成                | 来源状态列表、启用持久化、健康检查、IEEE 会话 Key、Scholar 外部入口与高级设置折叠                              |
 | v0.6.7-D   | 已完成 / 外部项待验证 | 真实机器人主题检索、浏览器健康检查、429/timeout/empty/partial 回归、Source secret 审计                          |
 | v0.6.8-A   | 已完成                | Base/Session/Effective Profile、Session Patch、provenance、严格 Schema 与非覆盖合并规则                         |
+| v0.6.8-B   | 已完成                | Intent Plan 生成 Session Profile Patch、增量应用、上下文注入、独立持久化与失败降级                              |
+
+## v0.6.8-B 阶段记录
+
+实施日期：2026-09-11。
+
+Agent 链路：Intent Plan 输出新增严格 `profilePatch`，目标必须是当前 Workspace 的 Session Profile；首次探索自动加入 domain/subfield/concept/query/venue/source signals，后续轮次在已有 Profile 上增量应用。更新后的 Profile 进入 overall context，帮助后续查询理解，但不会替代节点 primary context。
+
+持久化：Dexie v8 新增 `researchProfiles`，Session Profile 使用 `session:{workspaceId}` ID 独立保存；刷新后由新 Repository 实例恢复。删除 Workspace 时一并删除对应 Session Profile；Base Profile 不随 Workspace 删除。Profile 更新失败只产生明确 warning 并继续使用旧配置，不覆盖研究图或中断主探索。
+
+安全与边界：Agent 只能提交声明式 Patch；Zod 验证操作、目标、字段和预算。Base mode 在 Domain 层拒绝自动 Patch，Session 内容不包含凭证。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、26 个 Vitest 文件 / 120 项测试、production build、6 项 Playwright E2E 与 secret scan。更新 Initial Exploration 和 production E2E mock contract，验证 Profile 自动形成、持久化恢复、多轮使用和既有探索闭环。构建仍有既有 2.18 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.8-C，加入 General Research、Robotics、Localization & Navigation、Geomatics 轻量模板；默认仍为 Auto。
 
 ## v0.6.8-A 阶段记录
 

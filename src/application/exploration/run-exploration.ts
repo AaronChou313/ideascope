@@ -23,6 +23,8 @@ import { SearchRecordStore } from "../../infrastructure/storage/evidence-reposit
 import { WorkspaceRepository } from "../../infrastructure/storage/workspace-repository";
 import { isProviderGeneration } from "../../agent/provider-adapter";
 import { applyExplorationSynthesis, ensureRootNode } from "../../domain/exploration/apply-exploration-synthesis";
+import { applySessionProfilePatch } from "../../domain/research-profile/research-profile";
+import { ResearchProfileRepository } from "../../infrastructure/storage/research-profile-repository";
 
 export type ExplorationProgress = {
   stage:
@@ -47,7 +49,7 @@ export interface ExplorationRunResult {
   warnings: string[];
 }
 
-const planInstruction = `你是科研探索助手。只返回 JSON：{"title":"不超过20字的中文会话标题","understanding":"如何理解用户意图","queries":["2至4个适合OpenAlex的英文检索表达"]}。查询应覆盖对象、机制和应用，不要原样复制中文。`;
+const planInstruction = `你是科研探索助手。只返回 JSON：{"title":"不超过20字的中文会话标题","understanding":"如何理解用户意图","queries":["2至4个英文检索表达"],"profilePatch":{"patchVersion":1,"targetProfileId":"必须原样使用输入的sessionProfileId","operations":[]}}。profilePatch 只增量描述当前探索的 domain、subfield、concept、query alias、venue signal、source hint，不得修改长期 Base Profile；操作必须使用给定契约。查询应覆盖对象、机制和应用，不要原样复制中文。`;
 const synthesisInstruction = `你是严谨的科研综述助手。只返回 JSON：answer、nodes、crossLinks、nextQuestions、summary。Root 已由系统创建，不能生成 Root。nodes 每项为 {tempId,parentRef,existingNodeId?,kind,title,summary,evidenceIds,aliases?}。首次探索：识别 3–5 条主要路线，parentRef 为 ROOT；必要时每条再展开 0–2 个子节点，parentRef 只能引用一级路线的 tempId，首次最多到 depth 2，总计 6–12 个。基于节点继续：只扩展 anchor 局部，新节点默认挂在 anchorId 或本轮节点下，不得无故新增 Root 路线。existingGraph 提供真实 ID；已有概念应通过 existingNodeId 更新，不要重复新增。crossLinks 只表达少量跨分支关系，每项 {sourceRef,targetRef,relation}，最多 5 条。论文是 Evidence，不是一篇论文一个节点；只能引用输入出现的 evidenceId；没有直接证据则留空。不要声称读过全文。`;
 
 function parseJson(value: unknown): unknown {
@@ -164,6 +166,8 @@ export async function runExploration(
   const focus = options.contextNodeId
     ? branch.graph.nodes.find((node) => node.id === options.contextNodeId)
     : undefined;
+  const profileRepository = new ResearchProfileRepository();
+  let sessionProfile = await profileRepository.getOrCreateSession(workspace.workspace.id);
   const neighborIds = new Set(branch.graph.edges.flatMap((edge) => edge.source === focus?.id || edge.target === focus?.id ? [edge.source, edge.target] : []));
   if (focus?.parentId) neighborIds.add(focus.parentId);
   for (const node of branch.graph.nodes) if (node.parentId === focus?.id) neighborIds.add(node.id);
@@ -208,6 +212,7 @@ export async function runExploration(
       .filter((message) => message.branchId === branch.id)
       .slice(-8)
       .map((message) => ({ role: message.role, text: message.text })),
+    sessionProfile,
   };
   options.onProgress?.({ stage: "planning", message: "正在制定检索策略" });
   const plan = await generate<IntentPlan>(
@@ -215,12 +220,24 @@ export async function runExploration(
     planInstruction,
     {
       goal: text,
+      sessionProfileId: sessionProfile.id,
       primaryContext,
       overallContext,
     },
     intentPlanSchema,
     options.signal,
   );
+  let profileWarning: string | null = null;
+  try {
+    const profilePatch = plan.profilePatch.targetProfileId === "SESSION"
+      ? { ...plan.profilePatch, targetProfileId: sessionProfile.id }
+      : plan.profilePatch;
+    sessionProfile = applySessionProfilePatch(sessionProfile, profilePatch);
+    await profileRepository.save(sessionProfile);
+    overallContext.sessionProfile = sessionProfile;
+  } catch {
+    profileWarning = "本轮研究领域配置未能安全更新，已继续使用之前的配置。";
+  }
   if (workspace.workspace.title === "未命名探索")
     workspace.workspace.title = plan.title || text.slice(0, 24);
   const root = ensureRootNode(branch, plan.title || text.slice(0, 40), plan.understanding);
@@ -235,6 +252,8 @@ export async function runExploration(
     sourceRegistry.list().find((entry) => entry.manifest.id === sourceId)?.manifest.name ?? sourceId;
   const papers: Paper[] = [];
   const warnings: string[] = [];
+  let shouldFallback = false;
+  if (profileWarning) warnings.push(profileWarning);
   options.onProgress?.({
     stage: "searching",
     message: `正在检索 ${plan.queries.length} 组文献`,
@@ -275,6 +294,7 @@ export async function runExploration(
           ? `${sourceName(adapter.source)} 暂时限流，已保留此前找到的资料并继续整理。`
           : `${sourceName(adapter.source)} 本轮检索未完成（${result.record.status}），已保留此前找到的资料。`;
       warnings.push(warning);
+      shouldFallback = true;
       options.onProgress?.({
         stage: "searching",
         message: warning,
@@ -292,7 +312,7 @@ export async function runExploration(
       candidates: papers.length,
     });
   }
-  if (warnings.length) {
+  if (shouldFallback) {
     for (const source of sourceRegistry
       .enabledAdapters(sourceOrder)
       .filter((candidate) => candidate.source !== adapter.source)) {

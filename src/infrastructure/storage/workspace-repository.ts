@@ -55,7 +55,7 @@ export class WorkspaceRepository {
     const workspace = await this.db.workspaces.get(id);
     if (!workspace) throw new Error("项目不存在。");
     if (confirmedTitle !== workspace.title) throw new Error("删除确认名称不匹配；请先导出备份。");
-    await this.db.transaction("rw", [this.db.workspaces, this.db.branches, this.db.messages, this.db.runExecutions, this.db.checkpoints, this.db.patchReceipts, this.db.runSummaries, this.db.writerLeases], async () => {
+    await this.db.transaction("rw", [this.db.workspaces, this.db.branches, this.db.messages, this.db.runExecutions, this.db.checkpoints, this.db.patchReceipts, this.db.runSummaries, this.db.writerLeases, this.db.researchProfiles], async () => {
       await this.db.branches.where("workspaceId").equals(id).delete();
       await this.db.messages.filter((item) => item.workspaceId === id).delete();
       await this.db.runExecutions.where("workspaceId").equals(id).delete();
@@ -63,6 +63,7 @@ export class WorkspaceRepository {
       await this.db.patchReceipts.where("workspaceId").equals(id).delete();
       await this.db.runSummaries.where("workspaceId").equals(id).delete();
       await this.db.writerLeases.delete(id);
+      await this.db.researchProfiles.delete(`session:${id}`);
       await this.db.workspaces.delete(id);
     });
   }

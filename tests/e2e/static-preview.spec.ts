@@ -8,6 +8,14 @@ const plan = {
     "quadruped robot foot contact state estimation",
     "legged robot foot sensing localization",
   ],
+  profilePatch: {
+    patchVersion: 1,
+    targetProfileId: "SESSION",
+    operations: [
+      { op: "addDomainSignal", value: "Robotics" },
+      { op: "addSubfield", value: "Legged Robot State Estimation" },
+    ],
+  },
 };
 const nodes = [
   {

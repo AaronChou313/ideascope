@@ -1,6 +1,12 @@
 import { z } from "zod";
+import { sessionProfilePatchSchema } from "../research-profile/research-profile";
 
-export const intentPlanSchema = z.object({ title: z.string().min(1).max(40), understanding: z.string().min(1), queries: z.array(z.string().min(2).max(300)).min(2).max(4) }).strict();
+export const intentPlanSchema = z.object({
+  title: z.string().min(1).max(40),
+  understanding: z.string().min(1),
+  queries: z.array(z.string().min(2).max(300)).min(2).max(4),
+  profilePatch: sessionProfilePatchSchema,
+}).strict();
 const kinds = ["question", "concept", "approach", "finding", "debate", "gap", "direction"] as const;
 const relations = ["decomposes_into", "addressed_by", "requires", "contrasts_with", "limited_by", "motivates", "related_to"] as const;
 const ref = z.string().min(1).max(160);

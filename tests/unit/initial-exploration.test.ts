@@ -8,6 +8,7 @@ import { createEmptyWorkspace } from "../../src/domain/workspace/create-workspac
 import { ideaScopeDatabase } from "../../src/infrastructure/storage/ideascope-database";
 import { ProviderProfileRepository } from "../../src/infrastructure/storage/provider-profile-repository";
 import { memoryKeyStore } from "../../src/infrastructure/secrets/memory-key-store";
+import { ResearchProfileRepository } from "../../src/infrastructure/storage/research-profile-repository";
 
 const plan = {
   title: "足端传感与定位",
@@ -16,6 +17,15 @@ const plan = {
     "quadruped robot foot contact state estimation",
     "legged robot foot force localization",
   ],
+  profilePatch: {
+    patchVersion: 1,
+    targetProfileId: "SESSION",
+    operations: [
+      { op: "addDomainSignal", value: "Robotics" },
+      { op: "addSubfield", value: "Legged Robot State Estimation" },
+      { op: "addConcept", value: "Foot Contact Sensing" },
+    ],
+  },
 };
 const synthesis = {
   answer: "文献显示这一问题可从接触约束、状态估计和打滑鲁棒性三个层面展开。",
@@ -155,6 +165,12 @@ describe("initial exploration pipeline", () => {
         "updating",
       ]),
     );
+    const profile = await new ResearchProfileRepository().getSession("initial-test");
+    expect(profile?.scope).toMatchObject({
+      domains: ["Robotics"],
+      subfields: ["Legged Robot State Estimation"],
+      concepts: ["Foot Contact Sensing"],
+    });
   });
   it("keeps successful candidates and completes synthesis when a later query is rate limited", async () => {
     let providerCalls = 0;
