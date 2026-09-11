@@ -39,6 +39,14 @@ details[role="status"] li {
   gap: 2px;
   color: var(--muted);
 }
+details[role="status"] li > span {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
 details[role="status"] li[data-tone="warning"] {
   color: #92400e;
 }
