@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.8-C 已完成：General、Robotics、Localization & Navigation、Geomatics 四个轻量模板可用；默认仍为 Auto 且模板不是硬过滤。**
+当前状态：**v0.6.8-D 已完成：新增“我的研究领域”设置，支持 Auto、模板候选、手动编辑、Session 候选提升及 Profile 导入导出。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -36,6 +36,21 @@
 | v0.6.8-A   | 已完成                | Base/Session/Effective Profile、Session Patch、provenance、严格 Schema 与非覆盖合并规则                         |
 | v0.6.8-B   | 已完成                | Intent Plan 生成 Session Profile Patch、增量应用、上下文注入、独立持久化与失败降级                              |
 | v0.6.8-C   | 已完成                | 四个内置轻量领域模板、稳定 ID、Venue/Source/Query signals 与 Auto 默认隔离                                      |
+| v0.6.8-D   | 已完成                | 我的研究领域设置、Auto、模板/Session 候选确认、手动编辑、Base 持久化及 Profile 导入导出                         |
+
+## v0.6.8-D 阶段记录
+
+实施日期：2026-09-11。
+
+设置体验：设置导航新增“我的研究领域”。默认显示 Auto，不要求首次使用配置；用户可选择四个内置模板载入候选、编辑名称/说明/domain/subfield/concept/Venue，然后明确保存为 `base:active`。页面不显示数值权重，保持标准表单和黑白灰视觉。
+
+长期偏好门禁：“让 AI 帮我整理”读取最近一次由 Agent 形成的 Session Profile，仅生成 `ai_suggested` 候选和提示，必须点击保存才成为 Base；不会再次调用模型，也不会静默提升。运行时 Agent 使用 Base + Session + 节点词汇形成 Effective Profile，任何合并都不反写 Base。
+
+互操作：导出生成 `.ideascope-profile.json` 严格 JSON，不含凭证；导入先经 Zod Schema 校验并载入候选，非法文件不修改当前配置。选择 Auto 会清除 active Base，但保留各 Workspace Session Profile。
+
+测试与界面：`npm run check` 通过，包括 ESLint、严格 TypeScript、27 个 Vitest 文件 / 122 项测试、production build、7 项 Playwright E2E 与 secret scan。新增 Auto 默认、模板载入、明确保存、刷新恢复 E2E，并在本地 Vite 实际检查导航、表单与按钮；截图输出 `reports/visual/v0.6.8/research-profile-settings.png`。构建仍有既有 2.19 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.9-A，Search Intent 与 capability/Profile-aware Source Routing。
 
 ## v0.6.8-C 阶段记录
 

@@ -23,7 +23,7 @@ import { SearchRecordStore } from "../../infrastructure/storage/evidence-reposit
 import { WorkspaceRepository } from "../../infrastructure/storage/workspace-repository";
 import { isProviderGeneration } from "../../agent/provider-adapter";
 import { applyExplorationSynthesis, ensureRootNode } from "../../domain/exploration/apply-exploration-synthesis";
-import { applySessionProfilePatch } from "../../domain/research-profile/research-profile";
+import { applySessionProfilePatch, mergeResearchProfiles } from "../../domain/research-profile/research-profile";
 import { ResearchProfileRepository } from "../../infrastructure/storage/research-profile-repository";
 
 export type ExplorationProgress = {
@@ -168,6 +168,7 @@ export async function runExploration(
     : undefined;
   const profileRepository = new ResearchProfileRepository();
   let sessionProfile = await profileRepository.getOrCreateSession(workspace.workspace.id);
+  const baseProfile = await profileRepository.getActiveBase();
   const neighborIds = new Set(branch.graph.edges.flatMap((edge) => edge.source === focus?.id || edge.target === focus?.id ? [edge.source, edge.target] : []));
   if (focus?.parentId) neighborIds.add(focus.parentId);
   for (const node of branch.graph.nodes) if (node.parentId === focus?.id) neighborIds.add(node.id);
@@ -212,7 +213,11 @@ export async function runExploration(
       .filter((message) => message.branchId === branch.id)
       .slice(-8)
       .map((message) => ({ role: message.role, text: message.text })),
-    sessionProfile,
+    effectiveProfile: mergeResearchProfiles(
+      baseProfile ? [baseProfile] : [],
+      sessionProfile,
+      focus ? [focus.title, ...focus.aliases] : [],
+    ),
   };
   options.onProgress?.({ stage: "planning", message: "正在制定检索策略" });
   const plan = await generate<IntentPlan>(
@@ -234,7 +239,11 @@ export async function runExploration(
       : plan.profilePatch;
     sessionProfile = applySessionProfilePatch(sessionProfile, profilePatch);
     await profileRepository.save(sessionProfile);
-    overallContext.sessionProfile = sessionProfile;
+    overallContext.effectiveProfile = mergeResearchProfiles(
+      baseProfile ? [baseProfile] : [],
+      sessionProfile,
+      focus ? [focus.title, ...focus.aliases] : [],
+    );
   } catch {
     profileWarning = "本轮研究领域配置未能安全更新，已继续使用之前的配置。";
   }

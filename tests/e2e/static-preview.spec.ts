@@ -300,3 +300,16 @@ test("literature source settings persist enabled state and expose honest source 
   await expect(page.getByRole("button", { name: "让 AI 帮我配置来源" })).toBeDisabled();
   await page.screenshot({ path: "reports/visual/v0.6.7/source-settings.png", fullPage: true });
 });
+
+test("research profile stays Auto by default and saves an explicit template", async ({ page }) => {
+  await page.goto("/ideascope/#/settings/profile");
+  await expect(page.getByRole("heading", { name: "我的研究领域" })).toBeVisible();
+  await expect(page.getByText(/自动适配/).first()).toBeVisible();
+  await page.getByLabel("领域模式").selectOption("builtin.robotics");
+  await expect(page.getByLabel("重点会议与期刊")).toHaveValue(/ICRA/);
+  await page.getByRole("button", { name: "保存研究领域" }).click();
+  await expect(page.getByText(/研究领域已保存/)).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(/Robotics · 已保存/)).toBeVisible();
+  await page.screenshot({ path: "reports/visual/v0.6.8/research-profile-settings.png", fullPage: true });
+});
