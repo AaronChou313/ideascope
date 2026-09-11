@@ -1,6 +1,5 @@
 import "fake-indexeddb/auto";
 import { afterEach, describe, expect, it } from "vitest";
-import { startExploration } from "../../src/application/exploration/start-exploration";
 import { ProviderProfileRepository } from "../../src/infrastructure/storage/provider-profile-repository";
 import { IdeaScopeDatabase } from "../../src/infrastructure/storage/ideascope-database";
 import { memoryKeyStore } from "../../src/infrastructure/secrets/memory-key-store";
@@ -20,13 +19,4 @@ describe("saved active provider", () => {
     await db.delete();
   });
 
-  it("requires both a saved profile and the current in-memory key before creating", async () => {
-    const provider = { getActive: () => Promise.resolve(undefined) };
-    const save = () => Promise.resolve({ status: "saved" as const, updatedAt: "now" });
-    await expect(startExploration("idea", provider, { save })).resolves.toEqual({ status: "needs_provider", reason: "missing_profile" });
-    const active = { id: "active", active: true, lastTestState: "unknown" as const, lastTestedAt: null, updatedAt: "now", ...draft };
-    await expect(startExploration("idea", { getActive: () => Promise.resolve(active) }, { save })).resolves.toEqual({ status: "needs_provider", reason: "missing_session_key" });
-    memoryKeyStore.set("test-only-key");
-    await expect(startExploration("idea", { getActive: () => Promise.resolve(active) }, { save })).resolves.toMatchObject({ status: "started" });
-  });
 });

@@ -10,7 +10,7 @@ export class DiagnosticExporter {
       documentType: "ideascope.diagnostics",
       formatVersion: 1,
       exportedAt: new Date().toISOString(),
-      appVersion: "0.6.3",
+      appVersion: "0.6.4",
       browser: typeof navigator === "undefined" ? "unknown" : navigator.userAgent,
       storage: { indexedDb: typeof indexedDB !== "undefined", workspaceCount: workspaces },
       provider: provider ? { providerType: provider.providerType, format: provider.format, modelConfigured: Boolean(provider.model), lastTestState: provider.lastTestState } : null,

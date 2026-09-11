@@ -74,7 +74,7 @@ export class OpenAIChatCompletionsProvider extends ProtocolAgentProvider {
   readonly format = 'openai-chat' as const;
   protected body(request: ProviderRequest) {
     const messages = withJsonInstruction(request.messages, request.repair, request.jsonInstruction);
-    const body: Record<string, unknown> = { model: this.config.model, messages, max_tokens: 1600, stream: false };
+    const body: Record<string, unknown> = { model: this.config.model, messages, max_tokens: 4000, stream: false };
     // JSON object is the broadly compatible Chat Completions mode. Strict schema
     // support is not assumed for DeepSeek or arbitrary compatible providers.
     if (request.mode === 'structured') body.response_format = { type: 'json_object' };
@@ -86,7 +86,7 @@ export class OpenAIResponsesProvider extends ProtocolAgentProvider {
   readonly format = 'openai-responses' as const;
   protected body(request: ProviderRequest) {
     const messages = withJsonInstruction(request.messages, request.repair, request.jsonInstruction);
-    const body: Record<string, unknown> = { model: this.config.model, input: messages, max_output_tokens: 1600 };
+    const body: Record<string, unknown> = { model: this.config.model, input: messages, max_output_tokens: 4000 };
     if (request.mode === 'structured') body.text = { format: { type: 'json_schema', name: request.schemaName, strict: true, schema: request.outputSchema ?? outputJsonSchema } };
     return body;
   }
@@ -98,7 +98,7 @@ export class AnthropicMessagesProvider extends ProtocolAgentProvider {
     const all = withJsonInstruction(request.messages, request.repair, request.jsonInstruction);
     const system = all.filter((item) => item.role === 'system').map((item) => item.content).join('\n');
     const messages = all.filter((item) => item.role !== 'system');
-    return { model: this.config.model, ...(system ? { system } : {}), messages, max_tokens: 1600 };
+    return { model: this.config.model, ...(system ? { system } : {}), messages, max_tokens: 4000 };
   }
 }
 

@@ -7,7 +7,7 @@ export function createWorkspaceFromIdea(idea: string, id: string = crypto.random
   return {
     documentType: "ideascope.workspace",
     formatVersion: 1,
-    createdWith: "0.6.2",
+    createdWith: "0.6.4",
     exportedAt: now,
     isDemo: false,
     workspace: {
