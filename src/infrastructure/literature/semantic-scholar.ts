@@ -30,6 +30,7 @@ const responseSchema = z.object({
         })
         .nullable()
         .optional(),
+      citationCount: z.number().int().nonnegative().nullable().optional(),
     }),
   ),
 });
@@ -56,7 +57,7 @@ export class SemanticScholarLiteratureAdapter implements LiteratureAdapter {
     url.searchParams.set("limit", String(Math.min(options.limit, 20)));
     url.searchParams.set(
       "fields",
-      "paperId,title,abstract,year,authors,venue,url,externalIds",
+      "paperId,title,abstract,year,authors,venue,url,externalIds,citationCount",
     );
     let status: SearchStatus = "completed",
       httpStatus: number | null = null,
@@ -94,6 +95,7 @@ export class SemanticScholarLiteratureAdapter implements LiteratureAdapter {
               source: this.source,
               fetchedAt: new Date().toISOString(),
               relatedVersionIds: [],
+              citationCount: item.citationCount ?? null,
             };
           });
         if (!papers.length) status = "empty";

@@ -23,6 +23,7 @@ const responseSchema = z.object({
     doi: z.string().optional(),
     abstract: z.string().optional(),
     html_url: z.string().optional(),
+    citing_paper_count: z.union([z.string(), z.number()]).optional(),
   })).optional(),
 });
 
@@ -83,6 +84,7 @@ export class IeeeXploreLiteratureAdapter implements LiteratureAdapter {
                 source: this.source,
                 fetchedAt: new Date().toISOString(),
                 relatedVersionIds: [],
+                citationCount: Number.isFinite(Number(article.citing_paper_count)) ? Number(article.citing_paper_count) : null,
               } satisfies Paper;
             });
             if (!papers.length) status = "empty";

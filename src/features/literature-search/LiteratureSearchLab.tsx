@@ -300,6 +300,9 @@ export function LiteratureSearchLab() {
                       ? `关联 ${paper.relatedVersionIds.length} 个版本`
                       : "未关联版本"}
                   </small>
+                  {paper.selectionReasons?.length ? (
+                    <small>入选依据：{paper.selectionReasons.join("；")}</small>
+                  ) : null}
                 </article>
               ))}
             </section>

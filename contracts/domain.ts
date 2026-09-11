@@ -9,6 +9,8 @@ export interface Paper {
   title: string; authors: string[]; year: number | null; venue: string | null;
   url: string; abstract: string | null; source: string; fetchedAt: string;
   relatedVersionIds: ID[];
+  citationCount?: number | null;
+  selectionReasons?: string[];
 }
 export interface Evidence {
   id: ID; paperId: ID; level: EvidenceLevel;

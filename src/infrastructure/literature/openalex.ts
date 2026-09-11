@@ -22,6 +22,7 @@ export const OPENALEX_FIELDS = [
   "primary_location",
   "best_oa_location",
   "abstract_inverted_index",
+  "cited_by_count",
 ] as const;
 const workSchema = z.object({
   id: z.string().url(),
@@ -53,6 +54,7 @@ const workSchema = z.object({
     .record(z.string(), z.array(z.number().int().nonnegative()))
     .nullable()
     .optional(),
+  cited_by_count: z.number().int().nonnegative().nullable().optional(),
 });
 const responseSchema = z.object({
   meta: z.object({
@@ -235,6 +237,7 @@ function normalizeWork(work: Work, fetchedAt: string): Paper {
     source: "openalex",
     fetchedAt,
     relatedVersionIds: [],
+    citationCount: work.cited_by_count ?? null,
   };
 }
 

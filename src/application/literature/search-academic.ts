@@ -5,6 +5,7 @@ import { academicSearchRequestSchema, type AcademicSearchRequest } from "../../d
 import type { SearchRecord } from "../../domain/search/literature";
 import type { SourceRegistry } from "./literature-source-registry";
 import { routeAcademicSearch } from "./route-academic-search";
+import { rankAcademicPapers } from "./rank-academic-papers";
 
 export interface AcademicSearchTrace {
   status: "completed" | "partial" | "empty" | "failed" | "cancelled";
@@ -64,7 +65,9 @@ export async function searchAcademic(options: {
     if (!["completed", "empty"].includes(item.value.result.record.status))
       failures.push({ sourceId: item.value.sourceId, status: item.value.result.record.status });
   }
-  const papers = deduplicatePapers(rawPapers).slice(0, first.budget.maxCandidates);
+  const papers = rankAcademicPapers(
+    deduplicatePapers(rawPapers), requests.slice(0, maxQueries), options.effectiveProfile,
+  ).slice(0, first.budget.maxCandidates);
   const distinctFailures = [...new Map(
     failures.map((failure) => [`${failure.sourceId}:${failure.status}`, failure]),
   ).values()];
@@ -125,5 +128,6 @@ function mergePaper(left: Paper, right: Paper): Paper {
     venue: richer.venue ?? left.venue,
     year: richer.year ?? left.year,
     relatedVersionIds: [...new Set([...left.relatedVersionIds, ...right.relatedVersionIds, left.id, right.id])].filter((id) => id !== richer.id),
+    citationCount: Math.max(left.citationCount ?? 0, right.citationCount ?? 0) || null,
   };
 }

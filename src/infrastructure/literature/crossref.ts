@@ -24,6 +24,7 @@ const responseSchema = z.object({
         "container-title": z.unknown().optional(),
         URL: z.string().nullable().optional(),
         abstract: z.string().nullable().optional(),
+        "is-referenced-by-count": z.number().int().nonnegative().nullable().optional(),
       }),
     ),
   }),
@@ -87,6 +88,7 @@ export class CrossrefLiteratureAdapter implements LiteratureAdapter {
                 source: "crossref",
                 fetchedAt: new Date().toISOString(),
                 relatedVersionIds: [],
+                citationCount: item["is-referenced-by-count"] ?? null,
               },
             ];
           });

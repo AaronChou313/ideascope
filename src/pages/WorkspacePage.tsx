@@ -429,6 +429,9 @@ function WorkspaceShell({ id }: { id?: string }) {
                           ? "摘要可用"
                           : "仅元数据"}
                       </em>
+                      {paper!.selectionReasons?.length ? (
+                        <small>入选依据：{paper!.selectionReasons.join("；")}</small>
+                      ) : null}
                     </article>
                   ))
                 ) : (

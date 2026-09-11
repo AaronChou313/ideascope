@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.9-B 已完成：受预算的并行多来源检索、统一归一化、精确去重与候选版本关联已接入探索流程。**
+当前状态：**v0.6.9-C 已完成：文本优先、Venue-aware 且可解释的候选排序已接入，多样性与引用只作为受控辅助信号。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -39,6 +39,21 @@
 | v0.6.8-D   | 已完成                | 我的研究领域设置、Auto、模板/Session 候选确认、手动编辑、Base 持久化及 Profile 导入导出                         |
 | v0.6.9-A   | 已完成                | Academic Search Request、八类 Intent、Capability 门禁、Effective Profile 偏好与预算路由                         |
 | v0.6.9-B   | 已完成                | 多来源/多查询并行执行、候选预算、DOI/arXiv/ID 精确合并、题名候选版本关联与部分失败保留                           |
+| v0.6.9-C   | 已完成                | 文本相关度优先、Profile Venue、recent、封顶引用、摘要完整性与来源多样性的可解释排序                             |
+
+## v0.6.9-C 阶段记录
+
+实施日期：2026-09-11。
+
+排序：新增独立 `rankAcademicPapers`。题名与摘要相对用户问题/检索表达的词项覆盖是首要信号；Effective Profile Venue 匹配、摘要可用性、仅在 `recent` intent 下启用的时间信号，以及对数且封顶的引用记录只做辅助。选择过程对连续同来源结果施加轻量多样性修正，不以 Source preference 排除高相关资料。
+
+可解释性：每篇经过 Router 入选的 Paper 都携带自然语言 `selectionReasons`，例如“与当前问题高度相关”“匹配研究领域 Venue”“摘要可用”“近期工作”“具有引用记录（仅作辅助信号）”。Workspace 节点证据和本地文献库展示这些依据；UI 不显示内部总分，也不把引用量描述为论文质量或证据强度。
+
+来源字段：OpenAlex、Crossref、Semantic Scholar、IEEE Xplore 在官方响应存在时归一化 `citationCount`；该字段可缺失，不影响旧 Workspace。OpenAlex allowlist 同步加入 `cited_by_count`。精确合并时保留两个版本中较高的已知引用记录和更丰富摘要。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、30 个 Vitest 文件 / 133 项测试、production build、7 项 Playwright E2E 与 secret scan。新增文本优先、Venue 理由、recent 条件、引用封顶描述和来源多样性测试。构建仍有既有约 2.19 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.9-D，实现最多 2～3 轮、总预算受控的 PLAN → SEARCH → OBSERVE → REFINE 搜索循环；不得形成无限 Agent loop。
 
 ## v0.6.9-B 阶段记录
 
