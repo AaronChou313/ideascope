@@ -282,6 +282,21 @@ test("session delete requires exact confirmation", async ({ page }) => {
   await expect(page.getByText("还没有探索会话")).toBeVisible();
 });
 
+test("session and data menus expose the supported export and archive actions", async ({ page }) => {
+  await page.goto("/ideascope/#/");
+  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByLabel(/未命名探索 的更多操作/).click();
+  await expect(page.getByRole("button", { name: "导出完整档案" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "导出 Markdown" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "导出研究图" })).toBeVisible();
+  await page.screenshot({ path: "reports/visual/v0.6.11/session-export-menu.png", fullPage: true });
+  await page.goto("/ideascope/#/settings/data");
+  await expect(page.getByRole("heading", { name: "批量导出探索" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "导出所选" })).toBeDisabled();
+  await expect(page.getByText("导入档案 / Bundle")).toBeVisible();
+  await page.screenshot({ path: "reports/visual/v0.6.11/data-archive.png", fullPage: true });
+});
+
 test("literature source settings persist enabled state and expose honest source status", async ({ page }) => {
   await page.route("https://api.openalex.org/**", (route) =>
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ meta: { count: 0 }, results: [] }) }),

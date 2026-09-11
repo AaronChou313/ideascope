@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.11-C 已完成：Bundle 在解压前执行 ZIP 安全预算与路径审计，dry-run 后按选择单事务导入。**
+当前状态：**v0.6.11-D 已完成：会话级与批量备份入口统一为完整档案、Markdown、研究图和安全 Bundle 流程。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -48,6 +48,21 @@
 | v0.6.11-A  | 已完成                | 单 Workspace 完整档案、相关 Search/运行记录、Session/Base Profile、Source 快照与非覆盖恢复                       |
 | v0.6.11-B  | 已完成                | 多 Workspace ZIP、Bundle Manifest/SHA-256、去重 Source/Profile resources、批量选择与导入预览                    |
 | v0.6.11-C  | 已完成                | ZIP traversal/symlink/预算防护、全条目 dry-run、重复提示、选择导入、Dexie 单事务与失败回滚                       |
+| v0.6.11-D  | 已完成                | Sidebar 完整档案/Markdown/研究图导出、数据页批量 Bundle 入口、明确状态与真实浏览器截图                            |
+
+## v0.6.11-D 阶段记录
+
+实施日期：2026-09-11。
+
+会话菜单：移除含义重叠的普通 JSON 入口，保留“导出完整档案”，并接入已有 Markdown 与完整研究图 SVG 导出；导出成功或失败都会在 Sidebar 内给出状态，不再静默失败。删除仍要求输入完整会话名确认。
+
+数据与存储：批量区继续提供探索选择、是否附带非秘密 Source/Profile 资源、导出所选/全部以及 Bundle dry-run 导入。单项目档案与批量 Bundle 的文案和文件扩展名保持可区分。
+
+界面验收：Playwright 在真实构建页面检查 Sidebar 菜单与数据页入口并生成 `reports/visual/v0.6.11/session-export-menu.png`、`reports/visual/v0.6.11/data-archive.png`。macOS 交互桌面当时处于锁定状态，未将 CUA 手工检查写成已完成；截图已逐张视觉检查。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、40 个 Vitest 文件 / 155 项测试、production build、8 项 Playwright E2E 与 secret scan。构建仍有既有约 2.23 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.12，仅做跨领域、连续会话、来源降级、档案恢复与错误路径 dogfooding；不扩展产品范围。
 
 ## v0.6.11-C 阶段记录
 
