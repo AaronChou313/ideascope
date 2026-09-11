@@ -7,4 +7,4 @@ export const workspaceBundleManifestSchema = z.object({
   resources: z.object({ sources: z.array(z.string().startsWith("resources/sources/")).max(100).optional(), profiles: z.array(z.string().startsWith("resources/profiles/")).max(100).optional() }).strict().optional(),
 }).strict();
 export type WorkspaceBundleManifest = z.infer<typeof workspaceBundleManifestSchema>;
-export interface WorkspaceBundlePreviewItem { workspaceId: string; title: string; path: string; branches: number; nodes: number; papers: number; evidence: number }
+export interface WorkspaceBundlePreviewItem { workspaceId: string; title: string; path: string; branches: number; nodes: number; papers: number; evidence: number; duplicate: "none" | "same-id-same-content" | "same-id-different" }

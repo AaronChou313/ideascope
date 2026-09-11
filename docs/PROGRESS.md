@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.11-B 已完成：多探索可选择或全部导出为带 SHA-256 清单、可预览的真实 ZIP Bundle。**
+当前状态：**v0.6.11-C 已完成：Bundle 在解压前执行 ZIP 安全预算与路径审计，dry-run 后按选择单事务导入。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -47,6 +47,21 @@
 | v0.6.10-D  | 已完成                | Provider Web Search 显式能力门禁、unknown 默认拒绝、无名称猜测、Assistant 清晰降级指引                           |
 | v0.6.11-A  | 已完成                | 单 Workspace 完整档案、相关 Search/运行记录、Session/Base Profile、Source 快照与非覆盖恢复                       |
 | v0.6.11-B  | 已完成                | 多 Workspace ZIP、Bundle Manifest/SHA-256、去重 Source/Profile resources、批量选择与导入预览                    |
+| v0.6.11-C  | 已完成                | ZIP traversal/symlink/预算防护、全条目 dry-run、重复提示、选择导入、Dexie 单事务与失败回滚                       |
+
+## v0.6.11-C 阶段记录
+
+实施日期：2026-09-11。
+
+解压前防护：`inspectZipEntries` 直接读取 ZIP EOCD/central directory，不先展开不可信内容。硬限制为压缩 ZIP 64 MiB、展开总量 256 MiB、文件 1000、Workspace 250、单 JSON 64 MiB；拒绝 `../`、absolute path、Windows drive path、反斜杠、重复路径、越界 central directory 和 Unix symlink mode。
+
+Dry-run：预览在任何写入前验证 Bundle Manifest、所有 workspace SHA-256、完整 Archive/migration，以及列出的 Source/Profile resource Schema。每个会话显示分支、节点、Evidence 和本地重复状态；同 ID/同内容默认不选，同 ID/内容不同明确提示将导入副本，用户可逐项勾选。
+
+事务：`importSelected` 只接受预览中存在的 path，再次取得已经校验的 Archive，并把所选 Workspace、Graph、Paper、Evidence、Message、Search/Run、Profile 和 Custom Manifest 放入同一 Dexie transaction。任一条写入失败会回滚整个批次；UI 明确提示未留下本批次部分数据。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、40 个 Vitest 文件 / 153 项测试、production build、7 项 Playwright E2E 与 secret scan。新增 traversal 解压前拒绝、hash 篡改、资源 Schema、非法选择和第二 Workspace 写入失败后首项回滚测试。构建仍有既有约 2.23 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.11-D，收口 Sidebar 与数据设置的 Archive/Markdown/Graph/批量导入导出命名、状态、确认和实际浏览器体验。
 
 ## v0.6.11-B 阶段记录
 

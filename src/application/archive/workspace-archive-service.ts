@@ -7,6 +7,7 @@ import { WorkspaceRepository } from "../../infrastructure/storage/workspace-repo
 import { ResearchProfileRepository } from "../../infrastructure/storage/research-profile-repository";
 import { SourceManifestRepository } from "../../infrastructure/storage/source-manifest-repository";
 import { SourceInstallationRepository } from "../../infrastructure/storage/source-installation-repository";
+import { migrateWorkspaceExport } from "../../domain/workspace/migrate-workspace";
 
 export class WorkspaceArchiveService {
   constructor(private readonly db: IdeaScopeDatabase = ideaScopeDatabase) {}
@@ -40,6 +41,7 @@ export class WorkspaceArchiveService {
     value.baseProfileSnapshots.forEach((profile) => researchProfileSchema.parse(profile));
     if (value.sessionProfile) researchProfileSchema.parse(value.sessionProfile);
     value.sourceSnapshots.forEach((manifest) => literatureSourceManifestSchema.parse(manifest));
+    value.workspace = migrateWorkspaceExport(value.workspace);
     return value as WorkspaceArchive;
   }
 
