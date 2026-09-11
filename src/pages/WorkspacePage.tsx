@@ -10,6 +10,7 @@ import { downloadText } from "../infrastructure/export/download";
 import { WorkspaceRepository } from "../infrastructure/storage/workspace-repository";
 import { Button, Dialog } from "../shared/ui";
 import styles from "./WorkspacePage.module.css";
+import "./WorkspaceOverrides.css";
 
 export function WorkspacePage() { const { id } = useParams(); return <WorkspaceShell key={id ?? "root"} id={id} />; }
 
@@ -69,7 +70,7 @@ function WorkspaceShell({ id }: { id?: string }) {
   }
   async function continueNode() { if (!selected) return; const next = updateFocus(selected.id); setTab("chat"); await send(`围绕「${selected.title}」继续调研，必要时检索更多文献并增量更新研究地图。`, next); }
 
-  if (!id) return <div className={styles.page}><SessionSidebar /><main className={styles.blank}><Map /><h1>从一个模糊的研究想法开始</h1><p>点击“新建探索”，然后在右侧对话中输入问题、概念或还不成熟的研究念头。</p></main><aside className={styles.blankChat}><h2>探索对话</h2><p>先新建一个探索会话。</p></aside></div>;
+  if (!id) return <div className={`${styles.page} workspace-root-shell`}><SessionSidebar /><main className={styles.blank}><Map /><h1>从一个模糊的研究想法开始</h1><p>点击“新建探索”，然后在右侧对话中输入问题、概念或还不成熟的研究念头。</p></main><aside className={styles.blankChat}><h2>探索对话</h2><p>先新建一个探索会话。</p></aside></div>;
   if (loading) return <main className={styles.loading} role="status">正在恢复研究会话…</main>;
   if (!workspace || !branch) return <div className={styles.page}><SessionSidebar activeId={id} /><main className={styles.blank}><h1>无法恢复会话</h1><p>{loadError}</p><Link to="/">返回工作台</Link></main></div>;
 

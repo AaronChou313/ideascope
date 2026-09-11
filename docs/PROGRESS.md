@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.3 首次使用、Provider 设置、路由返回与探索历史体验修正已完成；API Key 仍仅保存在当前运行内存，刷新后需重新输入。**
+当前状态：**v0.6.4 核心研究体验重构已完成；根路径直接进入持久工作台，真实 Provider→OpenAlex→Evidence→Graph→对话闭环已在浏览器验证。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
@@ -26,6 +26,25 @@
 | v0.6.1 | 已完成 | Chat Completions、Responses、Anthropic Messages 三协议 Adapter；DeepSeek 完成/JSON 实测与三类 mock 契约 |
 | v0.6.2 | 已完成 | 四项探针严格判定、完整流事件解析、failed 状态、脱敏错误诊断与一键测试 |
 | v0.6.3 | 已完成 | Provider 非敏感配置持久化与 active guard、四个设置子页、来源健康检查、returnTo、探索历史列表与首次使用回归 |
+| v0.6.4 | 已完成 | 直接工作台、Session Sidebar、真实 Initial Exploration、节点继续、增量图、方向分支、真实 DeepSeek/OpenAlex 验收 |
+
+## v0.6.4 阶段记录
+
+实施日期 / commits：2026-09-11 / `c2266c6`、`7658eac`、`c1e40ca`、`8cb1683` 及最终文档/视觉提交。
+
+产品结构：删除独立 Homepage、旧 ProjectLibrary、旧 WorkspaceContent 演示状态与旧 startExploration。`/` 直接进入三栏研究工作台；左栏是轻量 Session 列表，中间保持 React Flow + ELK 画布，右栏只保留探索对话/节点详情。设置使用校验后的 returnTo 返回原 Session。
+
+真实研究链路：`WorkspacePage` 调用 `runExploration`；先由 Provider 生成意图、标题和 2–4 组检索词，再由 OpenAlex adapter 真实检索、归一化与去重，建立 metadata/abstract Evidence；第二次 Provider 调用只允许引用已有 Evidence ID，输出经受控规范化和 Zod 校验后转为节点、Claim 与 Edge，并保存完整 Workspace。节点继续和自由追问共用该 use case；方向转移创建继承当前图的新 Branch。
+
+真实浏览器验收：使用用户授权的临时 DeepSeek Chat Completions 凭证及 OpenAlex，在 localhost production preview 输入“四足机器人足端传感器对于定位导航的作用”。连接探针成功；模型生成 4 组查询，OpenAlex 去重得到 26 条候选，最终保存 25 条 Evidence，生成 10 个节点、12 条边。首次综合因 1600 token 输出预算/轻微格式偏差被严格拒绝且未覆盖图；提升到 4000 token 并增加受控规范化后成功。点击“触觉蒙特卡洛定位”节点可打开真实 DOI、作者、年份、期刊和摘要；“围绕此处继续”执行第二轮真实检索并增量扩展到 20 节点、44 Evidence，首轮节点仍存在。
+
+自动测试：最终 `npm run check` 包含 lint、strict typecheck、21 个 Vitest 文件/90 项测试、production build、5 项 Playwright E2E 和 secret scan。E2E 使用 mock Provider/OpenAlex 验证确定性行为；真实 API 结果单独按上述浏览器验收记录，不冒充 CI。
+
+视觉验收：`reports/visual/v0.6.4/` 包含 1440、1920、1100 空工作台和 Initial running、Research Graph、Node Detail、Node Continue、Provider Settings、Session History 最新截图。
+
+限制与风险：API Key 仍仅存运行内存，刷新后须重新输入；当前只接入 OpenAlex 作为生产研究来源；方向转移由明确语言启发式触发；图综合允许受控修正未知 kind/relation，但所有 Evidence ID 仍需白名单；ELK 仍在主线程异步 promise 中运行，30 节点性能尚未建立正式 benchmark；本次未部署 Pages。
+
+下一阶段入口：停止在 v0.6.4，等待实际使用反馈；不进入 v0.7.0。
 
 ## v0.6.3 阶段记录
 

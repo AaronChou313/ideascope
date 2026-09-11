@@ -8,6 +8,13 @@
 - 首页入口同时要求已保存 active profile 和当前会话密钥；底层调用仍保留自身安全检查。
 - OpenAlex 设置测试使用固定、最小健康检查参数，不运行用户关键词检索，不写入研究项目或探索历史。
 
+## v0.6.4 真实研究链路
+
+- localhost Chromium + DeepSeek Chat Completions (`deepseek-chat`)：普通完成和完整 Initial Exploration 成功；密钥未写入文档、源码、IndexedDB、诊断或截图。
+- OpenAlex：4 组模型生成英文查询成功，归一化/去重后得到 26 条候选；25 条进入当前 Workspace Evidence。来源包含 metadata 与 abstract，两者在节点详情明确区分。
+- 节点继续：第二轮 Provider + OpenAlex 调用成功，Research Graph 从 10 节点增量增长到 20 节点，旧节点未丢失。
+- OpenAI Responses 与 Anthropic Messages 的完整研究链路仍只有协议 mock，待真实凭证验收；不能从 DeepSeek 成功推断其真实兼容性。
+
 本文件只记录实际运行过的结果。Node/curl 成功不计作浏览器成功；模型 mock 不计作真实 Provider 成功。凭证值、Authorization header 与原始响应不写入记录。
 
 ## 测试环境

@@ -1,8 +1,14 @@
-import { Background, Controls, ReactFlow, type Edge, type Node } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import { useEffect, useMemo, useState } from 'react';
-import type { Branch, GraphNode } from '../../../contracts/domain';
-import { ResearchNode } from './ResearchNode';
-import styles from './ResearchMap.module.css';
+import { Background, Controls, ReactFlow, type Edge, type Node } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { useEffect, useMemo, useState } from "react";
+import type { Branch, GraphNode } from "../../../contracts/domain";
+import { ResearchNode } from "./ResearchNode";
+import styles from "./ResearchMap.module.css";
 const nodeTypes={research:ResearchNode};
-export function ResearchMap({branch,selectedId,onSelect}:{branch:Branch;selectedId:string|null;onSelect:(node:GraphNode)=>void}){const[positions,setPositions]=useState<Map<string,{x:number;y:number}>>(new Map());const edges=useMemo<Edge[]>(()=>branch.graph.edges.map(edge=>({id:edge.id,source:edge.source,target:edge.target,label:edge.label,type:'smoothstep',style:{stroke:branch.focusNodeId&&(edge.source===branch.focusNodeId||edge.target===branch.focusNodeId)?'#2563eb':'#b9bdc5',opacity:branch.focusNodeId&&edge.source!==branch.focusNodeId&&edge.target!==branch.focusNodeId?.45:1},labelStyle:{fontSize:10,fill:'#6b7280'}})),[branch.graph.edges,branch.focusNodeId]);useEffect(()=>{let active=true;void import('./layout').then(({layoutGraph})=>layoutGraph(branch.graph.nodes,branch.graph.edges)).then(value=>{if(active)setPositions(value)});return()=>{active=false}},[branch.graph.nodes,branch.graph.edges]);const nodes=useMemo<Node[]>(()=>branch.graph.nodes.filter(node=>!node.archived).map(node=>({id:node.id,type:'research',position:positions.get(node.id)??{x:0,y:0},data:{node},selected:node.id===selectedId})),[branch.graph.nodes,positions,selectedId]);return <div className={styles.map}><div className={styles.notice}>{branch.graph.nodes.length} 个研究节点 · {branch.graph.claims.filter(claim=>claim.epistemicStatus==='sourced').length} 条有来源判断</div><ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{padding:.18}} minZoom={.35} maxZoom={1.6} nodesDraggable={false} onNodeClick={(_,item)=>onSelect(item.data.node as GraphNode)}><Background color="#d7d9dd" gap={20} size={.7}/><Controls showInteractive={false}/></ReactFlow></div>}
+export function ResearchMap({branch,selectedId,onSelect}:{branch:Branch;selectedId:string|null;onSelect:(node:GraphNode)=>void}){
+  const[positions,setPositions]=useState<Map<string,{x:number;y:number}>>(new Map());
+  const edges=useMemo<Edge[]>(()=>branch.graph.edges.map(edge=>({id:edge.id,source:edge.source,target:edge.target,label:edge.label,type:"smoothstep",style:{stroke:branch.focusNodeId&&(edge.source===branch.focusNodeId||edge.target===branch.focusNodeId)?"#2563eb":"#b9bdc5",opacity:branch.focusNodeId&&edge.source!==branch.focusNodeId&&edge.target!==branch.focusNodeId?.45:1},labelStyle:{fontSize:10,fill:"#6b7280"}})),[branch.graph.edges,branch.focusNodeId]);
+  useEffect(()=>{let active=true;void import("./layout").then(({layoutGraph})=>layoutGraph(branch.graph.nodes,branch.graph.edges)).then(value=>{if(active)setPositions(value)});return()=>{active=false};},[branch.graph.nodes,branch.graph.edges]);
+  const nodes=useMemo<Node[]>(()=>branch.graph.nodes.filter(node=>!node.archived).map(node=>({id:node.id,type:"research",position:positions.get(node.id)??{x:0,y:0},data:{node},selected:node.id===selectedId})),[branch.graph.nodes,positions,selectedId]);
+  return <div className={styles.map}><div className={styles.notice}>{branch.graph.nodes.length} 个研究节点 · {branch.graph.claims.filter(claim=>claim.epistemicStatus==="sourced").length} 条有来源判断</div><ReactFlow key={`layout-${branch.revision}-${positions.size}`} nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{padding:.18}} minZoom={.35} maxZoom={1.6} nodesDraggable={false} onNodeClick={(_,item)=>onSelect(item.data.node as GraphNode)}><Background color="#d7d9dd" gap={20} size={.7}/><Controls showInteractive={false}/></ReactFlow></div>;
+}
