@@ -40,4 +40,11 @@ describe("literature source settings", () => {
     await expect(probeLiteratureSource(ieee, new AbortController().signal, { fetcher })).resolves.toBe("unconfigured");
     expect(fetcher).not.toHaveBeenCalled();
   });
+
+  it("distinguishes source rate limiting from a generic connection failure", async () => {
+    const crossref = BUILTIN_LITERATURE_SOURCE_MANIFESTS.find((item) => item.id === "crossref")!;
+    await expect(probeLiteratureSource(crossref, new AbortController().signal, {
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(new Response("{}", { status: 429 })),
+    })).rejects.toMatchObject({ code: "rate_limited", status: 429 });
+  });
 });

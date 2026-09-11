@@ -1,6 +1,7 @@
 import type { LiteratureSourceManifest } from "../../domain/literature-source/literature-source";
 import { IeeeXploreLiteratureAdapter } from "./ieee-xplore";
 import { probeOpenAlex } from "./openalex-probe";
+import { classifyResponse } from "../network/errors";
 
 export type SourceHealth = "available" | "unconfigured" | "external";
 
@@ -36,7 +37,7 @@ export async function probeLiteratureSource(
     signal,
     headers: { Accept: manifest.id === "arxiv" ? "application/atom+xml" : "application/json" },
   });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  if (!response.ok) throw classifyResponse(response.status);
   return "available";
 }
 

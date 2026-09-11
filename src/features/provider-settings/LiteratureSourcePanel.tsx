@@ -51,7 +51,10 @@ export function LiteratureSourcePanel() {
       setHealth((current) => ({ ...current, [sourceId]: result }));
     } catch (error) {
       setHealth((current) => ({ ...current, [sourceId]: "failed" }));
-      setDetails((current) => ({ ...current, [sourceId]: normalizeConnectionError(error).message }));
+      setDetails((current) => ({
+        ...current,
+        [sourceId]: normalizeConnectionError(error).message.replace("Provider", "文献来源"),
+      }));
     }
   }
 
