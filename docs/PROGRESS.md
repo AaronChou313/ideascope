@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.8-B 已完成：Agent 首轮自动形成 Session Profile，后续以受控 Patch 演化并持久化；Base Profile 保持不可自动修改。**
+当前状态：**v0.6.8-C 已完成：General、Robotics、Localization & Navigation、Geomatics 四个轻量模板可用；默认仍为 Auto 且模板不是硬过滤。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -35,6 +35,19 @@
 | v0.6.7-D   | 已完成 / 外部项待验证 | 真实机器人主题检索、浏览器健康检查、429/timeout/empty/partial 回归、Source secret 审计                          |
 | v0.6.8-A   | 已完成                | Base/Session/Effective Profile、Session Patch、provenance、严格 Schema 与非覆盖合并规则                         |
 | v0.6.8-B   | 已完成                | Intent Plan 生成 Session Profile Patch、增量应用、上下文注入、独立持久化与失败降级                              |
+| v0.6.8-C   | 已完成                | 四个内置轻量领域模板、稳定 ID、Venue/Source/Query signals 与 Auto 默认隔离                                      |
+
+## v0.6.8-C 阶段记录
+
+实施日期：2026-09-11。
+
+模板：新增 General Research、Robotics、Localization & Navigation、Geomatics / Surveying 四个经过 Profile Schema 校验的内置 Base 模板。模板包含少量 domain/subfield/concept、Source preference、Venue group、query aliases 和 arXiv category，只作为排序/查询信号，不构成硬过滤。
+
+默认行为：`Auto` 不对应隐式保存的模板 ID；未选择时只使用 Agent 自动形成的 Session Profile。内置模板是只读常量，后续由用户明确选择时复制为 Base Profile，不允许 Session 自动覆盖模板。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、27 个 Vitest 文件 / 122 项测试、production build、6 项 Playwright E2E 与 secret scan。验证四模板名称、稳定 ID、Schema、builtin provenance、轻量内容预算和 Auto 不隐式命中。构建仍有既有 2.18 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.8-D，增加“我的研究领域”设置页、Auto 默认、模板选择、手动编辑与 Profile 导入导出。
 
 ## v0.6.8-B 阶段记录
 
