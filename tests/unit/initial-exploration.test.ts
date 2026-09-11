@@ -9,6 +9,7 @@ import { ideaScopeDatabase } from "../../src/infrastructure/storage/ideascope-da
 import { ProviderProfileRepository } from "../../src/infrastructure/storage/provider-profile-repository";
 import { memoryKeyStore } from "../../src/infrastructure/secrets/memory-key-store";
 import { ResearchProfileRepository } from "../../src/infrastructure/storage/research-profile-repository";
+import { normalizeIntentPlanOutput, normalizeSynthesisOutput } from "../../src/domain/exploration/exploration-output";
 
 const plan = {
   title: "足端传感与定位",
@@ -82,6 +83,31 @@ describe("initial exploration pipeline", () => {
       baseUrl: "https://provider.test/v1",
       model: "mock",
     });
+  });
+  it("keeps a valid provider search plan when optional profile enrichment is malformed", () => {
+    const normalized = normalizeIntentPlanOutput({
+      title: "这是一个超过正常会话标题长度但仍然可以安全截断并继续执行的研究标题",
+      understanding: "研究足端接触感知",
+      queries: ["query one", "query two", "query three", "query four", "query five"],
+      profilePatch: { patchVersion: 1, targetProfileId: "wrong", operations: [{ op: "invented", value: "x" }] },
+      commentary: "provider-added field",
+    }, "session:real");
+    expect(normalized.title.length).toBeLessThanOrEqual(40);
+    expect(normalized.queries).toHaveLength(4);
+    expect(normalized.profilePatch).toEqual({ patchVersion: 1, targetProfileId: "session:real", operations: [] });
+  });
+  it("normalizes bounded provider synthesis variations before strict graph validation", () => {
+    const normalized = normalizeSynthesisOutput({
+      answer: "形成研究结构。",
+      nodes: [{ tempId: "n1", parentRef: "ROOT", kind: "method", title: "接触约束方法", summary: "方法摘要", evidenceIds: [], confidence: 0.8 }],
+      crossLinks: [{ sourceRef: "n1", targetRef: "existing", relation: "related" }, { sourceRef: "n1", targetRef: "x", relation: "invented" }],
+      nextQuestions: ["下一步？"],
+      summary: "单条摘要",
+      providerComment: "ignored",
+    });
+    expect(normalized.nodes[0]).toMatchObject({ kind: "approach", parentRef: "ROOT" });
+    expect(normalized.crossLinks).toEqual([{ sourceRef: "n1", targetRef: "existing", relation: "related_to" }]);
+    expect(normalized.summary).toEqual(["单条摘要"]);
   });
   it("plans searches, binds real adapter results and creates a multi-node graph", async () => {
     const providerFetcher: typeof fetch = () =>
@@ -381,6 +407,7 @@ describe("initial exploration pipeline", () => {
       },
     );
     const branch = initial.workspace.workspace.branches[0]!;
+    const originalRootTitle = branch.graph.nodes.find((node) => node.depth === 0)!.title;
     branch.focusNodeId = branch.graph.nodes[1]!.id;
     const oldIds = new Set(branch.graph.nodes.map((node) => node.id));
     const continued = await runExploration(
@@ -402,6 +429,7 @@ describe("initial exploration pipeline", () => {
     const added = continuedBranch.graph.nodes.find((node) => node.title === "因子图接触约束")!;
     expect(added.parentId).toBe(branch.focusNodeId);
     expect(added.depth).toBe(branch.graph.nodes[1]!.depth + 1);
+    expect(continuedBranch.graph.nodes.find((node) => node.depth === 0)?.title).toBe(originalRootTitle);
     expect(
       [...oldIds].every((id) =>
         continued.workspace.workspace.branches[0]!.graph.nodes.some(
@@ -423,6 +451,7 @@ describe("initial exploration pipeline", () => {
       shifted.workspace.workspace.branches[0]!.graph.nodes.length,
     ).toBeGreaterThan(0);
     expect(shifted.workspace.workspace.activeBranchId).not.toBe("branch-main");
+    expect(shifted.workspace.workspace.branches.find((item) => item.id === shifted.workspace.workspace.activeBranchId)?.focusNodeId).toBeNull();
   });
 });
 

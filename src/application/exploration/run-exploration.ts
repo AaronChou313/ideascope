@@ -6,8 +6,8 @@ import type {
   WorkspaceExport,
 } from "../../../contracts/domain";
 import {
-  intentPlanSchema,
-  synthesisSchema,
+  normalizeIntentPlanOutput,
+  normalizeSynthesisOutput,
   type IntentPlan,
   type ResearchSynthesis,
 } from "../../domain/exploration/exploration-output";
@@ -48,7 +48,7 @@ export interface ExplorationRunResult {
   warnings: string[];
 }
 
-const planInstruction = `你是科研探索助手。只返回 JSON：{"title":"不超过20字的中文会话标题","understanding":"如何理解用户意图","queries":["2至4个英文检索表达"],"profilePatch":{"patchVersion":1,"targetProfileId":"必须原样使用输入的sessionProfileId","operations":[]}}。profilePatch 只增量描述当前探索的 domain、subfield、concept、query alias、venue signal、source hint，不得修改长期 Base Profile；操作必须使用给定契约。查询应覆盖对象、机制和应用，不要原样复制中文。`;
+const planInstruction = `你是科研探索助手。只返回 JSON：{"title":"不超过20字的中文会话标题","understanding":"如何理解用户意图","queries":["2至4个英文检索表达"],"profilePatch":{"patchVersion":1,"targetProfileId":"必须原样使用输入的sessionProfileId","operations":[]}}。查询应覆盖对象、机制和应用，不要原样复制中文。profilePatch 是可选增强，只允许这些 operation：{"op":"addDomainSignal|addSubfield|addConcept","value":"字符串"}；{"op":"addQueryAlias","value":{"term":"字符串","alias":"字符串"}}；{"op":"addVenueSignal","value":{"groupId":"字符串","groupName":"字符串","venue":"字符串","aliases":[]}}；{"op":"addSourceHint|adjustTemporaryPriority","value":{"sourceId":"字符串","priority":0到100,"purposes":[]}}。不确定时 operations 返回空数组；不得修改长期 Base Profile。`;
 const synthesisInstruction = `你是严谨的科研综述助手。只返回 JSON：answer、nodes、crossLinks、nextQuestions、summary。Root 已由系统创建，不能生成 Root。nodes 每项为 {tempId,parentRef,existingNodeId?,kind,title,summary,evidenceIds,aliases?}。首次探索：识别 3–5 条主要路线，parentRef 为 ROOT；必要时每条再展开 0–2 个子节点，parentRef 只能引用一级路线的 tempId，首次最多到 depth 2，总计 6–12 个。基于节点继续：只扩展 anchor 局部，新节点默认挂在 anchorId 或本轮节点下，不得无故新增 Root 路线。existingGraph 提供真实 ID；已有概念应通过 existingNodeId 更新，不要重复新增。crossLinks 只表达少量跨分支关系，每项 {sourceRef,targetRef,relation}，最多 5 条。论文是 Evidence，不是一篇论文一个节点；只能引用输入出现的 evidenceId；没有直接证据则留空。不要声称读过全文。`;
 
 function parseJson(value: unknown): unknown {
@@ -142,6 +142,7 @@ export async function runExploration(
   if (!profile || !key) throw new Error("需要配置模型");
   const workspace = structuredClone(workspaceInput);
   const branch = branchForTurn(workspace, text);
+  const createdBranch = branch.id !== workspaceInput.workspace.activeBranchId;
   const now = new Date().toISOString();
   const userMessage: Message = {
     id: crypto.randomUUID(),
@@ -162,7 +163,7 @@ export async function runExploration(
     options.providerFetcher,
   );
   options.onProgress?.({ stage: "understanding", message: "正在理解问题" });
-  const focus = options.contextNodeId
+  const focus = !createdBranch && options.contextNodeId
     ? branch.graph.nodes.find((node) => node.id === options.contextNodeId)
     : undefined;
   const profileRepository = new ResearchProfileRepository();
@@ -228,7 +229,12 @@ export async function runExploration(
       primaryContext,
       overallContext,
     },
-    intentPlanSchema,
+    {
+      safeParse(value) {
+        try { return { success: true, data: normalizeIntentPlanOutput(value, sessionProfile.id) }; }
+        catch { return { success: false }; }
+      },
+    },
     options.signal,
   );
   let profileWarning: string | null = null;
@@ -248,7 +254,7 @@ export async function runExploration(
   }
   if (workspace.workspace.title === "未命名探索")
     workspace.workspace.title = plan.title || text.slice(0, 24);
-  const root = ensureRootNode(branch, plan.title || text.slice(0, 40), plan.understanding);
+  const root = ensureRootNode(branch, plan.title || text.slice(0, 40), plan.understanding, createdBranch);
   const sourceRegistry =
     options.literatureRegistry ??
     (await createConfiguredSourceRegistry({ fetcher: options.fetcher }));
@@ -341,12 +347,17 @@ export async function runExploration(
         url: paper.url,
       })),
     },
-    synthesisSchema,
+    {
+      safeParse(value) {
+        try { return { success: true, data: normalizeSynthesisOutput(value) }; }
+        catch { return { success: false }; }
+      },
+    },
     options.signal,
   );
   options.onProgress?.({ stage: "updating", message: "正在更新研究地图" });
   const counts = applyExplorationSynthesis(workspace, branch, synthesis, focus?.id ?? null);
-  branch.focusNodeId = focus?.id ?? branch.focusNodeId ?? root.id;
+  branch.focusNodeId = createdBranch ? null : (focus?.id ?? branch.focusNodeId ?? root.id);
   branch.scope.object = branch.scope.object || text;
   branch.scope.question = text;
   const limitation = warnings.length

@@ -31,6 +31,15 @@
 - 生产构建 E2E 已覆盖 Initial Exploration、节点上下文继续、刷新恢复、Provider guard、来源设置、Profile 保存、多会话切换以及档案入口；模型与文献响应使用受控 mock，因此不记作真实 Provider 验收。
 - 本次运行时 macOS 交互桌面锁定，进程环境没有 Provider 凭证。未读取浏览器存储中的密钥、未把旧凭证复制进命令，故 v0.6.12 没有新增真实 Provider 消耗记录；v0.7.0 仍需用户解锁并确认产品体验稳定后才能开始。
 
+### v0.6.12 DeepSeek 完整流程复测
+
+- 用户随后明确授权继续使用既有 DeepSeek 配置；测试通过浏览器中已保存的活动会话执行，不读取或记录密钥。
+- Initial Exploration：4 组查询、8 条候选、8 Evidence、13 Graph Nodes、12 条有来源判断；1 Root、4 条主要路线和 8 个二级节点。
+- Node Continue：选择状态估计路线并显式设为 context 后，增量至 18 Nodes / 15 Evidence；旧图保留。
+- Direction Shift：转向复杂地形理解后创建新 Branch，增量至 22 Nodes / 23 Evidence；刷新恢复通过。
+- Global Follow-up：清除节点 context 后全局追问，复用/更新已有节点，保持 22 Nodes，Evidence 增至 27，Root 未被重写。
+- 真实测试暴露的 Provider JSON 变体已通过有界 normalization 修复；canonical Schema、Evidence 引用、Primary Tree、GraphPatch 校验仍然严格执行。完整记录见 `reports/dogfooding/v0.6.12-deepseek.md`。
+
 ## 测试环境
 
 | 项目               | 值                                                                       |

@@ -5,9 +5,13 @@ import { primaryEdge, relationToShortLabel, validateTreeStructure } from "../gra
 
 const normalized = (value: string) => value.normalize("NFKC").toLocaleLowerCase().replace(/[\s\-_—–·:：，,。.!！?？()（）]/g, "");
 
-export function ensureRootNode(branch: Branch, title: string, summary: string) {
+export function ensureRootNode(branch: Branch, title: string, summary: string, updateExisting = false) {
   const current = branch.graph.nodes.find((node) => !node.archived && node.parentId === null && node.depth === 0);
-  if (current) { current.kind = "question"; current.title = title; current.summary = summary; return current; }
+  if (current) {
+    current.kind = "question";
+    if (updateExisting) { current.title = title; current.summary = summary; }
+    return current;
+  }
   const root = { id: `node-root-${crypto.randomUUID()}`, kind: "question" as const, title, summary, claimIds: [], parentId: null, depth: 0, aliases: [], locked: false, archived: false, mergedInto: null };
   branch.graph.nodes.push(root); return root;
 }

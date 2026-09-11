@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.12 工程与公开来源 dogfooding 已完成；真实 Provider 交互复测和用户稳定性确认仍是 v0.7.0 前置门禁。**
+当前状态：**v0.6.12 DeepSeek 完整 dogfooding 已通过并修复真实 JSON/Root/context 回归；等待用户稳定性确认后再进入 v0.7.0。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -49,7 +49,7 @@
 | v0.6.11-B  | 已完成                | 多 Workspace ZIP、Bundle Manifest/SHA-256、去重 Source/Profile resources、批量选择与导入预览                    |
 | v0.6.11-C  | 已完成                | ZIP traversal/symlink/预算防护、全条目 dry-run、重复提示、选择导入、Dexie 单事务与失败回滚                       |
 | v0.6.11-D  | 已完成                | Sidebar 完整档案/Markdown/研究图导出、数据页批量 Bundle 入口、明确状态与真实浏览器截图                            |
-| v0.6.12    | 工程完成 / 门禁待确认 | 三领域、多来源/失败、多会话、节点继续、Profile、单/批量档案与刷新恢复集成回归；真实 Provider 本轮未新增调用       |
+| v0.6.12    | 已完成 / 稳定性待确认 | 三领域、多来源/失败、多会话、节点继续、Profile、档案与刷新恢复回归；DeepSeek 完整真实流程通过                    |
 
 ## v0.6.12 集成 Dogfooding Gate
 
@@ -61,11 +61,13 @@
 
 公开来源实测：OpenAlex、Crossref、arXiv 实时请求为 HTTP 200；Semantic Scholar 匿名请求真实返回 HTTP 429。OpenAlex 对 Robotics、Localization、Geomatics 各抽样 5 条，摘要可用数分别为 4/4/5。应用把单来源 429 保留为诊断并继续使用已取得结果或其他来源，不再把它误判为全局空结果。
 
-真实 Provider 门禁：macOS 交互桌面在本轮处于锁定状态，运行环境也没有 Provider credential。遵循密钥安全约束，本轮未从浏览器存储提取密钥、未在命令中复制旧密钥，因此未新增真实 DeepSeek/OpenAI/Anthropic 调用证据。此前 v0.6.4/v0.6.5 的 DeepSeek 实测仍保留，但不能代替当前版本复测。
+真实 Provider：用户随后明确授权继续使用浏览器中已保存的 DeepSeek 配置。完整流程实测得到 4 组查询、8 候选、8 Evidence、13 节点；节点继续后为 18 节点/15 Evidence；方向转移后为 22 节点/23 Evidence；清除 context 的全局追问复用节点并增至 27 Evidence。刷新恢复通过。完整过程记录在 `reports/dogfooding/v0.6.12-deepseek.md`。
 
-测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、41 个 Vitest 文件 / 156 项测试、production build、9 项 Playwright E2E 与 secret scan。构建仍有既有约 2.24 MB 主 chunk 非阻断警告。
+Dogfooding 修复：Provider 的可选 Profile Patch 不再因为常见字段变体阻塞有效检索计划；Synthesis 先经过有界 normalization，再进入 canonical Schema 与 GraphPatch/Tree/Evidence 校验。后续普通追问不再改写既有 Root；创建方向 Branch 时不再继承旧 composer context。
 
-版本门禁结论：停止在 v0.6.12。计划书明确要求 v0.7.0 只有在用户确认主要产品体验基本稳定后开始；当前尚无该确认，且本轮真实 Provider 交互复测未完成，因此不进入 v0.7.0。
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、41 个 Vitest 文件 / 158 项测试、production build、9 项 Playwright E2E 与 secret scan。构建仍有既有约 2.24 MB 主 chunk 非阻断警告。
+
+版本门禁结论：停止在 v0.6.12。真实 Provider 交互复测已经完成；计划书仍明确要求 v0.7.0 只有在用户确认主要产品体验基本稳定后开始，当前尚无该稳定性确认，因此不自动进入 v0.7.0。
 
 ## v0.6.11-D 阶段记录
 
