@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.7-C 已完成：文献来源设置接入 Registry，支持启用状态持久化、逐项健康检查、IEEE 会话凭证与外部 Scholar 入口；AI 配置与导入保持后续阶段门禁。**
+当前状态：**v0.6.7-D 已完成：统一来源标准化、设置与真实网络回归完成；OpenAlex 浏览器可用，Crossref/Semantic Scholar/arXiv 的实际 CORS/限流状态已如实记录。下一阶段为 v0.6.8-A。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -32,6 +32,21 @@
 | v0.6.7-A   | 已完成                | Literature Source Manifest/Capability/Installation/Registry、三类内置来源注册与既有降级路径回归              |
 | v0.6.7-B   | 工程完成 / 外部待验收 | arXiv Atom、IEEE 可选凭证适配、Google Scholar 外部入口、六来源能力清单；浏览器 CORS/IEEE Key 待验证            |
 | v0.6.7-C   | 已完成                | 来源状态列表、启用持久化、健康检查、IEEE 会话 Key、Scholar 外部入口与高级设置折叠                              |
+| v0.6.7-D   | 已完成 / 外部项待验证 | 真实机器人主题检索、浏览器健康检查、429/timeout/empty/partial 回归、Source secret 审计                          |
+
+## v0.6.7-D 阶段记录
+
+实施日期：2026-09-11。
+
+真实来源回归：在本地浏览器 origin 执行全部默认来源健康检查，OpenAlex 显示可用；Crossref、Semantic Scholar 与 arXiv 在该浏览器环境显示跨域/网络读取失败。命令行分别复核：OpenAlex 机器人主题查询 HTTP 200、约 1950 条候选；Crossref HTTP 200 且返回相关 DOI 元数据；Semantic Scholar HTTP 429；arXiv Atom HTTP 200，返回 Quadruped State Estimation 相关预印本，但响应未见 CORS 许可头。IEEE 未提供 Key，因此保持未配置而非失败。
+
+诊断修正：健康检查的 HTTP 429 现在映射为明确限流；浏览器读取失败文案明确归属“文献来源”，不再错误称为 Provider。来源失败不会清空其他来源已取得的候选；既有 OpenAlex timeout、empty、invalid response、429 和后续来源 partial success 测试继续通过。
+
+安全与自动回归：`npm run check` 通过，包括 ESLint、严格 TypeScript、24 个 Vitest 文件 / 115 项测试、production build、6 项 Playwright E2E 与 secret scan。IEEE credential 只在 session/memory store，Manifest、Installation、SearchRecord diagnostic、Workspace export 与日志均不含值。未使用或保存用户先前提供的 Model Key，也未调用付费模型；构建仍有既有 2.17 MB 主 chunk 非阻断警告。
+
+验收边界：arXiv 的解析和真实服务响应已验证，但静态浏览器直连受官方 CORS 限制；Semantic Scholar 当前匿名限流；IEEE 无凭证。这些状态不记作浏览器可用。
+
+下一阶段入口：v0.6.8-A，Research Profile Contract；不在 v0.6.7 内提前实现 Profile 或复杂 Router。
 
 ## v0.6.7-C 阶段记录
 
