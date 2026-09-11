@@ -30,6 +30,8 @@
         "claimIds": [
           "claim-new"
         ],
+        "parentId": "g-sufficient",
+        "depth": 3,
         "aliases": []
       }
     },
@@ -40,6 +42,7 @@
         "source": "g-sufficient",
         "target": "q-evidence-criteria",
         "relation": "decomposes_into",
+        "role": "primary",
         "label": "细化问题",
         "claimIds": []
       }

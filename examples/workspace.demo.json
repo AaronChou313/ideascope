@@ -1,7 +1,7 @@
 {
   "documentType": "ideascope.workspace",
-  "formatVersion": 1,
-  "createdWith": "0.6.0",
+  "formatVersion": 2,
+  "createdWith": "0.6.6",
   "exportedAt": "2026-09-10T00:00:00Z",
   "isDemo": true,
   "workspace": {
@@ -49,7 +49,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": null,
+              "depth": 0
             },
             {
               "id": "a-retrieval",
@@ -62,7 +64,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "q-reliable",
+              "depth": 1
             },
             {
               "id": "a-reflection",
@@ -75,7 +79,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "q-reliable",
+              "depth": 1
             },
             {
               "id": "a-quality",
@@ -88,7 +94,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "q-reliable",
+              "depth": 1
             },
             {
               "id": "g-sufficient",
@@ -101,7 +109,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "a-retrieval",
+              "depth": 2
             },
             {
               "id": "g-boundary",
@@ -114,7 +124,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "a-reflection",
+              "depth": 2
             },
             {
               "id": "d-uncertain",
@@ -127,7 +139,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "g-sufficient",
+              "depth": 3
             }
           ],
           "edges": [
@@ -137,7 +151,8 @@
               "target": "a-retrieval",
               "relation": "addressed_by",
               "label": "已有路线",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-2",
@@ -145,7 +160,8 @@
               "target": "a-reflection",
               "relation": "addressed_by",
               "label": "已有路线",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-3",
@@ -153,7 +169,8 @@
               "target": "a-quality",
               "relation": "addressed_by",
               "label": "已有路线",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-4",
@@ -161,7 +178,8 @@
               "target": "g-sufficient",
               "relation": "related_to",
               "label": "继续追问",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-5",
@@ -169,7 +187,8 @@
               "target": "g-boundary",
               "relation": "related_to",
               "label": "比较视角",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-6",
@@ -177,7 +196,8 @@
               "target": "g-sufficient",
               "relation": "related_to",
               "label": "继续追问",
-              "claimIds": []
+              "claimIds": [],
+              "role": "cross"
             },
             {
               "id": "edge-7",
@@ -185,7 +205,8 @@
               "target": "d-uncertain",
               "relation": "motivates",
               "label": "探索问题",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-8",
@@ -193,7 +214,8 @@
               "target": "d-uncertain",
               "relation": "related_to",
               "label": "澄清边界",
-              "claimIds": []
+              "claimIds": [],
+              "role": "cross"
             }
           ],
           "claims": [
@@ -386,7 +408,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": null,
+              "depth": 0
             },
             {
               "id": "a-retrieval",
@@ -399,7 +423,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "q-reliable",
+              "depth": 1
             },
             {
               "id": "a-reflection",
@@ -412,7 +438,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "q-reliable",
+              "depth": 1
             },
             {
               "id": "a-quality",
@@ -425,7 +453,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "q-reliable",
+              "depth": 1
             },
             {
               "id": "g-sufficient",
@@ -438,7 +468,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "a-retrieval",
+              "depth": 2
             },
             {
               "id": "g-boundary",
@@ -451,7 +483,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "a-reflection",
+              "depth": 2
             },
             {
               "id": "d-uncertain",
@@ -464,7 +498,9 @@
               "aliases": [],
               "locked": false,
               "archived": false,
-              "mergedInto": null
+              "mergedInto": null,
+              "parentId": "g-sufficient",
+              "depth": 3
             }
           ],
           "edges": [
@@ -474,7 +510,8 @@
               "target": "a-retrieval",
               "relation": "addressed_by",
               "label": "已有路线",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-2",
@@ -482,7 +519,8 @@
               "target": "a-reflection",
               "relation": "addressed_by",
               "label": "已有路线",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-3",
@@ -490,7 +528,8 @@
               "target": "a-quality",
               "relation": "addressed_by",
               "label": "已有路线",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-4",
@@ -498,7 +537,8 @@
               "target": "g-sufficient",
               "relation": "related_to",
               "label": "继续追问",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-5",
@@ -506,7 +546,8 @@
               "target": "g-boundary",
               "relation": "related_to",
               "label": "比较视角",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-6",
@@ -514,7 +555,8 @@
               "target": "g-sufficient",
               "relation": "related_to",
               "label": "继续追问",
-              "claimIds": []
+              "claimIds": [],
+              "role": "cross"
             },
             {
               "id": "edge-7",
@@ -522,7 +564,8 @@
               "target": "d-uncertain",
               "relation": "motivates",
               "label": "探索问题",
-              "claimIds": []
+              "claimIds": [],
+              "role": "primary"
             },
             {
               "id": "edge-8",
@@ -530,7 +573,8 @@
               "target": "d-uncertain",
               "relation": "related_to",
               "label": "澄清边界",
-              "claimIds": []
+              "claimIds": [],
+              "role": "cross"
             }
           ],
           "claims": [

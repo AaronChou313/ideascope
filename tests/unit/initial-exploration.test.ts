@@ -21,48 +21,42 @@ const synthesis = {
   answer: "文献显示这一问题可从接触约束、状态估计和打滑鲁棒性三个层面展开。",
   nodes: [
     {
-      kind: "question",
-      title: "足端信息如何约束定位",
-      summary: "核心问题",
-      evidenceIds: ["evidence:openalex:W1"],
-    },
-    {
+      tempId: "route-estimation", parentRef: "ROOT",
       kind: "approach",
       title: "接触辅助状态估计",
       summary: "把可信接触转为运动学约束",
       evidenceIds: ["evidence:openalex:W1"],
     },
     {
+      tempId: "contact-state", parentRef: "route-estimation",
       kind: "concept",
       title: "接触状态识别",
       summary: "识别足端是否稳定接触",
       evidenceIds: ["evidence:openalex:W1"],
     },
     {
+      tempId: "slip-gap", parentRef: "route-estimation",
       kind: "gap",
       title: "打滑条件下的失效",
       summary: "错误接触约束会污染估计",
       evidenceIds: [],
     },
     {
+      tempId: "fusion", parentRef: "slip-gap",
       kind: "direction",
       title: "触觉与惯性融合",
       summary: "联合足端触觉和惯性信息",
       evidenceIds: [],
     },
     {
+      tempId: "drift", parentRef: "route-estimation",
       kind: "finding",
       title: "接触约束抑制漂移",
       summary: "稳定接触可提供相对运动约束",
       evidenceIds: ["evidence:openalex:W1"],
     },
   ],
-  edges: [
-    { source: 0, target: 1, relation: "addressed_by", label: "通过" },
-    { source: 1, target: 2, relation: "requires", label: "依赖" },
-    { source: 1, target: 3, relation: "limited_by", label: "受限于" },
-    { source: 3, target: 4, relation: "motivates", label: "推动" },
-  ],
+  crossLinks: [{ sourceRef: "slip-gap", targetRef: "fusion", relation: "motivates" }],
   nextQuestions: ["接触检测如何处理打滑？"],
   summary: ["足端接触可作为状态估计约束"],
 };
@@ -140,8 +134,12 @@ describe("initial exploration pipeline", () => {
     expect(result.queries).toBe(2);
     expect(result.candidates).toBe(1);
     expect(result.evidence).toBe(1);
-    expect(result.nodesAdded).toBe(6);
-    expect(result.workspace.workspace.branches[0]!.graph.edges).toHaveLength(4);
+    expect(result.nodesAdded).toBe(5);
+    expect(result.workspace.workspace.branches[0]!.graph.edges).toHaveLength(6);
+    const graph = result.workspace.workspace.branches[0]!.graph;
+    expect(graph.nodes.filter((node) => node.depth === 0 && node.parentId === null)).toHaveLength(1);
+    expect(graph.edges.filter((edge) => edge.role === "primary")).toHaveLength(5);
+    expect(graph.edges.filter((edge) => edge.role === "cross")).toHaveLength(1);
     expect(result.workspace.workspace.messages).toHaveLength(2);
     expect(
       result.workspace.workspace.branches[0]!.graph.claims.some(
@@ -261,13 +259,14 @@ describe("initial exploration pipeline", () => {
       answer: "状态估计的局部深入结果",
       nodes: [
         {
+          tempId: "factor-graph", parentRef: null,
           kind: "approach",
           title: "因子图接触约束",
           summary: "把接触约束加入因子图",
           evidenceIds: ["evidence:openalex:W1"],
         },
       ],
-      edges: [],
+      crossLinks: [],
       summary: ["接触约束可进入因子图"],
       nextQuestions: [],
     };
@@ -330,7 +329,7 @@ describe("initial exploration pipeline", () => {
       "重点看看足端接触信息在状态估计里是怎么使用的",
       {
         signal: new AbortController().signal,
-        focusNodeId: branch.focusNodeId,
+        contextNodeId: branch.focusNodeId,
         fetcher: literatureFetcher,
         providerFetcher,
       },
@@ -340,6 +339,10 @@ describe("initial exploration pipeline", () => {
         (node) => node.title === "因子图接触约束",
       ),
     ).toBe(true);
+    const continuedBranch = continued.workspace.workspace.branches[0]!;
+    const added = continuedBranch.graph.nodes.find((node) => node.title === "因子图接触约束")!;
+    expect(added.parentId).toBe(branch.focusNodeId);
+    expect(added.depth).toBe(branch.graph.nodes[1]!.depth + 1);
     expect(
       [...oldIds].every((id) =>
         continued.workspace.workspace.branches[0]!.graph.nodes.some(

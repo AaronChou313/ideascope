@@ -17,7 +17,7 @@ export function auditWorkspaceExport(value: WorkspaceExport): ExportAudit {
 }
 
 export function exportWorkspaceJson(value: WorkspaceExport, createdWith: string) {
-  const clean: WorkspaceExport = { ...structuredClone(value), formatVersion: 1, createdWith, exportedAt: new Date().toISOString() };
+  const clean: WorkspaceExport = { ...structuredClone(value), formatVersion: 2, createdWith, exportedAt: new Date().toISOString() };
   return JSON.stringify(clean, null, 2);
 }
 

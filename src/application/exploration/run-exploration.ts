@@ -1,9 +1,6 @@
 import type {
   Branch,
-  Claim,
   Evidence,
-  GraphEdge,
-  GraphNode,
   Message,
   Paper,
   WorkspaceExport,
@@ -26,6 +23,7 @@ import { ProviderProfileRepository } from "../../infrastructure/storage/provider
 import { SearchRecordStore } from "../../infrastructure/storage/evidence-repositories";
 import { WorkspaceRepository } from "../../infrastructure/storage/workspace-repository";
 import { isProviderGeneration } from "../../agent/provider-adapter";
+import { applyExplorationSynthesis, ensureRootNode } from "../../domain/exploration/apply-exploration-synthesis";
 
 export type ExplorationProgress = {
   stage:
@@ -51,7 +49,7 @@ export interface ExplorationRunResult {
 }
 
 const planInstruction = `你是科研探索助手。只返回 JSON：{"title":"不超过20字的中文会话标题","understanding":"如何理解用户意图","queries":["2至4个适合OpenAlex的英文检索表达"]}。查询应覆盖对象、机制和应用，不要原样复制中文。`;
-const synthesisInstruction = `你是严谨的科研综述助手。根据用户目标、已有研究结构和真实 OpenAlex 元数据形成研究认知网络。只返回 JSON，字段为 answer、nodes、edges、nextQuestions、summary。nodes 每项含 kind、title、summary、evidenceIds；只能引用输入中出现的 evidenceId。论文是证据，不是一篇论文一个节点。没有直接证据的归纳 evidenceIds 留空。edges 用 nodes 数组下标 source/target，并给 relation 与中文 label。首次探索形成约6至12个高价值节点；后续只给需要新增或强化的局部节点。不要声称读过全文。`;
+const synthesisInstruction = `你是严谨的科研综述助手。只返回 JSON：answer、nodes、crossLinks、nextQuestions、summary。Root 已由系统创建，不能生成 Root。nodes 每项为 {tempId,parentRef,existingNodeId?,kind,title,summary,evidenceIds,aliases?}。首次探索：识别 3–5 条主要路线，parentRef 为 ROOT；必要时每条再展开 0–2 个子节点，parentRef 引用本轮 tempId，总计 6–12 个。基于节点继续：只扩展 anchor 局部，新节点默认挂在 anchorId 或本轮节点下，不得无故新增 Root 路线。existingGraph 提供真实 ID；已有概念应通过 existingNodeId 更新，不要重复新增。crossLinks 只表达少量跨分支关系，每项 {sourceRef,targetRef,relation}，最多 5 条。论文是 Evidence，不是一篇论文一个节点；只能引用输入出现的 evidenceId；没有直接证据则留空。不要声称读过全文。`;
 
 function parseJson(value: unknown): unknown {
   const raw = isProviderGeneration(value) ? value.value : value;
@@ -125,96 +123,12 @@ function branchForTurn(workspace: WorkspaceExport, text: string): Branch {
   workspace.workspace.activeBranchId = next.id;
   return next;
 }
-function applySynthesis(
-  branch: Branch,
-  synthesis: ResearchSynthesis,
-  evidenceIds: Set<string>,
-  incremental: boolean,
-) {
-  const existingTitles = new Set(
-    branch.graph.nodes.map((node) => node.title.toLocaleLowerCase()),
-  );
-  const added: GraphNode[] = [];
-  const indexToId = new Map<number, string>();
-  synthesis.nodes.forEach((draft, index) => {
-    const existing = branch.graph.nodes.find(
-      (node) =>
-        node.title.toLocaleLowerCase() === draft.title.toLocaleLowerCase(),
-    );
-    if (existing) {
-      indexToId.set(index, existing.id);
-      return;
-    }
-    const id = `node-${crypto.randomUUID()}`;
-    const valid = draft.evidenceIds.filter((value) => evidenceIds.has(value));
-    const claimId = `claim-${crypto.randomUUID()}`;
-    const claim: Claim = {
-      id: claimId,
-      text: draft.summary,
-      epistemicStatus: valid.length ? "sourced" : "inference",
-      evidenceLinks: valid.map((evidenceId) => ({
-        evidenceId,
-        stance: "background",
-      })),
-      qualifiers: valid.length ? [] : ["模型归纳，待进一步核查"],
-      verification: "unreviewed",
-    };
-    branch.graph.claims.push(claim);
-    const node: GraphNode = {
-      id,
-      kind: draft.kind,
-      title: draft.title,
-      summary: draft.summary,
-      claimIds: [claimId],
-      aliases: [],
-      locked: false,
-      archived: false,
-      mergedInto: null,
-    };
-    branch.graph.nodes.push(node);
-    added.push(node);
-    indexToId.set(index, id);
-    existingTitles.add(draft.title.toLocaleLowerCase());
-  });
-  let edgeCount = 0;
-  for (const draft of synthesis.edges) {
-    const source = indexToId.get(draft.source),
-      target = indexToId.get(draft.target);
-    if (
-      !source ||
-      !target ||
-      source === target ||
-      branch.graph.edges.some(
-        (edge) => edge.source === source && edge.target === target,
-      )
-    )
-      continue;
-    const edge: GraphEdge = {
-      id: `edge-${crypto.randomUUID()}`,
-      source,
-      target,
-      relation: draft.relation,
-      label: draft.label,
-      claimIds: [],
-    };
-    branch.graph.edges.push(edge);
-    edgeCount++;
-  }
-  branch.summary.understood = [
-    ...new Set([...branch.summary.understood, ...synthesis.summary]),
-  ].slice(-12);
-  branch.summary.openQuestions = synthesis.nextQuestions;
-  branch.focusNodeId = added[0]?.id ?? branch.focusNodeId;
-  branch.revision += 1;
-  return { nodesAdded: added.length, edgesAdded: edgeCount, incremental };
-}
-
 export async function runExploration(
   workspaceInput: WorkspaceExport,
   userText: string,
   options: {
     signal: AbortSignal;
-    focusNodeId?: string | null;
+    contextNodeId?: string | null;
     onProgress?: (progress: ExplorationProgress) => void;
     fetcher?: typeof fetch;
     providerFetcher?: typeof fetch;
@@ -247,28 +161,24 @@ export async function runExploration(
     options.providerFetcher,
   );
   options.onProgress?.({ stage: "understanding", message: "正在理解问题" });
-  const focus = options.focusNodeId
-    ? branch.graph.nodes.find((node) => node.id === options.focusNodeId)
+  const focus = options.contextNodeId
+    ? branch.graph.nodes.find((node) => node.id === options.contextNodeId)
     : undefined;
-  const neighborIds = new Set(
-    branch.graph.edges.flatMap((edge) =>
-      edge.source === focus?.id
-        ? [edge.target]
-        : edge.target === focus?.id
-          ? [edge.source]
-          : [],
-    ),
-  );
+  const neighborIds = new Set(branch.graph.edges.flatMap((edge) => edge.source === focus?.id || edge.target === focus?.id ? [edge.source, edge.target] : []));
+  if (focus?.parentId) neighborIds.add(focus.parentId);
+  for (const node of branch.graph.nodes) if (node.parentId === focus?.id) neighborIds.add(node.id);
   const primaryContext = focus
     ? {
-        node: { title: focus.title, kind: focus.kind, summary: focus.summary },
+        anchorId: focus.id,
+        node: { id: focus.id, title: focus.title, kind: focus.kind, summary: focus.summary, parentId: focus.parentId, depth: focus.depth },
         neighbors: branch.graph.nodes
           .filter((node) => neighborIds.has(node.id))
           .slice(0, 8)
           .map((node) => ({
-            title: node.title,
+            id: node.id, title: node.title,
             kind: node.kind,
             summary: node.summary,
+            parentId: node.parentId, depth: node.depth,
           })),
         evidence: branch.graph.claims
           .filter((claim) => focus.claimIds.includes(claim.id))
@@ -289,9 +199,10 @@ export async function runExploration(
       .filter((node) => !node.archived)
       .slice(-30)
       .map((node) => ({
-        title: node.title,
+        id: node.id, title: node.title,
         kind: node.kind,
         summary: node.summary,
+        parentId: node.parentId, depth: node.depth,
       })),
     recentConversation: workspace.workspace.messages
       .filter((message) => message.branchId === branch.id)
@@ -312,6 +223,7 @@ export async function runExploration(
   );
   if (workspace.workspace.title === "未命名探索")
     workspace.workspace.title = plan.title || text.slice(0, 24);
+  const root = ensureRootNode(branch, plan.title || text.slice(0, 40), plan.understanding);
   const adapter = new OpenAlexLiteratureAdapter({ fetcher: options.fetcher });
   const fallbackAdapter = new CrossrefLiteratureAdapter({
     fetcher: options.fetcher,
@@ -437,9 +349,10 @@ export async function runExploration(
       overallContext,
       existingGraph: {
         nodes: branch.graph.nodes.slice(-30).map((node) => ({
-          title: node.title,
+          id: node.id, title: node.title,
           kind: node.kind,
           summary: node.summary,
+          parentId: node.parentId, depth: node.depth,
         })),
         summary: branch.summary,
       },
@@ -457,12 +370,8 @@ export async function runExploration(
     options.signal,
   );
   options.onProgress?.({ stage: "updating", message: "正在更新研究地图" });
-  const counts = applySynthesis(
-    branch,
-    synthesis,
-    allEvidence,
-    branch.graph.nodes.length > 0,
-  );
+  const counts = applyExplorationSynthesis(workspace, branch, synthesis, focus?.id ?? null);
+  branch.focusNodeId = focus?.id ?? branch.focusNodeId ?? root.id;
   branch.scope.object = branch.scope.object || text;
   branch.scope.question = text;
   const limitation = warnings.length

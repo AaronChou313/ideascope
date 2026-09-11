@@ -24,10 +24,11 @@ export interface Claim {
 }
 export interface GraphNode {
   id: ID; kind: NodeKind; title: string; summary: string; claimIds: ID[];
+  parentId: ID | null; depth: number;
   aliases: string[]; locked: boolean; archived: boolean; mergedInto: ID | null;
 }
 export interface GraphEdge {
-  id: ID; source: ID; target: ID; relation: Relation; label: string; claimIds: ID[];
+  id: ID; source: ID; target: ID; relation: Relation; role: 'primary' | 'cross'; label: string; claimIds: ID[];
 }
 export interface GraphModel { nodes: GraphNode[]; edges: GraphEdge[]; claims: Claim[]; }
 export interface GraphViewState {
@@ -59,13 +60,13 @@ export interface RunRecord {
   usage: {inputTokens: number | null; outputTokens: number | null; source: 'reported' | 'estimated' | 'unknown'};
 }
 export interface WorkspaceExport {
-  documentType: 'ideascope.workspace'; formatVersion: 1; createdWith: string;
+  documentType: 'ideascope.workspace'; formatVersion: 2; createdWith: string;
   exportedAt: string; isDemo: boolean;
   workspace: {id: ID; title: string; seedIdea: string; activeBranchId: ID;
     branches: Branch[]; papers: Paper[]; evidence: Evidence[]; messages: Message[]; runs: RunRecord[];};
 }
 export type NewGraphNode = Omit<GraphNode, 'locked' | 'archived' | 'mergedInto'>;
-export type NodeChanges = Partial<Pick<GraphNode, 'title' | 'summary' | 'kind' | 'claimIds' | 'aliases'>>;
+export type NodeChanges = Partial<Pick<GraphNode, 'title' | 'summary' | 'kind' | 'claimIds' | 'aliases' | 'parentId' | 'depth'>>;
 export type ClaimChanges = Partial<Omit<Claim, 'id'>>;
 export type EdgeChanges = Partial<Omit<GraphEdge, 'id'>>;
 export type GraphOperation =

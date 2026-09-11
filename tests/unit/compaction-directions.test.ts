@@ -16,7 +16,7 @@ afterEach(async () => Promise.all(databases.splice(0).map((db) => db.delete())))
 describe("compaction and directions", () => {
   it("limits visibility to 30 without deleting graph data and only suggests merges", () => {
     const branch: Branch = structuredClone(original);
-    for (let index = branch.graph.nodes.length; index < 35; index += 1) branch.graph.nodes.push({ id: `extra-${index}`, kind: "concept", title: index === 34 ? "重复概念" : `概念 ${index}`, summary: "保留数据", claimIds: [], aliases: index === 33 ? ["重复概念"] : [], locked: false, archived: false, mergedInto: null });
+    for (let index = branch.graph.nodes.length; index < 35; index += 1) branch.graph.nodes.push({ id: `extra-${index}`, kind: "concept", title: index === 34 ? "重复概念" : `概念 ${index}`, summary: "保留数据", claimIds: [], parentId: branch.graph.nodes[0]!.id, depth: 1, aliases: index === 33 ? ["重复概念"] : [], locked: false, archived: false, mergedInto: null });
     const plan = planCompaction(branch);
     expect(plan.visibleIds).toHaveLength(30);
     expect(plan.collapsedIds).toHaveLength(5);

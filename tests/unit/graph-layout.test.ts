@@ -48,4 +48,23 @@ describe('demo graph adapter and ELK layout', () => {
       expect(a.x + RESEARCH_NODE_SIZE.width <= b.x || b.x + RESEARCH_NODE_SIZE.width <= a.x || a.y + RESEARCH_NODE_SIZE.height <= b.y || b.y + RESEARCH_NODE_SIZE.height <= a.y).toBe(true);
     }
   });
+
+  it('uses depth as the column and ignores cross links for hierarchy', async () => {
+    const branch = loadDemoWorkspace().workspace.branches[0]!;
+    const positions = await layoutGraph(branch.graph.nodes, branch.graph.edges, undefined, true);
+    for (const node of branch.graph.nodes) expect(positions.get(node.id)?.x).toBe(node.depth * 350);
+    const cross = branch.graph.edges.find((edge) => edge.role === 'cross');
+    if (cross) expect(branch.graph.nodes.find((node) => node.id === cross.target)?.parentId).not.toBe(cross.source);
+  });
+
+  it('preserves existing positions while placing a new child to the right', async () => {
+    const branch = loadDemoWorkspace().workspace.branches[0]!;
+    const initial = await layoutGraph(branch.graph.nodes, branch.graph.edges, undefined, true);
+    branch.view.positions = Object.fromEntries([...initial].map(([id, value]) => [id, { ...value, pinned: false }]));
+    const parent = branch.graph.nodes[1]!;
+    branch.graph.nodes.push({ ...parent, id: 'new-child', title: '新增局部节点', parentId: parent.id, depth: parent.depth + 1 });
+    const next = await layoutGraph(branch.graph.nodes, branch.graph.edges, branch.view);
+    for (const [id, position] of initial) expect(next.get(id)).toEqual(position);
+    expect(next.get('new-child')!.x).toBeGreaterThan(next.get(parent.id)!.x);
+  });
 });

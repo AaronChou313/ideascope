@@ -27,7 +27,7 @@ describe("GraphPatch reducer", () => {
     expect(branch.revision).toBe(0);
   });
   it("rejects a whole patch when one operation is illegal", () => {
-    const patch: GraphPatch = { ...demoPatch, operations: [...demoPatch.operations, { op: "ADD_EDGE", edge: { id: "bad", source: "missing", target: "q-evidence-criteria", relation: "related_to", label: "bad", claimIds: [] } }] };
+    const patch: GraphPatch = { ...demoPatch, operations: [...demoPatch.operations, { op: "ADD_EDGE", edge: { id: "bad", source: "missing", target: "q-evidence-criteria", relation: "related_to", role: "cross", label: "关联", claimIds: [] } }] };
     expect(() => applyGraphPatch(patch, { workspaceId: "workspace-demo", branch, evidenceIds: demoEvidenceIds })).toThrow(/端点不存在/);
     expect(branch.graph.claims.some(({ id }) => id === "claim-new")).toBe(false);
   });
@@ -40,6 +40,11 @@ describe("GraphPatch reducer", () => {
   });
   it("rejects stale revisions", () => {
     expect(() => applyGraphPatch({ ...demoPatch, baseRevision: 9 }, { workspaceId: "workspace-demo", branch, evidenceIds: demoEvidenceIds })).toThrow(/revision/);
+  });
+  it("rejects a primary edge that contradicts parent and depth", () => {
+    const target = branch.graph.nodes[1]!;
+    const patch: GraphPatch = { ...demoPatch, patchId: "invalid-tree", operations: [{ op: "UPDATE_NODE", nodeId: target.id, changes: { depth: 7 } }] };
+    expect(() => applyGraphPatch(patch, { workspaceId: "workspace-demo", branch, evidenceIds: demoEvidenceIds })).toThrow(/depth/);
   });
 });
 

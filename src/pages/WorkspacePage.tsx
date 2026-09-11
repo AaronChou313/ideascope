@@ -8,7 +8,8 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Viewport } from "@xyflow/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { GraphNode, WorkspaceExport } from "../../contracts/domain";
 import {
@@ -17,6 +18,7 @@ import {
 } from "../application/exploration/run-exploration";
 import { exportWorkspaceJson } from "../domain/export/workspace-export";
 import { ResearchMap } from "../features/graph/ResearchMap";
+import type { PositionMap } from "../features/graph/layout";
 import { SessionSidebar } from "../features/workspace/SessionSidebar";
 import { downloadText } from "../infrastructure/export/download";
 import { WorkspaceRepository } from "../infrastructure/storage/workspace-repository";
@@ -35,6 +37,7 @@ function WorkspaceShell({ id }: { id?: string }) {
   const [loading, setLoading] = useState(Boolean(id));
   const [loadError, setLoadError] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [composerContextNodeId, setComposerContextNodeId] = useState<string | null>(null);
   const [tab, setTab] = useState<"chat" | "detail">("chat");
   const [draft, setDraft] = useState(() =>
     id ? (sessionStorage.getItem(`ideascope.draft.${id}`) ?? "") : "",
@@ -47,6 +50,7 @@ function WorkspaceShell({ id }: { id?: string }) {
   const [right, setRight] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -58,7 +62,7 @@ function WorkspaceShell({ id }: { id?: string }) {
         const restored = value.workspace.branches.find(
           (item) => item.id === value.workspace.activeBranchId,
         );
-        setSelectedId(restored?.focusNodeId ?? null);
+        setComposerContextNodeId(restored?.focusNodeId ?? null);
       } else
         setLoadError("探索会话不存在或已被删除。现有其他会话没有受到影响。");
       setLoading(false);
@@ -78,7 +82,10 @@ function WorkspaceShell({ id }: { id?: string }) {
     ) ?? null;
   const selected =
     branch?.graph.nodes.find((node) => node.id === selectedId) ?? null;
-  const selectedEvidence = useMemo(() => {
+  const selectedParent = branch?.graph.nodes.find((node) => node.id === selected?.parentId) ?? null;
+  const selectedChildren = branch?.graph.nodes.filter((node) => node.parentId === selected?.id && !node.archived) ?? [];
+  const selectedRelated = branch && selected ? branch.graph.edges.filter((edge) => edge.role === "cross" && (edge.source === selected.id || edge.target === selected.id)).flatMap((edge) => branch.graph.nodes.filter((node) => node.id === (edge.source === selected.id ? edge.target : edge.source))) : [];
+  const selectedEvidence = (() => {
     if (!workspace || !branch || !selected) return [];
     const ids = new Set(
       branch.graph.claims
@@ -94,9 +101,9 @@ function WorkspaceShell({ id }: { id?: string }) {
         ),
       }))
       .filter((item) => item.paper);
-  }, [workspace, branch, selected]);
+  })();
 
-  async function send(text = draft, sourceWorkspace = workspace) {
+  async function send(text = draft, sourceWorkspace = workspace, contextNodeId = composerContextNodeId) {
     if (!sourceWorkspace || running || !text.trim()) return;
     setError("");
     setProgressLog([]);
@@ -109,17 +116,13 @@ function WorkspaceShell({ id }: { id?: string }) {
       );
       const result = await runExploration(sourceWorkspace, text, {
         signal: controller.signal,
-        focusNodeId: active?.focusNodeId,
+        contextNodeId,
         onProgress: (item) => setProgressLog((current) => [...current, item]),
       });
       setWorkspace(result.workspace);
       setDraft("");
       sessionStorage.removeItem(`ideascope.draft.${id}`);
-      setSelectedId(
-        result.workspace.workspace.branches.find(
-          (item) => item.id === result.workspace.workspace.activeBranchId,
-        )?.focusNodeId ?? null,
-      );
+      if (active?.id !== result.workspace.workspace.activeBranchId) { setComposerContextNodeId(null); setSelectedId(null); }
       setTab("chat");
       setRefreshKey((value) => value + 1);
     } catch (caught) {
@@ -136,7 +139,6 @@ function WorkspaceShell({ id }: { id?: string }) {
   }
   function chooseNode(node: GraphNode) {
     setSelectedId(node.id);
-    updateFocus(node.id);
     setTab("detail");
   }
   function updateFocus(nodeId: string | null) {
@@ -150,15 +152,24 @@ function WorkspaceShell({ id }: { id?: string }) {
     void new WorkspaceRepository().save(next);
     return next;
   }
-  async function continueNode() {
+  function continueNode() {
     if (!selected) return;
-    const next = updateFocus(selected.id);
+    updateFocus(selected.id);
+    setComposerContextNodeId(selected.id);
     setTab("chat");
-    await send(
-      `围绕「${selected.title}」继续调研，必要时检索更多文献并增量更新研究地图。`,
-      next,
-    );
+    requestAnimationFrame(() => composerRef.current?.focus());
   }
+  const saveView = useCallback((positions: PositionMap, viewport?: Viewport) => {
+    setWorkspace((current) => {
+      if (!current) return current;
+      const next = structuredClone(current), active = next.workspace.branches.find((item) => item.id === next.workspace.activeBranchId);
+      if (!active) return current;
+      active.view.positions = Object.fromEntries([...positions].map(([nodeId, position]) => [nodeId, { ...position, pinned: active.view.positions[nodeId]?.pinned ?? false }]));
+      if (viewport) active.view.viewport = viewport;
+      void new WorkspaceRepository().save(next);
+      return next;
+    });
+  }, []);
 
   if (!id)
     return (
@@ -249,7 +260,9 @@ function WorkspaceShell({ id }: { id?: string }) {
             <ResearchMap
               branch={branch}
               selectedId={selectedId}
+              contextNodeId={composerContextNodeId}
               onSelect={chooseNode}
+              onViewChange={saveView}
             />
           ) : (
             <div className={styles.canvasEmpty}>
@@ -327,23 +340,24 @@ function WorkspaceShell({ id }: { id?: string }) {
               )}
             </div>
             <div className={styles.composer}>
-              {branch.focusNodeId && (
+              {composerContextNodeId && (
                 <div className={styles.focus}>
-                  正在围绕：
+                  基于：
                   {
                     branch.graph.nodes.find(
-                      (node) => node.id === branch.focusNodeId,
+                      (node) => node.id === composerContextNodeId,
                     )?.title
                   }
                   <button
                     aria-label="清除研究焦点"
-                    onClick={() => updateFocus(null)}
+                    onClick={() => { setComposerContextNodeId(null); updateFocus(null); }}
                   >
                     <X size={12} />
                   </button>
                 </div>
               )}
               <textarea
+                ref={composerRef}
                 autoFocus
                 aria-label="探索对话输入"
                 value={draft}
@@ -387,8 +401,12 @@ function WorkspaceShell({ id }: { id?: string }) {
                 <small>{selected.kind}</small>
                 <h2>{selected.title}</h2>
                 <p>{selected.summary}</p>
+                <h3>在研究结构中的位置</h3>
+                <p>{selectedParent ? `父节点：${selectedParent.title}` : "这是当前研究的核心问题。"} · {selectedChildren.length} 个直接子节点</p>
                 <h3>为什么重要</h3>
                 <p>{selected.summary}</p>
+                <h3>当前判断</h3>
+                {branch.graph.claims.filter((claim) => selected.claimIds.includes(claim.id)).map((claim) => <p key={claim.id}>{claim.text} · {claim.epistemicStatus === "sourced" ? "有证据支持" : "模型归纳"}</p>)}
                 <h3>当前证据</h3>
                 {selectedEvidence.length ? (
                   selectedEvidence.map(({ evidence, paper }) => (
@@ -416,8 +434,9 @@ function WorkspaceShell({ id }: { id?: string }) {
                 ) : (
                   <p>暂无直接文献证据；此节点属于模型归纳或待核查问题。</p>
                 )}
-                <Button variant="primary" onClick={() => void continueNode()}>
-                  围绕此处继续
+                {selectedRelated.length > 0 && <><h3>相关节点</h3><p>{selectedRelated.map((node) => node.title).join("；")}</p></>}
+                <Button variant="primary" onClick={continueNode}>
+                  基于此节点继续探索
                 </Button>
               </>
             ) : (

@@ -5,6 +5,7 @@ import type {
   GraphPatch,
   GraphNode,
 } from "../../../contracts/domain";
+import { validateTreeStructure } from "./graph-structure";
 
 export class GraphPatchError extends Error {
   constructor(message: string) {
@@ -134,6 +135,7 @@ export function applyGraphPatch(patch: GraphPatch, context: GraphPatchContext): 
   }
   for (const claim of claims) validateClaim(claim, context.evidenceIds);
   validateGraph(nodes, edges, claims);
+  validateTreeStructure(next);
   next.revision += 1;
   return next;
 }

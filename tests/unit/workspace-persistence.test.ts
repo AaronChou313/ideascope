@@ -18,11 +18,23 @@ describe("workspace persistence and migration", () => {
     expect((await new WorkspaceRepository(db).save(workspace)).status).toBe("saved");
     const restored = await new WorkspaceRepository(db).get(workspace.workspace.id);
     expect(restored?.workspace).toEqual(workspace.workspace);
-    expect(restored?.formatVersion).toBe(1);
+    expect(restored?.formatVersion).toBe(2);
   });
   it("migrates version 0 and explicitly rejects future versions", () => {
-    expect(migrateWorkspaceExport({ ...workspace, formatVersion: 0 }).formatVersion).toBe(1);
+    expect(migrateWorkspaceExport({ ...workspace, formatVersion: 0 }).formatVersion).toBe(2);
     expect(() => migrateWorkspaceExport({ ...workspace, formatVersion: 99 })).toThrow(/未来版本/);
+  });
+  it("infers one hierarchy from a legacy graph without losing research records", () => {
+    const legacy = structuredClone(workspace) as unknown as Record<string, unknown>;
+    legacy.formatVersion = 1;
+    const rawWorkspace = (legacy.workspace as { branches: Array<{ graph: { nodes: Array<Record<string, unknown>>; edges: Array<Record<string, unknown>> } }> });
+    for (const branch of rawWorkspace.branches) { for (const node of branch.graph.nodes) { delete node.parentId; delete node.depth; } for (const edge of branch.graph.edges) delete edge.role; }
+    const migrated = migrateWorkspaceExport(legacy);
+    expect(migrated.workspace.papers).toHaveLength(workspace.workspace.papers.length);
+    for (const branch of migrated.workspace.branches) {
+      expect(branch.graph.nodes.filter((node) => node.parentId === null && node.depth === 0)).toHaveLength(1);
+      expect(branch.graph.edges.every((edge) => edge.role === "primary" || edge.role === "cross")).toBe(true);
+    }
   });
   it("reports quota exhaustion instead of claiming save success", async () => {
     const db = database();

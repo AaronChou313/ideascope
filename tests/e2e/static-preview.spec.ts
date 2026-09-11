@@ -11,36 +11,35 @@ const plan = {
 };
 const nodes = [
   {
-    kind: "question",
-    title: "足端感知如何支持定位",
-    summary: "核心研究问题",
-    evidenceIds: ["evidence:openalex:W1"],
-  },
-  {
+    tempId: "route-estimation", parentRef: "ROOT",
     kind: "approach",
     title: "接触辅助状态估计",
     summary: "利用稳定接触构造运动约束",
     evidenceIds: ["evidence:openalex:W1"],
   },
   {
+    tempId: "contact-state", parentRef: "route-estimation",
     kind: "concept",
     title: "接触状态识别",
     summary: "判断足端接触是否可信",
     evidenceIds: ["evidence:openalex:W1"],
   },
   {
+    tempId: "drift", parentRef: "route-estimation",
     kind: "finding",
     title: "接触约束抑制漂移",
     summary: "可靠接触可以约束累积误差",
     evidenceIds: ["evidence:openalex:W1"],
   },
   {
+    tempId: "slip", parentRef: "route-estimation",
     kind: "gap",
     title: "打滑导致约束失效",
     summary: "打滑会让错误约束污染估计",
     evidenceIds: [],
   },
   {
+    tempId: "fusion", parentRef: "slip",
     kind: "direction",
     title: "足端触觉与惯性融合",
     summary: "联合多模态感知提升鲁棒性",
@@ -50,13 +49,7 @@ const nodes = [
 const synthesis = {
   answer: "当前文献可从接触识别、状态估计和打滑鲁棒性三个层面组织。",
   nodes,
-  edges: [
-    { source: 0, target: 1, relation: "addressed_by", label: "通过" },
-    { source: 1, target: 2, relation: "requires", label: "依赖" },
-    { source: 1, target: 3, relation: "related_to", label: "带来" },
-    { source: 1, target: 4, relation: "limited_by", label: "受限于" },
-    { source: 4, target: 5, relation: "motivates", label: "推动" },
-  ],
+  crossLinks: [{ sourceRef: "drift", targetRef: "fusion", relation: "related_to" }],
   nextQuestions: ["接触信息如何进入状态估计？"],
   summary: ["足端接触是状态估计的重要约束"],
 };
@@ -82,13 +75,14 @@ async function mockResearch(page: Page) {
                 answer: "围绕接触辅助状态估计完成了局部深入。",
                 nodes: [
                   {
+                    tempId: "factor-graph", parentRef: null,
                     kind: "approach",
                     title: "因子图接触约束",
                     summary: "把足端接触加入因子图",
                     evidenceIds: ["evidence:openalex:W1"],
                   },
                 ],
-                edges: [],
+                crossLinks: [],
                 summary: ["接触约束可进入因子图"],
               };
       await route.fulfill({
@@ -147,7 +141,7 @@ test("root is the direct empty research workspace at desktop widths", async ({
       page.getByRole("heading", { name: "从一个模糊的研究想法开始" }),
     ).toBeVisible();
     await page.screenshot({
-      path: `reports/visual/v0.6.4/${name}.png`,
+      path: `reports/visual/v0.6.6/${name}.png`,
       fullPage: true,
     });
   }
@@ -174,7 +168,7 @@ test("provider guard preserves draft and protocol switching preserves common fie
   );
   await expect(page.getByLabel("Model ID")).toHaveValue("model-x");
   await page.screenshot({
-    path: "reports/visual/v0.6.4/06-settings-provider.png",
+    path: "reports/visual/v0.6.6/06-settings-provider.png",
     fullPage: true,
   });
   await page.getByRole("button", { name: "保存配置" }).click();
@@ -199,7 +193,7 @@ test("initial exploration creates evidence graph and node continuation updates i
   await expect(page.getByRole("status")).toHaveAttribute("open", "");
   await expect(page.getByText(/正在检索|正在整理/).first()).toBeVisible();
   await page.screenshot({
-    path: "reports/visual/v0.6.4/02-initial-exploration-running.png",
+    path: "reports/visual/v0.6.6/02-initial-exploration-running.png",
     fullPage: true,
   });
   await expect(
@@ -210,7 +204,7 @@ test("initial exploration creates evidence graph and node continuation updates i
   await page.getByRole("status").locator("summary").click();
   await expect(page.getByText("正在理解问题")).toBeVisible();
   await page.screenshot({
-    path: "reports/visual/v0.6.4/03-research-graph.png",
+    path: "reports/visual/v0.6.6/01-initial-hierarchy.png",
     fullPage: true,
   });
   await page.getByText("接触辅助状态估计", { exact: true }).first().click();
@@ -221,16 +215,23 @@ test("initial exploration creates evidence graph and node continuation updates i
     page.getByText("Contact-Aided State Estimation for Legged Robots"),
   ).toBeVisible();
   await page.screenshot({
-    path: "reports/visual/v0.6.4/04-node-detail.png",
+    path: "reports/visual/v0.6.6/02-node-selected.png",
     fullPage: true,
   });
-  await page.getByRole("button", { name: "围绕此处继续" }).click();
+  await page.getByRole("button", { name: "基于此节点继续探索" }).click();
+  await expect(page.getByText("基于：接触辅助状态估计")).toBeVisible();
+  await page.screenshot({ path: "reports/visual/v0.6.6/03-context-chip.png", fullPage: true });
+  await page.getByText("接触状态识别", { exact: true }).first().click();
+  await page.getByRole("button", { name: "探索对话" }).click();
+  await expect(page.getByText("基于：接触辅助状态估计")).toBeVisible();
+  await page.getByLabel("探索对话输入").fill("足端接触约束通常怎样进入 EKF 或优化框架？");
+  await page.getByRole("button", { name: "发送" }).click();
   await expect(
     page.getByText("因子图接触约束", { exact: true }).first(),
   ).toBeVisible({ timeout: 15000 });
   await expect(page.getByText(/7 个节点 · 1 条 Evidence/)).toBeVisible();
   await page.screenshot({
-    path: "reports/visual/v0.6.4/05-continue-from-node.png",
+    path: "reports/visual/v0.6.6/04-focused-expansion.png",
     fullPage: true,
   });
   await page.reload();
@@ -238,7 +239,7 @@ test("initial exploration creates evidence graph and node continuation updates i
     page.getByText("因子图接触约束", { exact: true }).first(),
   ).toBeVisible();
   await page.screenshot({
-    path: "reports/visual/v0.6.4/07-session-history.png",
+    path: "reports/visual/v0.6.6/06-restored-workspace.png",
     fullPage: true,
   });
 });

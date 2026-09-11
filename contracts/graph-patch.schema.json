@@ -95,6 +95,8 @@
                     "minItems": 0,
                     "uniqueItems": true
                   },
+                  "parentId": { "type": ["string", "null"], "maxLength": 128 },
+                  "depth": { "type": "integer", "minimum": 0, "maximum": 100 },
                   "aliases": {
                     "type": "array",
                     "items": {
@@ -112,6 +114,8 @@
                   "title",
                   "summary",
                   "claimIds",
+                  "parentId",
+                  "depth",
                   "aliases"
                 ]
               }
@@ -428,6 +432,7 @@
                       "related_to"
                     ]
                   },
+                  "role": { "enum": ["primary", "cross"] },
                   "label": {
                     "type": "string",
                     "minLength": 1,
@@ -451,6 +456,7 @@
                   "source",
                   "target",
                   "relation",
+                  "role",
                   "label",
                   "claimIds"
                 ]
