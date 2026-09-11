@@ -9,7 +9,7 @@ describe('production shell', () => {
     render(<MemoryRouter><App /></MemoryRouter>);
 
     expect(screen.getByRole('heading', { name: /从一个模糊的研究想法开始/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /新建探索/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /新建会话/ })).toBeInTheDocument();
   });
 });
 import "fake-indexeddb/auto";

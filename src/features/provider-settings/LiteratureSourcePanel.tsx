@@ -250,9 +250,20 @@ export function LiteratureSourcePanel() {
       </div>
       <div className={styles.sourceActions}>
         <Button type="button" onClick={() => void testAll()}>测试已启用来源</Button>
-        <Button type="button" onClick={() => setAssistantOpen((value) => !value)}>让 AI 帮我配置来源</Button>
-        <Button type="button" onClick={() => setImportOpen((value) => !value)}>导入 Source / Pack</Button>
       </div>
+      <details className={styles.advanced}>
+        <summary>高级设置</summary>
+        <div className={styles.advancedBody}>
+          <p>管理来源配置助手、Manifest 导入与认证策略。密钥与 Manifest 分离，不进入项目导出。</p>
+          <dl className={styles.advancedFacts}>
+            <div><dt>已注册来源</dt><dd>{manifests.length}</dd></div>
+            <div><dt>已启用</dt><dd>{manifests.filter((manifest) => installationFor(manifest.id)?.enabled).length}</dd></div>
+            <div><dt>自定义来源</dt><dd>{manifests.filter((manifest) => manifest.adapter.kind !== "builtin" && manifest.adapter.kind !== "external-search").length}</dd></div>
+          </dl>
+          <div className={styles.sourceActions}>
+            <Button type="button" onClick={() => setAssistantOpen((value) => !value)}>让 AI 帮我配置来源</Button>
+            <Button type="button" onClick={() => setImportOpen((value) => !value)}>导入 Source / Pack</Button>
+          </div>
       {assistantOpen ? (
         <section className={styles.sourceRow} aria-label="AI 来源配置助手">
           <h3>让 AI 帮我配置来源</h3>
@@ -291,9 +302,7 @@ export function LiteratureSourcePanel() {
           {importStatus ? <p role="status">{importStatus}</p> : null}
         </section>
       ) : null}
-      <details className={styles.advanced}>
-        <summary>高级设置</summary>
-        <p>来源能力和认证方式由经过校验的 Manifest 管理。密钥与 Manifest 分离，不进入项目导出。</p>
+        </div>
       </details>
     </section>
   );

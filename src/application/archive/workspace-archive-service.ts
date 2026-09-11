@@ -17,7 +17,7 @@ export class WorkspaceArchiveService {
     if (!workspace) throw new Error("探索项目不存在。");
     const profiles = new ResearchProfileRepository(this.db);
     return {
-      documentType: "ideascope.workspace-archive", archiveVersion: 1, createdWith: "0.6.13", exportedAt: new Date().toISOString(),
+      documentType: "ideascope.workspace-archive", archiveVersion: 1, createdWith: "0.6.14", exportedAt: new Date().toISOString(),
       workspace,
       searchRecords: await this.db.searchRecords.where("workspaceId").equals(workspaceId).toArray(),
       runs: {

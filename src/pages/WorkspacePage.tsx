@@ -5,7 +5,6 @@ import {
   PanelLeftClose,
   PanelRightClose,
   Search,
-  Settings,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -16,7 +15,7 @@ import {
   runExploration,
   type ExplorationProgress,
 } from "../application/exploration/run-exploration";
-import { exportWorkspaceJson } from "../domain/export/workspace-export";
+import { WorkspaceArchiveService } from "../application/archive/workspace-archive-service";
 import { ResearchMap } from "../features/graph/ResearchMap";
 import type { PositionMap } from "../features/graph/layout";
 import { normalizeViewport } from "../features/graph/viewport";
@@ -50,8 +49,10 @@ function WorkspaceShell({ id }: { id?: string }) {
   const [left, setLeft] = useState(true);
   const [right, setRight] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [nodeSearchOpen, setNodeSearchOpen] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
+  const nodeSearchRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -138,6 +139,15 @@ function WorkspaceShell({ id }: { id?: string }) {
       abortRef.current = null;
     }
   }
+  async function exportCurrentSession() {
+    if (!id || !workspace) return;
+    try {
+      const archive = await new WorkspaceArchiveService().create(id);
+      downloadText(`${workspace.workspace.title}.ideascope-archive.json`, "application/json", JSON.stringify(archive, null, 2));
+    } catch (caught) {
+      setError(caught instanceof Error ? `导出失败：${caught.message}` : "导出失败。");
+    }
+  }
   function chooseNode(node: GraphNode) {
     setSelectedId(node.id);
     setTab("detail");
@@ -182,7 +192,7 @@ function WorkspaceShell({ id }: { id?: string }) {
           <Map />
           <h1>从一个模糊的研究想法开始</h1>
           <p>
-            点击“新建探索”，然后在右侧对话中输入问题、概念或还不成熟的研究念头。
+            点击“新建会话”，然后在右侧对话中输入问题、概念或还不成熟的研究念头。
           </p>
         </main>
         <aside className={styles.blankChat}>
@@ -224,10 +234,13 @@ function WorkspaceShell({ id }: { id?: string }) {
             </p>
           </div>
           <div className={styles.toolbar}>
-            <label>
+            {nodeSearchOpen ? <label className={styles.nodeSearch}>
               <Search size={14} />
               <input
+                ref={nodeSearchRef}
+                aria-label="搜索研究节点"
                 placeholder="搜索节点"
+                onKeyDown={(event) => { if (event.key === "Escape") setNodeSearchOpen(false); }}
                 onChange={(event) => {
                   const term = event.target.value.trim().toLocaleLowerCase();
                   const node = branch.graph.nodes.find((item) =>
@@ -236,26 +249,14 @@ function WorkspaceShell({ id }: { id?: string }) {
                   if (node && term) chooseNode(node);
                 }}
               />
-            </label>
+            </label> : <Button aria-label="搜索研究节点" title="搜索研究节点" onClick={() => { setNodeSearchOpen(true); requestAnimationFrame(() => nodeSearchRef.current?.focus()); }}><Search size={15} /></Button>}
             <Button
-              aria-label="导出当前探索"
-              onClick={() =>
-                downloadText(
-                  `${workspace.workspace.title}.json`,
-                  "application/json",
-                  exportWorkspaceJson(workspace, "0.6.4"),
-                )
-              }
+              aria-label="导出当前会话"
+              title="导出当前会话完整档案"
+              onClick={() => void exportCurrentSession()}
             >
               <Download size={15} />
             </Button>
-            <Link
-              aria-label="设置"
-              to="/settings/provider"
-              state={{ returnTo: `/workspace/${id}` }}
-            >
-              <Settings size={16} />
-            </Link>
           </div>
         </header>
         <div className={styles.canvas}>

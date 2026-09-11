@@ -159,7 +159,11 @@ test("provider guard preserves draft and protocol switching preserves common fie
   page,
 }) => {
   await page.goto("/ideascope/#/");
-  await page.getByRole("button", { name: /新建探索/ }).click();
+  await expect(page.getByRole("link", { name: "设置" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "导入会话" })).toBeVisible();
+  await page.getByRole("button", { name: "搜索对话记录" }).click();
+  await expect(page.getByLabel("搜索对话记录")).toBeVisible();
+  await page.getByRole("button", { name: /新建会话/ }).click();
   await page.getByLabel("探索对话输入").fill(idea);
   await page.getByRole("button", { name: "发送" }).click();
   await expect(
@@ -195,7 +199,7 @@ test("initial exploration creates evidence graph and node continuation updates i
   await mockResearch(page);
   await configure(page);
   await page.goto("/ideascope/#/");
-  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByRole("button", { name: /新建会话/ }).click();
   await page.getByLabel("探索对话输入").fill(idea);
   await page.getByRole("button", { name: "发送" }).click();
   await expect(page.getByRole("status")).toHaveAttribute("open", "");
@@ -253,7 +257,8 @@ test("initial exploration creates evidence graph and node continuation updates i
   await page.getByLabel("探索对话输入").fill("足端接触约束通常怎样进入 EKF 或优化框架？");
   await page.getByRole("button", { name: "发送" }).click();
   await expect(page.getByText(/7 个节点 · 1 条 Evidence/)).toBeVisible({ timeout: 15000 });
-  await page.getByRole("button", { name: "Fit View" }).click();
+  await page.getByRole("button", { name: "找回地图" }).click();
+  await page.waitForTimeout(300);
   await expect(
     page.getByText("因子图接触约束", { exact: true }).first(),
   ).toBeVisible({ timeout: 15000 });
@@ -263,7 +268,8 @@ test("initial exploration creates evidence graph and node continuation updates i
   });
   await page.reload();
   await expect(page.getByText(/7 个节点 · 1 条 Evidence/)).toBeVisible();
-  await page.getByRole("button", { name: "Fit View" }).click();
+  await page.getByRole("button", { name: "找回地图" }).click();
+  await page.waitForTimeout(300);
   await expect(
     page.getByText("因子图接触约束", { exact: true }).first(),
   ).toBeVisible();
@@ -278,7 +284,7 @@ test("settings return to the same session and invalid settings return falls back
 }) => {
   await configure(page);
   await page.goto("/ideascope/#/");
-  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByRole("button", { name: /新建会话/ }).click();
   await expect(page).toHaveURL(/#\/workspace\//);
   const url = page.url();
   await page.getByLabel("设置").click();
@@ -291,7 +297,7 @@ test("settings return to the same session and invalid settings return falls back
 
 test("session delete requires exact confirmation", async ({ page }) => {
   await page.goto("/ideascope/#/");
-  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByRole("button", { name: /新建会话/ }).click();
   await page.getByLabel(/未命名探索 的更多操作/).click();
   await page.getByRole("button", { name: "删除" }).click();
   await expect(page.getByRole("button", { name: "确认删除" })).toBeDisabled();
@@ -302,29 +308,29 @@ test("session delete requires exact confirmation", async ({ page }) => {
 
 test("session and data menus expose the supported export and archive actions", async ({ page }) => {
   await page.goto("/ideascope/#/");
-  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByRole("button", { name: /新建会话/ }).click();
   await page.getByLabel(/未命名探索 的更多操作/).click();
   await expect(page.getByRole("button", { name: "导出完整档案" })).toBeVisible();
   await expect(page.getByRole("button", { name: "导出 Markdown" })).toBeVisible();
   await expect(page.getByRole("button", { name: "导出研究图" })).toBeVisible();
   await page.screenshot({ path: "reports/visual/v0.6.11/session-export-menu.png", fullPage: true });
   await page.goto("/ideascope/#/settings/data");
-  await expect(page.getByRole("heading", { name: "批量导出探索" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "导出所选" })).toBeDisabled();
-  await expect(page.getByText("导入档案 / Bundle")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "整体备份与恢复" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "导出完整备份" })).toBeEnabled();
+  await expect(page.getByText("导入完整备份")).toBeVisible();
   await page.screenshot({ path: "reports/visual/v0.6.11/data-archive.png", fullPage: true });
 });
 
 test("multiple research sessions remain independently addressable after refresh", async ({ page }) => {
   await page.goto("/ideascope/#/");
-  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByRole("button", { name: /新建会话/ }).click();
   await expect(page).toHaveURL(/#\/workspace\//);
   const firstUrl = page.url();
   page.once("dialog", (dialog) => dialog.accept("机器人定位"));
   await page.getByLabel(/未命名探索 的更多操作/).click();
   await page.getByRole("button", { name: "重命名" }).click();
   await expect(page.getByText("机器人定位", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: /新建探索/ }).click();
+  await page.getByRole("button", { name: /新建会话/ }).click();
   await page.waitForURL((url) => url.toString() !== firstUrl);
   const secondUrl = page.url();
   expect(secondUrl).not.toBe(firstUrl);
@@ -350,6 +356,7 @@ test("literature source settings persist enabled state and expose honest source 
   await page.reload();
   await expect(page.getByText("Crossref", { exact: true })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "Crossref 启用" })).not.toBeChecked();
+  await page.getByText("高级设置", { exact: true }).click();
   await page.getByRole("button", { name: "让 AI 帮我配置来源" }).click();
   await expect(page.getByRole("region", { name: "AI 来源配置助手" })).toBeVisible();
   await expect(page.getByText("不会凭记忆创建 API 地址")).toBeVisible();
