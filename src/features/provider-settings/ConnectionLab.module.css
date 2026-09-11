@@ -3,7 +3,7 @@
 .heading p { margin:0 0 8px; color:var(--muted); font:11px Georgia,serif; letter-spacing:.16em; }
 .heading h2 { margin:0; font-size:30px; letter-spacing:-.04em; }
 .heading span { border:1px solid var(--line); border-radius:99px; padding:4px 9px; color:var(--muted); font-size:11px; }
-.grid { display:grid; grid-template-columns:1.15fr .85fr; border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; }
+.grid { border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; }
 .provider,.source { padding:32px; background:var(--surface); }
 .source { border-left:1px solid var(--line); background:var(--surface-subtle); }
 .grid h3 { margin:0 0 8px; font-size:16px; }

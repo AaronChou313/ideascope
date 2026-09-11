@@ -1,25 +1,18 @@
-import { lazy, Suspense } from "react";
-import { AppHeader } from "../shared/ui/AppHeader";
+import { Navigate, NavLink, useLocation, useParams } from "react-router-dom";
+import { AboutPanel } from "../features/provider-settings/AboutPanel";
 import { ConnectionLab } from "../features/provider-settings/ConnectionLab";
-const LiteratureSearchLab = lazy(() =>
-  import("../features/literature-search/LiteratureSearchLab").then(
-    (module) => ({ default: module.LiteratureSearchLab }),
-  ),
-);
-const DataSafetyPanel = lazy(() =>
-  import("../features/provider-settings/DataSafetyPanel").then(
-    (module) => ({ default: module.DataSafetyPanel }),
-  ),
-);
+import { DataSafetyPanel } from "../features/provider-settings/DataSafetyPanel";
+import { LiteratureSourcePanel } from "../features/provider-settings/LiteratureSourcePanel";
+import { AppHeader } from "../shared/ui/AppHeader";
+import styles from "./SettingsPage.module.css";
+
+const sections = ["provider", "literature", "data", "about"] as const;
+const labels = { provider: "模型 Provider", literature: "文献来源", data: "数据与存储", about: "关于" };
+function safeReturnTo(value: unknown) { return typeof value === "string" && (value === "/" || value.startsWith("/workspace/")) ? value : "/"; }
 export function SettingsPage() {
-  return (
-    <>
-      <AppHeader context="模型与来源设置" />
-      <ConnectionLab />
-      <Suspense fallback={<p role="status">正在加载检索工具…</p>}>
-        <LiteratureSearchLab />
-      </Suspense>
-      <DataSafetyPanel />
-    </>
-  );
+  const { section } = useParams(); const location = useLocation();
+  const returnTo = safeReturnTo((location.state as { returnTo?: unknown } | null)?.returnTo);
+  if (!section || !sections.includes(section as typeof sections[number])) return <Navigate to="/settings/provider" replace state={{ returnTo }} />;
+  const current = section as typeof sections[number];
+  return <><AppHeader context="设置" /><main className={styles.layout}><nav className={styles.nav} aria-label="设置页面">{sections.map((item) => <NavLink key={item} to={`/settings/${item}`} state={{ returnTo }} aria-current={item === current ? "page" : undefined}>{labels[item]}</NavLink>)}</nav><div className={styles.content}><NavLink className={styles.back} to={returnTo}>← {returnTo === "/" ? "返回首页" : "返回研究工作区"}</NavLink>{current === "provider" && <ConnectionLab />}{current === "literature" && <LiteratureSourcePanel />}{current === "data" && <DataSafetyPanel />}{current === "about" && <AboutPanel />}</div></main></>;
 }

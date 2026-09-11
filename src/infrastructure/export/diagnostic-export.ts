@@ -1,15 +1,21 @@
 import { IdeaScopeDatabase, ideaScopeDatabase } from "../storage/ideascope-database";
+import { ProviderProfileRepository } from "../storage/provider-profile-repository";
 
 export class DiagnosticExporter {
   constructor(private readonly db: IdeaScopeDatabase = ideaScopeDatabase) {}
   async collect() {
-    const [searches, runs] = await Promise.all([this.db.searchRecords.toArray(), this.db.runExecutions.toArray()]);
+    const [searches, runs, workspaces, provider] = await Promise.all([this.db.searchRecords.toArray(), this.db.runExecutions.toArray(), this.db.workspaces.count(), new ProviderProfileRepository(this.db).getActive()]);
+    const recentError = [...runs].reverse().map((run) => run.error).find((error): error is string => typeof error === "string") ?? null;
     return {
       documentType: "ideascope.diagnostics",
       formatVersion: 1,
       exportedAt: new Date().toISOString(),
-      searches: searches.map(({ source, status, startedAt, endedAt, resultCount, diagnostic }) => ({ source, status, startedAt, endedAt, resultCount, diagnostic })),
-      runs: runs.map(({ id, workspaceId, branchId, status, states, startedAt, endedAt, usage, error }) => ({ id, workspaceId, branchId, status, states, startedAt, endedAt, usage, error })),
+      appVersion: "0.6.3",
+      browser: typeof navigator === "undefined" ? "unknown" : navigator.userAgent,
+      storage: { indexedDb: typeof indexedDB !== "undefined", workspaceCount: workspaces },
+      provider: provider ? { providerType: provider.providerType, format: provider.format, modelConfigured: Boolean(provider.model), lastTestState: provider.lastTestState } : null,
+      literature: { openAlex: searches.length ? "used" : "not_tested", lastStatus: searches.at(-1)?.status ?? null },
+      recentError: recentError?.slice(0, 240) ?? null,
       excluded: ["credentials", "authorization", "request URLs", "queries", "prompts", "responses", "messages"],
     };
   }

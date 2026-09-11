@@ -36,7 +36,8 @@ describe("diagnostics and destructive local cleanup", () => {
     const json = JSON.stringify(await new DiagnosticExporter(db).collect());
     expect(json).not.toContain("private query");
     expect(json).not.toContain("private-cache");
-    expect(json).toContain("api.openalex.org/works");
+    expect(json).toContain('"openAlex":"used"');
+    expect(json).not.toContain("api.openalex.org/works");
   });
   it("requires exact confirmation and clears tables plus the memory key", async () => {
     const db = database();

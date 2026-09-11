@@ -5,10 +5,6 @@ import type {
   ProbeResult,
   ProviderFormat,
 } from "../../infrastructure/llm/types";
-import {
-  probeOpenAlex,
-  type OpenAlexProbeResult,
-} from "../../infrastructure/literature/openalex-probe";
 import { normalizeConnectionError } from "../../infrastructure/network/errors";
 import { memoryKeyStore } from "../../infrastructure/secrets/memory-key-store";
 import { defaultProviderDraft, type ProviderDraft, type SavedProviderProfile } from "../../domain/provider/provider-profile";
@@ -39,7 +35,6 @@ export function ConnectionLab({ onSaved }: { onSaved?: (profile: SavedProviderPr
   const [saved, setSaved] = useState<SavedProviderProfile | null>(null);
   const [lastTest, setLastTest] = useState<{ state: ProbeResult["state"]; testedAt: string } | null>(null);
   const [results, setResults] = useState<ProbeResult[]>([]);
-  const [openAlex, setOpenAlex] = useState<OpenAlexProbeResult | null>(null);
   const [message, setMessage] = useState("所有能力均待验证。");
   const active = useRef<AbortController | null>(null);
 
@@ -97,19 +92,6 @@ export function ConnectionLab({ onSaved }: { onSaved?: (profile: SavedProviderPr
       await executeProviderProbe(id, controller);
     }
     if (!controller.signal.aborted) setMessage("四项能力测试已完成；请查看各项状态与诊断。");
-  }
-
-  async function runOpenAlexProbe() {
-    active.current?.abort();
-    active.current = new AbortController();
-    setMessage("正在从浏览器直接测试 OpenAlex…");
-    try {
-      const result = await probeOpenAlex(active.current.signal);
-      setOpenAlex(result);
-      setMessage("OpenAlex 浏览器基础检索成功。");
-    } catch (error) {
-      setMessage(normalizeConnectionError(error).message);
-    }
   }
 
   async function saveProvider() {
@@ -236,33 +218,6 @@ export function ConnectionLab({ onSaved }: { onSaved?: (profile: SavedProviderPr
             }}
           >
             取消当前请求
-          </button>
-        </div>
-        <div className={styles.source}>
-          <h3>OpenAlex 文献来源</h3>
-          <p className={styles.help}>
-            使用固定非敏感查询测试匿名基础检索；这不代表配额、语义检索或未来策略已验证。
-          </p>
-          <dl>
-            <div>
-              <dt>基础检索</dt>
-              <dd>{openAlex ? "已测试" : "待验证"}</dd>
-            </div>
-            <div>
-              <dt>结果数量</dt>
-              <dd>{openAlex?.count.toLocaleString() ?? "—"}</dd>
-            </div>
-            <div>
-              <dt>首条题名</dt>
-              <dd>{openAlex?.firstTitle ?? "—"}</dd>
-            </div>
-          </dl>
-          <button
-            className={styles.primary}
-            type="button"
-            onClick={() => void runOpenAlexProbe()}
-          >
-            测试匿名检索
           </button>
         </div>
       </div>

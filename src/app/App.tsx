@@ -4,5 +4,5 @@ import { SettingsPage } from '../pages/SettingsPage';
 import { WorkspacePage } from '../pages/WorkspacePage';
 
 export function App() {
-  return <Routes><Route path="/" element={<HomePage />} /><Route path="/workspace/:id" element={<WorkspacePage />} /><Route path="/settings" element={<SettingsPage />} /><Route path="*" element={<Navigate to="/" replace />} /></Routes>;
+  return <Routes><Route path="/" element={<HomePage />} /><Route path="/workspace/:id" element={<WorkspacePage />} /><Route path="/settings/:section?" element={<SettingsPage />} /><Route path="*" element={<Navigate to="/" replace />} /></Routes>;
 }
