@@ -1,5 +1,13 @@
 import { expect, test } from "@playwright/test";
 
+async function configureProvider(page: import("@playwright/test").Page) {
+  await page.goto("/ideascope/#/settings/provider");
+  await page.getByLabel("Model ID").fill("test-model");
+  await page.getByLabel("API Key").fill("test-session-key");
+  await page.getByRole("button", { name: "保存配置" }).click();
+  await expect(page.getByText(/Provider 配置已保存/)).toBeVisible();
+}
+
 test("loads from a Pages-style subpath and keeps navigation in the hash", async ({
   page,
 }) => {
@@ -13,8 +21,44 @@ test("loads from a Pages-style subpath and keeps navigation in the hash", async 
   expect(errors).toEqual([]);
 });
 
+test("guides first use through provider settings and preserves the idea draft", async ({ page }) => {
+  const idea = "首次使用流程中的研究想法";
+  await page.goto("/ideascope/#/");
+  await page.getByLabel("先说说，你在想什么？").fill(idea);
+  await page.getByRole("button", { name: /开始探索/ }).click();
+  await expect(page.getByRole("dialog", { name: "需要配置模型" })).toBeVisible();
+  await page.getByRole("button", { name: "前往设置" }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({ path: "reports/visual/settings-provider-1440x1000.png", fullPage: true });
+  await page.getByLabel("Model ID").fill("test-model");
+  await page.getByLabel("API Key").fill("test-session-key");
+  await page.getByRole("button", { name: "保存配置" }).click();
+  await page.getByRole("link", { name: "返回首页" }).click();
+  await expect(page.getByLabel("先说说，你在想什么？")).toHaveValue(idea);
+  await page.getByRole("button", { name: /开始探索/ }).click();
+  await expect(page.getByRole("heading", { name: "初始范围" })).toBeVisible();
+});
+
+test("returns from settings to the originating workspace", async ({ page }) => {
+  await page.goto("/ideascope/#/workspace/demo");
+  await page.getByLabel("模型与来源设置").click();
+  await expect(page.getByRole("link", { name: "返回研究工作区" })).toBeVisible();
+  await page.getByRole("link", { name: "文献来源" }).click();
+  await page.getByRole("link", { name: "返回研究工作区" }).click();
+  await expect(page).toHaveURL(/#\/workspace\/demo$/);
+});
+
+test("does not treat an unsaved provider draft as active", async ({ page }) => {
+  await page.goto("/ideascope/#/settings/provider");
+  await page.getByLabel("Model ID").fill("unsaved-model");
+  await page.getByLabel("API Key").fill("session-key");
+  await page.reload();
+  await expect(page.getByText("尚未保存", { exact: true })).toBeVisible();
+});
+
 test("creates, restores and deletes a local project without a model call", async ({ page }) => {
   const idea = "本地证据边界测试项目";
+  await configureProvider(page);
   await page.goto("/ideascope/#/");
   await page.getByLabel("先说说，你在想什么？").fill(idea);
   await page.getByRole("button", { name: /开始探索/ }).click();
@@ -25,37 +69,41 @@ test("creates, restores and deletes a local project without a model call", async
   await expect(project).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: "reports/visual/local-projects-1440x1000.png", fullPage: true });
-  await project.getByLabel(`确认删除 ${idea}`).fill(idea);
+  await project.getByLabel(`${idea} 的更多操作`).click();
   await project.getByRole("button", { name: "删除" }).click();
+  await page.getByLabel("输入项目名称确认删除").fill(idea);
+  await page.getByRole("button", { name: "确认删除" }).click();
   await expect(project).toBeHidden();
 });
 
 test("does not enable paid provider probes without model and key", async ({
   page,
 }) => {
-  await page.goto("/ideascope/#/settings");
+  await page.goto("/ideascope/#/settings/provider");
   await expect(page.getByRole("button", { name: /普通完成/ })).toBeDisabled();
   await expect(page.getByRole("button", { name: /结构化输出/ })).toBeDisabled();
 });
 
-test("exposes redacted diagnostics and guarded local data cleanup", async ({ page }) => {
-  await page.goto("/ideascope/#/settings");
-  await expect(page.getByText(/纯前端应用无法安全保管长期密钥/)).toBeVisible();
-  const clear = page.getByRole("button", { name: "清除全部本地数据" });
+test("exposes separated data and diagnostic settings", async ({ page }) => {
+  await page.goto("/ideascope/#/settings/data");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({ path: "reports/visual/settings-data-1440x1000.png", fullPage: true });
+  const clear = page.getByRole("button", { name: "删除所有本地研究项目" });
   await expect(clear).toBeDisabled();
-  await page.getByLabel(/导入 IdeaScope JSON/).setInputFiles("examples/workspace.demo.json");
-  await expect(page.getByText(/已导入为新项目/)).toBeVisible();
-  const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "导出脱敏诊断" }).click();
-  expect((await download).suggestedFilename()).toBe("ideascope-diagnostics.json");
+  await page.getByLabel("导入备份").setInputFiles("examples/workspace.demo.json");
+  await expect(page.getByText(/已导入 1 个项目/)).toBeVisible();
+  await page.getByRole("button", { name: "清理缓存" }).click();
+  await expect(page.getByText(/研究项目未删除/)).toBeVisible();
   await page.getByLabel(/输入“清除全部数据”确认/).fill("不清除");
   await expect(clear).toBeDisabled();
-  await expect(page.getByRole("heading", { name: "真实关键词检索" })).toBeVisible();
+  await page.getByRole("link", { name: "关于" }).click();
+  await expect(page.getByText(/诊断信息不会包含密钥或研究正文/)).toBeVisible();
+  await page.screenshot({ path: "reports/visual/settings-about-1440x1000.png", fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: "reports/visual/data-safety-1440x1000.png", fullPage: true });
 });
 
-test("runs a bounded OpenAlex keyword query without invoking a model", async ({
+test("runs a lightweight OpenAlex health check without creating research history", async ({
   page,
 }) => {
   let requestedUrl = "";
@@ -72,46 +120,20 @@ test("runs a bounded OpenAlex keyword query without invoking a model", async ({
         "X-RateLimit-Reset": "300",
       },
       body: JSON.stringify({
-        meta: { count: 1, next_cursor: null, cost_usd: 0.001 },
-        results: [
-          {
-            id: `https://openalex.org/W${requestCount}`,
-            doi: null,
-            title: "Reliable Research Question Answering",
-            publication_year: 2025,
-            authorships: [{ author: { display_name: "Example Author" } }],
-            primary_location: {
-              source: { display_name: "Example Journal" },
-              landing_page_url: "https://example.test/paper",
-            },
-            best_oa_location: null,
-            abstract_inverted_index: null,
-          },
-        ],
+        meta: { count: 1 }, results: [{ id: "https://openalex.org/W1", title: "Health check" }],
       }),
     });
   });
-  await page.goto("/ideascope/#/settings");
-  await page.getByRole("button", { name: "预览四类检索配方" }).click();
-  await expect(
-    page.getByText("counterevidence", { exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "执行真实检索" }).click();
-  await expect(
-    page.getByText("Reliable Research Question Answering").first(),
-  ).toBeVisible();
-  await expect(page.getByText("本地文献库 1 条")).toBeVisible();
-  await page.getByRole("button", { name: "执行真实检索" }).click();
-  await expect(page.getByText("候选重复 · 需人工审阅")).toBeVisible();
-  await page.getByRole("button", { name: "保留独立" }).click();
-  await expect(page.getByText("候选重复 · 需人工审阅")).toBeHidden();
-  await expect(page.getByText("本地文献库 2 条")).toBeVisible();
-  expect(new URL(requestedUrl).searchParams.get("search")).toBe(
-    "retrieval augmented generation reliability evidence",
-  );
-  expect(requestedUrl).not.toContain(
-    encodeURIComponent("怎样让研究型问答更可靠？"),
-  );
+  await page.goto("/ideascope/#/settings/literature");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({ path: "reports/visual/settings-literature-1440x1000.png", fullPage: true });
+  await page.getByRole("button", { name: "测试连接" }).click();
+  await expect(page.getByText("可用", { exact: true }).last()).toBeVisible();
+  expect(requestCount).toBe(1);
+  expect(new URL(requestedUrl).searchParams.get("per_page")).toBe("1");
+  expect(new URL(requestedUrl).searchParams.has("search")).toBe(false);
+  await page.goto("/ideascope/#/");
+  await expect(page.getByText(/还没有探索记录/)).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({
     path: "reports/visual/literature-search-1440x1000.png",

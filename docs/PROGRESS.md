@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.2 Provider 能力探针可靠性修复已完成；DeepSeek Chat Completions 最小实测沿用 v0.6.1 证据，其余真实能力待凭证验证。**
+当前状态：**v0.6.3 首次使用、Provider 设置、路由返回与探索历史体验修正已完成；API Key 仍仅保存在当前运行内存，刷新后需重新输入。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
@@ -25,6 +25,21 @@
 | v0.6.0-C | 已完成 | 安全文本、endpoint/redirect 限制、脱敏诊断、全量清除、攻击夹具与数据流说明 |
 | v0.6.1 | 已完成 | Chat Completions、Responses、Anthropic Messages 三协议 Adapter；DeepSeek 完成/JSON 实测与三类 mock 契约 |
 | v0.6.2 | 已完成 | 四项探针严格判定、完整流事件解析、failed 状态、脱敏错误诊断与一键测试 |
+| v0.6.3 | 已完成 | Provider 非敏感配置持久化与 active guard、四个设置子页、来源健康检查、returnTo、探索历史列表与首次使用回归 |
+
+## v0.6.3 阶段记录
+
+实施日期 / commit：2026-09-11 / `aef9f7d`（A）、`f3032f3`（B）、`3be9c7e`（C）及最终 D 提交。
+
+范围：只修正首次使用、Provider 配置保存、设置页信息架构、路由返回与探索历史，不修改研究 Agent、研究图和工作流语义。
+
+已完成：非敏感 Provider profile 进入既有 Dexie，密钥继续只在内存；测试与保存分离；协议切换只改变协议字段；统一 `startExploration` 检查 active profile 与会话密钥；首页草稿跨设置往返保留；设置拆为模型 Provider、文献来源、数据与存储、关于；OpenAlex 仅执行固定最小健康检查；诊断移至关于并排除查询、URL、正文和凭证；设置入口携带经校验的 `returnTo`；历史项目改为紧凑列表并复用重命名、JSON 导出和确认删除。
+
+测试证据：`npm run check` 通过，包括 ESLint、严格 TypeScript、20 个 Vitest 文件 / 89 项测试、production build、16 项 Playwright e2e 与凭证扫描。Playwright 覆盖首次使用引导、草稿保留、未保存配置不生效、Workspace 往返设置、来源健康检查不污染历史、历史进入与确认删除。构建仍报告既有大 chunk 和动态导入无效 warning，不影响构建成功。
+
+待真实验证：真实 Provider 凭证能力矩阵沿用 v0.6.2 状态；刷新会按安全设计丢失 API Key，已保存非敏感配置会恢复并提示重新输入。未部署 GitHub Pages。
+
+下一阶段入口：停止在 v0.6.3，等待真实使用反馈；不自动进入 v0.6.4 或 v0.7.0。
 
 ## 每阶段记录模板
 

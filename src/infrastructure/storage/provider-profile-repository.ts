@@ -1,6 +1,7 @@
 import type { CapabilityState } from "../llm/types";
 import { providerDraftSchema, type ProviderDraft, type SavedProviderProfile } from "../../domain/provider/provider-profile";
 import { IdeaScopeDatabase, ideaScopeDatabase } from "./ideascope-database";
+import { normalizeBaseUrl } from "../llm/provider-protocol";
 
 export class ProviderProfileRepository {
   constructor(private readonly db: IdeaScopeDatabase = ideaScopeDatabase) {}
@@ -8,7 +9,7 @@ export class ProviderProfileRepository {
   async getActive() { return this.db.providerProfiles.filter(({ active }) => active).first(); }
 
   async saveActive(draft: ProviderDraft, test?: { state: CapabilityState; testedAt: string | null }) {
-    const parsed = providerDraftSchema.parse(draft);
+    const parsed = providerDraftSchema.parse({ ...draft, baseUrl: normalizeBaseUrl(draft.baseUrl) });
     const existing = await this.getActive();
     const profile: SavedProviderProfile = {
       ...parsed,

@@ -1,5 +1,13 @@
 # v0.1.0 浏览器兼容性实测
 
+## v0.6.3 设置与首次使用状态
+
+- Provider 名称、类型、协议、Base URL 与 Model 作为 active profile 保存在 IndexedDB；API Key 不持久化、不导出，刷新后必须重新输入。
+- “测试连接”只更新当前草稿的探针结果；只有“保存配置”才会更新 active Provider。编辑后的配置若未重新测试，保存状态回到“待验证”。
+- 切换 Chat Completions、Responses 与 Messages 协议不会覆盖 Base URL、Model、名称或内存中的 API Key。
+- 首页入口同时要求已保存 active profile 和当前会话密钥；底层调用仍保留自身安全检查。
+- OpenAlex 设置测试使用固定、最小健康检查参数，不运行用户关键词检索，不写入研究项目或探索历史。
+
 本文件只记录实际运行过的结果。Node/curl 成功不计作浏览器成功；模型 mock 不计作真实 Provider 成功。凭证值、Authorization header 与原始响应不写入记录。
 
 ## 测试环境

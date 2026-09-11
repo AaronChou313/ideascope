@@ -12,8 +12,9 @@ export async function probeOpenAlex(
 ): Promise<OpenAlexProbeResult> {
   try {
     const url = new URL("https://api.openalex.org/works");
-    url.searchParams.set("search", "retrieval augmented generation");
+    url.searchParams.set("filter", "has_doi:true");
     url.searchParams.set("per_page", "1");
+    url.searchParams.set("select", "id,title");
     const response = await fetcher(url, {
       signal,
       headers: { Accept: "application/json" },

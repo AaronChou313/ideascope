@@ -96,12 +96,13 @@ export function ConnectionLab({ onSaved }: { onSaved?: (profile: SavedProviderPr
 
   async function saveProvider() {
     try {
+      const draftChanged = !saved || saved.name !== name || saved.providerType !== providerType || saved.format !== format || saved.baseUrl !== baseUrl || saved.model !== model;
       const profile = await new ProviderProfileRepository().saveActive(
         { name, providerType, format, baseUrl, model },
-        lastTest ? { state: lastTest.state, testedAt: lastTest.testedAt } : undefined,
+        lastTest ? { state: lastTest.state, testedAt: lastTest.testedAt } : draftChanged ? { state: "unknown", testedAt: null } : undefined,
       );
       setSaved(profile);
-      setMessage(keyPresent ? "Provider 配置已保存并设为当前使用。" : "非敏感配置已保存；刷新后请重新输入 API Key。 ");
+      setMessage(keyPresent ? "Provider 配置已保存并设为当前使用。" : "非敏感配置已保存；使用前请重新输入 API Key。");
       onSaved?.(profile);
     } catch (error) { setMessage(error instanceof Error ? error.message : "保存配置失败。"); }
   }
@@ -110,8 +111,8 @@ export function ConnectionLab({ onSaved }: { onSaved?: (profile: SavedProviderPr
     <section className={styles.lab} aria-labelledby="lab-title">
       <div className={styles.heading}>
         <div>
-          <p>CONNECTION LAB / 0.1-B</p>
-          <h2 id="lab-title">浏览器连接探针</h2>
+          <p>MODEL PROVIDER</p>
+          <h2 id="lab-title">模型 Provider</h2>
         </div>
         <span>真实模式</span>
       </div>
@@ -123,8 +124,10 @@ export function ConnectionLab({ onSaved }: { onSaved?: (profile: SavedProviderPr
           </p>
           <dl>
             <div><dt>当前 Provider</dt><dd>{saved?.name ?? "尚未保存"}</dd></div>
+            <div><dt>Provider 类型</dt><dd>{saved?.providerType ?? "—"}</dd></div>
+            <div><dt>请求协议</dt><dd>{saved?.format ?? "—"}</dd></div>
             <div><dt>模型</dt><dd>{saved?.model || "—"}</dd></div>
-            <div><dt>状态</dt><dd>{saved ? (keyPresent ? "可使用" : "需要重新输入 API Key") : "未配置"}</dd></div>
+            <div><dt>状态</dt><dd>{saved ? (keyPresent ? `可使用 · 最近测试${stateLabels[saved.lastTestState]}` : "需要重新输入 API Key") : "未配置"}</dd></div>
           </dl>
           <label>
             Provider 名称
