@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { layoutGraph, RESEARCH_NODE_SIZE } from '../../src/features/graph/layout';
 import { loadDemoWorkspace } from '../../src/infrastructure/demo/workspace-demo';
+import { normalizeViewport, viewportShowsAnyNode } from '../../src/features/graph/viewport';
 
 describe('demo graph adapter and ELK layout', () => {
   it('returns isolated demo copies', () => {
@@ -66,5 +67,17 @@ describe('demo graph adapter and ELK layout', () => {
     const next = await layoutGraph(branch.graph.nodes, branch.graph.edges, branch.view);
     for (const [id, position] of initial) expect(next.get(id)).toEqual(position);
     expect(next.get('new-child')!.x).toBeGreaterThan(next.get(parent.id)!.x);
+  });
+
+  it('rejects invalid persisted viewports instead of restoring an unusable canvas state', () => {
+    expect(normalizeViewport({ x: Number.NaN, y: 0, zoom: 1 })).toBeNull();
+    expect(normalizeViewport({ x: 0, y: 0, zoom: 99 })).toBeNull();
+    expect(normalizeViewport({ x: -240, y: 80, zoom: 0.8 })).toEqual({ x: -240, y: 80, zoom: 0.8 });
+  });
+
+  it('detects when every graph node has moved outside the visible viewport', () => {
+    const positions = new Map([['root', { x: 0, y: 0 }]]);
+    expect(viewportShowsAnyNode({ x: 80, y: 60, zoom: 1 }, positions, 1200, 800)).toBe(true);
+    expect(viewportShowsAnyNode({ x: -20_000, y: -20_000, zoom: 1 }, positions, 1200, 800)).toBe(false);
   });
 });

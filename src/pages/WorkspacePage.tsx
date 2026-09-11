@@ -19,6 +19,7 @@ import {
 import { exportWorkspaceJson } from "../domain/export/workspace-export";
 import { ResearchMap } from "../features/graph/ResearchMap";
 import type { PositionMap } from "../features/graph/layout";
+import { normalizeViewport } from "../features/graph/viewport";
 import { SessionSidebar } from "../features/workspace/SessionSidebar";
 import { downloadText } from "../infrastructure/export/download";
 import { WorkspaceRepository } from "../infrastructure/storage/workspace-repository";
@@ -164,8 +165,10 @@ function WorkspaceShell({ id }: { id?: string }) {
       if (!current) return current;
       const next = structuredClone(current), active = next.workspace.branches.find((item) => item.id === next.workspace.activeBranchId);
       if (!active) return current;
-      active.view.positions = Object.fromEntries([...positions].map(([nodeId, position]) => [nodeId, { ...position, pinned: active.view.positions[nodeId]?.pinned ?? false }]));
-      if (viewport) active.view.viewport = viewport;
+      const safePositions = [...positions].filter(([, position]) => Number.isFinite(position.x) && Number.isFinite(position.y));
+      if (safePositions.length > 0) active.view.positions = Object.fromEntries(safePositions.map(([nodeId, position]) => [nodeId, { ...position, pinned: active.view.positions[nodeId]?.pinned ?? false }]));
+      const safeViewport = normalizeViewport(viewport);
+      if (safeViewport) active.view.viewport = safeViewport;
       void new WorkspaceRepository().save(next);
       return next;
     });

@@ -209,6 +209,24 @@ test("initial exploration creates evidence graph and node continuation updates i
   ).toBeVisible({ timeout: 15000 });
   await expect(page.getByText(/6 个节点 · 1 条 Evidence/)).toBeVisible();
   await expect(page.getByRole("status")).not.toHaveAttribute("open", "");
+  const pane = page.locator(".react-flow__pane");
+  const paneBox = await pane.boundingBox();
+  if (!paneBox) throw new Error("Research Map pane is unavailable");
+  for (let index = 0; index < 3; index += 1) {
+    await page.mouse.move(paneBox.x + paneBox.width * .55, paneBox.y + paneBox.height * .55);
+    await page.mouse.down();
+    await page.mouse.move(paneBox.x + paneBox.width * .92, paneBox.y + paneBox.height * .18, { steps: 5 });
+    await page.mouse.up();
+  }
+  await page.getByRole("button", { name: "找回地图" }).click();
+  await expect.poll(async () => {
+    const recoveredNode = await page.locator(".react-flow__node").first().boundingBox();
+    if (!recoveredNode) return false;
+    return recoveredNode.x + recoveredNode.width > paneBox.x
+      && recoveredNode.x < paneBox.x + paneBox.width
+      && recoveredNode.y + recoveredNode.height > paneBox.y
+      && recoveredNode.y < paneBox.y + paneBox.height;
+  }).toBe(true);
   await page.getByRole("status").locator("summary").click();
   await expect(page.getByText("正在理解问题")).toBeVisible();
   await page.screenshot({
