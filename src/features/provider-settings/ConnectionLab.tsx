@@ -11,6 +11,9 @@ import {
 } from "../../infrastructure/literature/openalex-probe";
 import { normalizeConnectionError } from "../../infrastructure/network/errors";
 import { memoryKeyStore } from "../../infrastructure/secrets/memory-key-store";
+import { defaultProviderDraft, type ProviderDraft, type SavedProviderProfile } from "../../domain/provider/provider-profile";
+import { ProviderProfileRepository } from "../../infrastructure/storage/provider-profile-repository";
+import { Button } from "../../shared/ui";
 import styles from "./ConnectionLab.module.css";
 
 const capabilities: Array<{ id: ProbeCapability; label: string }> = [
@@ -26,23 +29,29 @@ const stateLabels: Record<ProbeResult["state"], string> = {
   unknown: "待验证",
 };
 
-export function ConnectionLab() {
-  const [baseUrl, setBaseUrl] = useState("https://api.openai.com/v1");
-  const [format, setFormat] = useState<ProviderFormat>("openai-chat");
-  const [model, setModel] = useState("");
-  const [keyPresent, setKeyPresent] = useState(false);
+export function ConnectionLab({ onSaved }: { onSaved?: (profile: SavedProviderProfile) => void }) {
+  const [name, setName] = useState(defaultProviderDraft.name);
+  const [providerType, setProviderType] = useState<ProviderDraft["providerType"]>(defaultProviderDraft.providerType);
+  const [baseUrl, setBaseUrl] = useState(defaultProviderDraft.baseUrl);
+  const [format, setFormat] = useState<ProviderFormat>(defaultProviderDraft.format);
+  const [model, setModel] = useState(defaultProviderDraft.model);
+  const [keyPresent, setKeyPresent] = useState(Boolean(memoryKeyStore.get()));
+  const [saved, setSaved] = useState<SavedProviderProfile | null>(null);
+  const [lastTest, setLastTest] = useState<{ state: ProbeResult["state"]; testedAt: string } | null>(null);
   const [results, setResults] = useState<ProbeResult[]>([]);
   const [openAlex, setOpenAlex] = useState<OpenAlexProbeResult | null>(null);
   const [message, setMessage] = useState("所有能力均待验证。");
   const active = useRef<AbortController | null>(null);
 
-  useEffect(
-    () => () => {
-      active.current?.abort();
-      memoryKeyStore.clear();
-    },
-    [],
-  );
+  useEffect(() => {
+    let mounted = true;
+    void new ProviderProfileRepository().getActive().then((profile) => {
+      if (!mounted || !profile) return;
+      setSaved(profile); setName(profile.name); setProviderType(profile.providerType);
+      setFormat(profile.format); setBaseUrl(profile.baseUrl); setModel(profile.model);
+    });
+    return () => { mounted = false; active.current?.abort(); };
+  }, []);
 
   async function executeProviderProbe(capability: ProbeCapability, controller: AbortController) {
     setMessage(
@@ -60,12 +69,14 @@ export function ConnectionLab() {
         result,
       ]);
       setMessage(result.detail);
+      if (capability === "completion") setLastTest({ state: result.state, testedAt: new Date().toISOString() });
       return result;
     } catch (error) {
       const normalized = normalizeConnectionError(error);
       const result: ProbeResult = { capability, state: "failed", detail: normalized.message, usageReporting: "unknown" };
       setResults((current) => [...current.filter(({ capability: id }) => id !== capability), result]);
       setMessage(normalized.message);
+      if (capability === "completion") setLastTest({ state: "failed", testedAt: new Date().toISOString() });
       return result;
     }
   }
@@ -101,6 +112,18 @@ export function ConnectionLab() {
     }
   }
 
+  async function saveProvider() {
+    try {
+      const profile = await new ProviderProfileRepository().saveActive(
+        { name, providerType, format, baseUrl, model },
+        lastTest ? { state: lastTest.state, testedAt: lastTest.testedAt } : undefined,
+      );
+      setSaved(profile);
+      setMessage(keyPresent ? "Provider 配置已保存并设为当前使用。" : "非敏感配置已保存；刷新后请重新输入 API Key。 ");
+      onSaved?.(profile);
+    } catch (error) { setMessage(error instanceof Error ? error.message : "保存配置失败。"); }
+  }
+
   return (
     <section className={styles.lab} aria-labelledby="lab-title">
       <div className={styles.heading}>
@@ -116,6 +139,21 @@ export function ConnectionLab() {
           <p className={styles.help}>
             每项能力测试会发送一条最小请求；一键测试会顺序发送四次，可能产生费用。密钥只保存在当前页面内存中。
           </p>
+          <dl>
+            <div><dt>当前 Provider</dt><dd>{saved?.name ?? "尚未保存"}</dd></div>
+            <div><dt>模型</dt><dd>{saved?.model || "—"}</dd></div>
+            <div><dt>状态</dt><dd>{saved ? (keyPresent ? "可使用" : "需要重新输入 API Key") : "未配置"}</dd></div>
+          </dl>
+          <label>
+            Provider 名称
+            <input value={name} onChange={(event) => setName(event.target.value)} />
+          </label>
+          <label>
+            Provider 类型
+            <select value={providerType} onChange={(event) => setProviderType(event.target.value as ProviderDraft["providerType"])}>
+              <option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option><option value="anthropic">Anthropic</option><option value="custom">自定义</option>
+            </select>
+          </label>
           <label>
             Provider Format
             <select
@@ -124,9 +162,6 @@ export function ConnectionLab() {
                 const next = event.target.value as ProviderFormat;
                 setFormat(next);
                 setResults([]);
-                if (next === "openai-chat") setBaseUrl("https://api.openai.com/v1");
-                if (next === "openai-responses") setBaseUrl("https://api.openai.com/v1");
-                if (next === "anthropic-messages") setBaseUrl("https://api.anthropic.com");
               }}
             >
               <option value="openai-chat">OpenAI Chat Completions</option>
@@ -179,6 +214,10 @@ export function ConnectionLab() {
                 </button>
               );
             })}
+          </div>
+          <div className={styles.actions}>
+            <Button type="button" disabled={!keyPresent || !model} onClick={() => void runProviderProbe("completion")}>测试连接</Button>
+            <Button type="button" variant="primary" disabled={!model || !name || !baseUrl} onClick={() => void saveProvider()}>保存配置</Button>
           </div>
           <button
             className={styles.primary}

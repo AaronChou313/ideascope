@@ -1,3 +1,4 @@
+import "fake-indexeddb/auto";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectionLab } from "../../src/features/provider-settings/ConnectionLab";
@@ -10,6 +11,17 @@ afterEach(() => {
 });
 
 describe("ConnectionLab capability status", () => {
+  it("does not overwrite common draft fields when switching protocols", () => {
+    render(<ConnectionLab />);
+    fireEvent.change(screen.getByLabelText("Base URL"), { target: { value: "https://custom.example/api" } });
+    fireEvent.change(screen.getByLabelText("Model ID"), { target: { value: "custom-model" } });
+    fireEvent.change(screen.getByLabelText("API Key"), { target: { value: "test-only-key" } });
+    fireEvent.change(screen.getByLabelText("Provider Format"), { target: { value: "openai-responses" } });
+    fireEvent.change(screen.getByLabelText("Provider Format"), { target: { value: "openai-chat" } });
+    expect(screen.getByLabelText("Base URL")).toHaveValue("https://custom.example/api");
+    expect(screen.getByLabelText("Model ID")).toHaveValue("custom-model");
+    expect(memoryKeyStore.get()).toBe("test-only-key");
+  });
   it("shows failed after a request error instead of leaving the capability pending", async () => {
     vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ error: { type: "invalid_request_error", message: "bad input" } }), { status: 400 })));
     render(<ConnectionLab />);
