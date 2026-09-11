@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.7-B 已完成工程实现：六类文献入口进入统一 Registry，arXiv/IEEE adapter 与 Google Scholar 外部入口已建立；arXiv 官方 API 的浏览器 CORS、IEEE 真实凭证仍待外部门禁验证。**
+当前状态：**v0.6.7-C 已完成：文献来源设置接入 Registry，支持启用状态持久化、逐项健康检查、IEEE 会话凭证与外部 Scholar 入口；AI 配置与导入保持后续阶段门禁。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -31,6 +31,21 @@
 | v0.6.6     | 工程完成 / 真实待复测 | Root/parent/depth、Primary/Cross、层级综合契约、节点上下文、稳定增量布局、短关系标签与 Workspace v2 迁移       |
 | v0.6.7-A   | 已完成                | Literature Source Manifest/Capability/Installation/Registry、三类内置来源注册与既有降级路径回归              |
 | v0.6.7-B   | 工程完成 / 外部待验收 | arXiv Atom、IEEE 可选凭证适配、Google Scholar 外部入口、六来源能力清单；浏览器 CORS/IEEE Key 待验证            |
+| v0.6.7-C   | 已完成                | 来源状态列表、启用持久化、健康检查、IEEE 会话 Key、Scholar 外部入口与高级设置折叠                              |
+
+## v0.6.7-C 阶段记录
+
+实施日期：2026-09-11。
+
+设置体验：文献来源页由 Registry Manifest 生成六来源紧凑列表，显示启用状态、访问状态和检索/摘要能力；支持逐项测试及测试全部已启用来源。OpenAlex/Crossref/Semantic Scholar/arXiv 默认启用；IEEE 因需要独立 Key 默认关闭；Google Scholar 只打开外部搜索。高级协议说明折叠，普通界面不暴露 REST mapping。
+
+持久化与安全：Dexie v7 新增 `sourceInstallations`，只保存 sourceId、enabled、时间和 credential slot，不保存凭证。IEEE Key 使用独立 session/memory store，刷新标签页可恢复、关闭会话清除；全量数据清理同时清除 Model 与 Source 会话凭证。探索流程从持久化 installation 构建 Registry；禁用来源不执行，若主 OpenAlex 被禁用则使用下一个已启用自动来源，不会退回未启用来源。
+
+阶段门禁：“让 AI 帮我配置来源”和“导入 Source / Pack”已在正确位置呈现但保持 disabled，并明确后续阶段开放；没有用空点击伪装功能完成。
+
+测试与界面：`npm run check` 通过，包括 ESLint、严格 TypeScript、24 个 Vitest 文件 / 114 项测试、production build、6 项 Playwright E2E 与 secret scan。新增 Source installation 持久化、IEEE secret 隔离、external/unconfigured 零请求健康状态、设置刷新恢复 E2E。实际在本地 Vite 页面检查来源列表、状态、开关、Key 和高级区域，并生成 `reports/visual/v0.6.7/source-settings.png`。构建仍有既有 2.17 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.7-D，执行真实来源健康/CORS/限流/超时/空结果/部分成功与 secret 回归。
 
 ## v0.6.7-B 阶段记录
 

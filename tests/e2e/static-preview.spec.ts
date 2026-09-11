@@ -273,3 +273,22 @@ test("session delete requires exact confirmation", async ({ page }) => {
   await page.getByRole("button", { name: "确认删除" }).click();
   await expect(page.getByText("还没有探索会话")).toBeVisible();
 });
+
+test("literature source settings persist enabled state and expose honest source status", async ({ page }) => {
+  await page.route("https://api.openalex.org/**", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ meta: { count: 0 }, results: [] }) }),
+  );
+  await page.goto("/ideascope/#/settings/literature");
+  await expect(page.getByRole("heading", { name: "文献来源" })).toBeVisible();
+  await expect(page.getByText("Google Scholar", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "打开外部搜索" })).toHaveAttribute("href", /scholar\.google\.com/);
+  const toggle = page.getByRole("checkbox", { name: "Crossref 启用" });
+  await expect(toggle).toBeChecked();
+  await toggle.uncheck();
+  await expect(page.getByText("Crossref 已停用。")).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("Crossref", { exact: true })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Crossref 启用" })).not.toBeChecked();
+  await expect(page.getByRole("button", { name: "让 AI 帮我配置来源" })).toBeDisabled();
+  await page.screenshot({ path: "reports/visual/v0.6.7/source-settings.png", fullPage: true });
+});

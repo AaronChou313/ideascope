@@ -14,7 +14,7 @@ import {
 import {
   OPENALEX_FIELDS,
 } from "../../infrastructure/literature/openalex";
-import { createBuiltInSourceRegistry } from "../../infrastructure/literature/builtin-source-registry";
+import { createConfiguredSourceRegistry } from "../../infrastructure/literature/configured-source-registry";
 import type { SourceRegistry } from "../literature/literature-source-registry";
 import { createAgentProvider } from "../../infrastructure/llm/agent-provider";
 import { memoryKeyStore } from "../../infrastructure/secrets/memory-key-store";
@@ -226,10 +226,13 @@ export async function runExploration(
   const root = ensureRootNode(branch, plan.title || text.slice(0, 40), plan.understanding);
   const sourceRegistry =
     options.literatureRegistry ??
-    createBuiltInSourceRegistry({ fetcher: options.fetcher });
-  const adapter = sourceRegistry.getAdapter("openalex");
+    (await createConfiguredSourceRegistry({ fetcher: options.fetcher }));
+  const sourceOrder = ["openalex", "crossref", "semantic-scholar", "arxiv", "ieee-xplore"];
+  const adapter = sourceRegistry.enabledAdapters(sourceOrder)[0];
   if (!adapter)
-    throw new Error("主文献来源 OpenAlex 未启用；研究想法和已有数据未丢失。");
+    throw new Error("没有已启用且可自动检索的文献来源；研究想法和已有数据未丢失。");
+  const sourceName = (sourceId: string) =>
+    sourceRegistry.list().find((entry) => entry.manifest.id === sourceId)?.manifest.name ?? sourceId;
   const papers: Paper[] = [];
   const warnings: string[] = [];
   options.onProgress?.({
@@ -247,7 +250,11 @@ export async function runExploration(
         language: "en",
         rationale: plan.understanding,
       },
-      { limit: 8, maxPages: 1, fields: OPENALEX_FIELDS },
+      {
+        limit: 8,
+        maxPages: 1,
+        fields: adapter.source === "openalex" ? OPENALEX_FIELDS : [],
+      },
       options.signal,
     );
     await new SearchRecordStore().save(result.record);
@@ -265,8 +272,8 @@ export async function runExploration(
     ) {
       const warning =
         result.record.status === "rate_limited"
-          ? "OpenAlex 暂时限流，已保留此前找到的资料并继续整理。"
-          : `OpenAlex 本轮检索未完成（${result.record.status}），已保留此前找到的资料。`;
+          ? `${sourceName(adapter.source)} 暂时限流，已保留此前找到的资料并继续整理。`
+          : `${sourceName(adapter.source)} 本轮检索未完成（${result.record.status}），已保留此前找到的资料。`;
       warnings.push(warning);
       options.onProgress?.({
         stage: "searching",
@@ -286,12 +293,10 @@ export async function runExploration(
     });
   }
   if (warnings.length) {
-    for (const source of sourceRegistry.enabledAdapters([
-      "crossref",
-      "semantic-scholar",
-    ])) {
-      const label =
-        source.source === "crossref" ? "Crossref" : "Semantic Scholar";
+    for (const source of sourceRegistry
+      .enabledAdapters(sourceOrder)
+      .filter((candidate) => candidate.source !== adapter.source)) {
+      const label = sourceName(source.source);
       options.onProgress?.({
         stage: "searching",
         message: `正在尝试 ${label} 补充来源`,

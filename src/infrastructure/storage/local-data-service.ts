@@ -1,4 +1,5 @@
 import { memoryKeyStore } from "../secrets/memory-key-store";
+import { sourceCredentialStore } from "../secrets/source-credential-store";
 import { IdeaScopeDatabase, ideaScopeDatabase } from "./ideascope-database";
 
 export class LocalDataService {
@@ -7,6 +8,7 @@ export class LocalDataService {
     if (confirmation !== "清除全部数据") throw new Error("确认文字不匹配。");
     await this.db.transaction("rw", this.db.tables, async () => Promise.all(this.db.tables.map((table) => table.clear())));
     memoryKeyStore.clear();
+    sourceCredentialStore.clear();
   }
   async clearCache() { await this.db.searchRecords.clear(); }
   async summary() {
