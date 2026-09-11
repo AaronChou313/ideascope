@@ -24,4 +24,15 @@ describe("initial exploration pipeline", () => {
     const progress:string[]=[];const result=await runExploration(createEmptyWorkspace("initial-test"),"我想研究四足机器人足端传感器对于定位导航的作用",{signal:new AbortController().signal,fetcher:literatureFetcher,providerFetcher,onProgress:item=>progress.push(item.stage)});
     expect(result.queries).toBe(2);expect(result.candidates).toBe(1);expect(result.evidence).toBe(1);expect(result.nodesAdded).toBe(6);expect(result.workspace.workspace.branches[0]!.graph.edges).toHaveLength(4);expect(result.workspace.workspace.messages).toHaveLength(2);expect(result.workspace.workspace.branches[0]!.graph.claims.some(claim=>claim.epistemicStatus==="sourced")).toBe(true);expect(progress).toEqual(expect.arrayContaining(["understanding","planning","searching","synthesizing","updating"]));
   });
+  it("continues from a focused node with an incremental graph and preserves prior branches on a direction shift", async () => {
+    let call=0;const continuation={...synthesis,answer:"状态估计的局部深入结果",nodes:[{kind:"approach",title:"因子图接触约束",summary:"把接触约束加入因子图",evidenceIds:["evidence:openalex:W1"]}],edges:[],summary:["接触约束可进入因子图"],nextQuestions:[]};
+    const providerFetcher:typeof fetch=()=>Promise.resolve(new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(call++%2===0?plan:call===2?synthesis:continuation)}}]}),{status:200}));
+    const literatureFetcher:typeof fetch=()=>Promise.resolve(new Response(JSON.stringify({meta:{count:1,next_cursor:null},results:[{id:"https://openalex.org/W1",doi:null,title:"Contact estimation",publication_year:2023,authorships:[],primary_location:null,best_oa_location:null,abstract_inverted_index:null}]}),{status:200}));
+    const initial=await runExploration(createEmptyWorkspace("continue-test"),"研究四足机器人足端感知与定位",{signal:new AbortController().signal,fetcher:literatureFetcher,providerFetcher});
+    const branch=initial.workspace.workspace.branches[0]!;branch.focusNodeId=branch.graph.nodes[1]!.id;const oldIds=new Set(branch.graph.nodes.map(node=>node.id));
+    const continued=await runExploration(initial.workspace,"重点看看足端接触信息在状态估计里是怎么使用的",{signal:new AbortController().signal,focusNodeId:branch.focusNodeId,fetcher:literatureFetcher,providerFetcher});
+    expect(continued.workspace.workspace.branches[0]!.graph.nodes.some(node=>node.title==="因子图接触约束")).toBe(true);expect([...oldIds].every(id=>continued.workspace.workspace.branches[0]!.graph.nodes.some(node=>node.id===id))).toBe(true);
+    const shifted=await runExploration(continued.workspace,"我对导航兴趣不大了，看看足端感知在地形理解方面有什么研究",{signal:new AbortController().signal,fetcher:literatureFetcher,providerFetcher});
+    expect(shifted.workspace.workspace.branches).toHaveLength(2);expect(shifted.workspace.workspace.branches[0]!.graph.nodes.length).toBeGreaterThan(0);expect(shifted.workspace.workspace.activeBranchId).not.toBe("branch-main");
+  });
 });
