@@ -25,6 +25,8 @@ import { isProviderGeneration } from "../../agent/provider-adapter";
 import { applyExplorationSynthesis, ensureRootNode } from "../../domain/exploration/apply-exploration-synthesis";
 import { applySessionProfilePatch, mergeResearchProfiles } from "../../domain/research-profile/research-profile";
 import { ResearchProfileRepository } from "../../infrastructure/storage/research-profile-repository";
+import { inferSearchIntent } from "../../domain/search/academic-search";
+import { routeAcademicSearch } from "../literature/route-academic-search";
 
 export type ExplorationProgress = {
   stage:
@@ -253,8 +255,18 @@ export async function runExploration(
   const sourceRegistry =
     options.literatureRegistry ??
     (await createConfiguredSourceRegistry({ fetcher: options.fetcher }));
-  const sourceOrder = ["openalex", "crossref", "semantic-scholar", "arxiv", "ieee-xplore"];
-  const adapter = sourceRegistry.enabledAdapters(sourceOrder)[0];
+  const routed = routeAcademicSearch(
+    {
+      requestVersion: 1,
+      userQuestion: text,
+      query: plan.queries[0]!,
+      intent: inferSearchIntent(text, Boolean(focus)),
+      budget: { maxSources: 4, maxQueries: plan.queries.length, maxCandidates: 32 },
+    },
+    sourceRegistry,
+    overallContext.effectiveProfile,
+  );
+  const adapter = routed.sources[0]?.adapter;
   if (!adapter)
     throw new Error("没有已启用且可自动检索的文献来源；研究想法和已有数据未丢失。");
   const sourceName = (sourceId: string) =>
@@ -322,9 +334,7 @@ export async function runExploration(
     });
   }
   if (shouldFallback) {
-    for (const source of sourceRegistry
-      .enabledAdapters(sourceOrder)
-      .filter((candidate) => candidate.source !== adapter.source)) {
+    for (const source of routed.sources.slice(1).map((item) => item.adapter)) {
       const label = sourceName(source.source);
       options.onProgress?.({
         stage: "searching",

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ideascope.local/contracts/academic-search-request.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["requestVersion", "userQuestion", "query", "intent", "budget"],
+  "properties": {
+    "requestVersion": { "const": 1 },
+    "userQuestion": { "type": "string", "minLength": 1, "maxLength": 5000 },
+    "query": { "type": "string", "minLength": 1, "maxLength": 1000 },
+    "intent": { "enum": ["landscape", "representative", "recent", "counterevidence", "venue_focused", "citation_expand", "reference_expand", "direct_lookup"] },
+    "filters": { "type": "object", "additionalProperties": false, "properties": {
+      "fromYear": { "type": "integer", "minimum": 1800, "maximum": 3000 },
+      "toYear": { "type": "integer", "minimum": 1800, "maximum": 3000 },
+      "venues": { "type": "array", "maxItems": 100, "items": { "type": "string", "maxLength": 200 } },
+      "authors": { "type": "array", "maxItems": 100, "items": { "type": "string", "maxLength": 200 } }
+    } },
+    "budget": { "type": "object", "additionalProperties": false, "required": ["maxSources", "maxQueries", "maxCandidates"], "properties": {
+      "maxSources": { "type": "integer", "minimum": 1, "maximum": 20 },
+      "maxQueries": { "type": "integer", "minimum": 1, "maximum": 50 },
+      "maxCandidates": { "type": "integer", "minimum": 1, "maximum": 1000 }
+    } }
+  }
+}

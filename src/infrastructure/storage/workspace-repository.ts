@@ -36,7 +36,7 @@ export class WorkspaceRepository {
     const evidence = (await Promise.all(record.evidenceIds.map((evidenceId) => this.db.evidence.get(evidenceId)))).flatMap((item) => item ? [item] : []);
     const messages = (await Promise.all(record.messageIds.map((messageId) => this.db.messages.get(messageId)))).flatMap((item) => item ? [{ id: item.id, branchId: item.branchId, role: item.role, text: item.text, evidenceIds: item.evidenceIds, createdAt: item.createdAt, isDemo: item.isDemo }] : []);
     const legacy = branches.some((branch) => branch.graph.nodes.some((node) => !("depth" in node) || !("parentId" in node)) || branch.graph.edges.some((edge) => !("role" in edge)));
-    return migrateWorkspaceExport({ documentType: "ideascope.workspace", formatVersion: legacy ? 1 : 2, createdWith: "0.6.8", exportedAt: record.updatedAt, isDemo: record.isDemo, workspace: { id: record.id, title: record.title, seedIdea: record.seedIdea, activeBranchId: record.activeBranchId, branches, papers, evidence, messages, runs: [] } });
+    return migrateWorkspaceExport({ documentType: "ideascope.workspace", formatVersion: legacy ? 1 : 2, createdWith: "0.6.9", exportedAt: record.updatedAt, isDemo: record.isDemo, workspace: { id: record.id, title: record.title, seedIdea: record.seedIdea, activeBranchId: record.activeBranchId, branches, papers, evidence, messages, runs: [] } });
   }
   list() { return this.db.workspaces.orderBy("updatedAt").reverse().toArray(); }
   async rename(id: string, title: string) {

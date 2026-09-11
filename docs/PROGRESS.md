@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.8-D 已完成：新增“我的研究领域”设置，支持 Auto、模板候选、手动编辑、Session 候选提升及 Profile 导入导出。**
+当前状态：**v0.6.9-A 已完成：统一 Academic Search Request、Search Intent 与 capability/Profile-aware Source Routing 已接入探索流程。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -37,6 +37,21 @@
 | v0.6.8-B   | 已完成                | Intent Plan 生成 Session Profile Patch、增量应用、上下文注入、独立持久化与失败降级                              |
 | v0.6.8-C   | 已完成                | 四个内置轻量领域模板、稳定 ID、Venue/Source/Query signals 与 Auto 默认隔离                                      |
 | v0.6.8-D   | 已完成                | 我的研究领域设置、Auto、模板/Session 候选确认、手动编辑、Base 持久化及 Profile 导入导出                         |
+| v0.6.9-A   | 已完成                | Academic Search Request、八类 Intent、Capability 门禁、Effective Profile 偏好与预算路由                         |
+
+## v0.6.9-A 阶段记录
+
+实施日期：2026-09-11。
+
+Search Contract：新增 `ideascope` Academic Search Request JSON Schema/Zod，包含八类 Search Intent、可选年份/Venue/作者过滤和 source/query/candidate 预算；未知字段和越界预算严格拒绝。受控 intent inference 识别 recent、counterevidence、venue、citation/reference、direct lookup、节点 representative 与全局 landscape。
+
+Router：新增独立 `routeAcademicSearch` application use case，按 required capability、installation enabled、是否具备自动 adapter、Effective Profile source preference 和 maxSources 排序选择来源。来源明确 `unsupported` 时绝不调用；`unknown` 可作为带“能力待验证”理由的降级候选。Google Scholar external link 不进入自动路由。
+
+探索接入：`runExploration` 通过 Router 获得主来源和后续候选，不再维护固定 adapter 列表；当前仍保持串行主源/失败降级语义。默认无 Base 偏好时保持 Registry 注册顺序，OpenAlex 仍优先。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、28 个 Vitest 文件 / 126 项测试、production build、7 项 Playwright E2E 与 secret scan。新增 Schema 双验证、八类 Intent 样例、Profile preference、禁用来源、预算和 unsupported capability 门禁。构建仍有既有 2.19 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.9-B，多来源受预算并行执行、统一归一化与去重；Source failure 保留其它结果。
 
 ## v0.6.8-D 阶段记录
 
