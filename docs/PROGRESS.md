@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.10-B 已完成：Source、Profile 与 Pack 支持粘贴/文件导入、严格识别、预览和显式确认。**
+当前状态：**v0.6.10-C 已完成：声明式 Custom REST JSON Source 可安全导入、持久化、测试并加入统一 Router。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -43,6 +43,21 @@
 | v0.6.9-D   | 已完成                | 最多三轮 PLAN → SEARCH → OBSERVE → REFINE、充分性提前停止、跨轮去重和用户可见轮次进度                           |
 | v0.6.10-A  | 已完成                | 自然语言 Source Assistant、built-in 优先建议、缺失凭证提示、严格 Proposal 校验与测试后确认应用                 |
 | v0.6.10-B  | 已完成                | 外部 Source/Profile/Pack JSON 粘贴与上传、2 MB 预算、嵌套 Schema 校验、预览和非覆盖导入                         |
+| v0.6.10-C  | 已完成                | Custom Manifest 持久化、受限 REST JSON GET/POST/认证/字段映射、默认停用、连接测试与 Router 接入                  |
+
+## v0.6.10-C 阶段记录
+
+实施日期：2026-09-11。
+
+Custom Source：实现 `RestJsonLiteratureAdapter`，仅解释 Manifest 中的 Base URL、站内 search path、GET/POST、query parameter、items dot-path 和有限 Paper 字段映射。支持 none、API Key Header、Bearer 和 query-param credential slot；凭证仍只从 Source credential session store 注入，SearchRecord 只保存去掉查询参数的 endpoint。
+
+安全限制：外部 REST 默认要求 HTTPS，仅允许 localhost 使用 HTTP；拒绝 URL 内凭证/查询/fragment、`..` path、任意完整 URL search path、`constructor/prototype/__proto__` 字段路径和 Cookie/Host 等危险 header。实现不含 eval、函数体、JavaScript expression、远程 transform 或公共 CORS 代理。redirect 使用 `error`，浏览器 CORS/网络失败保留为明确 source failure。
+
+持久化与 Router：Dexie v9 新增独立 `sourceManifests`；built-in Manifest 仍来自代码，只保存 custom/external Manifest。外部 Manifest 默认停用，用户可在列表中先测试、补充会话凭证，再显式启用。`createConfiguredSourceRegistry` 会把已启用 Custom REST adapter 注册到统一 capability-aware Router。ID 冲突不静默覆盖。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、36 个 Vitest 文件 / 144 项测试、production build、7 项 Playwright E2E 与 secret scan。覆盖字段归一化、凭证只发往配置 origin、脱敏诊断、HTTPS/path/mapping/header 拒绝、Manifest 恢复/默认停用/冲突，以及 UI 导入后列表恢复。构建仍有既有约 2.21 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.10-D，为 Provider Web Search 建立显式能力门禁；当前 Provider 未声明能力时，Source Assistant 只能使用 built-in 或用户提供的官方资料，不能自动浏览并臆造配置。
 
 ## v0.6.10-B 阶段记录
 

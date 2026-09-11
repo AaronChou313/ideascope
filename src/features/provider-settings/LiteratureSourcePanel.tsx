@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { SourceInstallation } from "../../domain/literature-source/literature-source";
+import type { LiteratureSourceManifest, SourceInstallation } from "../../domain/literature-source/literature-source";
 import { BUILTIN_LITERATURE_SOURCE_MANIFESTS, buildExternalSourceSearchUrl } from "../../infrastructure/literature/builtin-source-registry";
 import { probeLiteratureSource, type SourceHealth } from "../../infrastructure/literature/source-health";
 import { normalizeConnectionError } from "../../infrastructure/network/errors";
@@ -12,6 +12,7 @@ import { proposeSourceConfiguration } from "../../application/literature/propose
 import type { SourceAssistantProposal } from "../../domain/literature-source/source-assistant-proposal";
 import { parseConfigurationImport, type ConfigurationImport } from "../../application/import/parse-configuration-import";
 import { ResearchProfileRepository } from "../../infrastructure/storage/research-profile-repository";
+import { SourceManifestRepository } from "../../infrastructure/storage/source-manifest-repository";
 import { Button } from "../../shared/ui";
 import styles from "./DataSafetyPanel.module.css";
 
@@ -24,9 +25,11 @@ const healthLabels: Record<HealthState, string> = {
 export function LiteratureSourcePanel() {
   const repository = useMemo(() => new SourceInstallationRepository(), []);
   const [installations, setInstallations] = useState<SourceInstallation[]>([]);
+  const [manifests, setManifests] = useState<LiteratureSourceManifest[]>([...BUILTIN_LITERATURE_SOURCE_MANIFESTS]);
   const [health, setHealth] = useState<Record<string, HealthState>>({});
   const [details, setDetails] = useState<Record<string, string>>({});
   const [ieeeKey, setIeeeKey] = useState(() => sourceCredentialStore.get("ieee-xplore.api-key") ?? "");
+  const [customCredentials, setCustomCredentials] = useState<Record<string, string>>({});
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantInput, setAssistantInput] = useState("");
   const [proposal, setProposal] = useState<SourceAssistantProposal | null>(null);
@@ -40,7 +43,9 @@ export function LiteratureSourcePanel() {
   const [importStatus, setImportStatus] = useState("");
 
   useEffect(() => {
-    void repository.list().then(setInstallations);
+    void Promise.all([repository.list(), new SourceManifestRepository().list()]).then(([nextInstallations, nextManifests]) => {
+      setInstallations(nextInstallations); setManifests(nextManifests);
+    });
     return () => active.current?.abort();
   }, [repository]);
 
@@ -52,12 +57,12 @@ export function LiteratureSourcePanel() {
     ));
     const saved = await repository.setEnabled(sourceId, enabled);
     setInstallations((current) => [...current.filter((item) => item.sourceId !== sourceId), saved]);
-    const name = BUILTIN_LITERATURE_SOURCE_MANIFESTS.find((item) => item.id === sourceId)?.name ?? sourceId;
+    const name = manifests.find((item) => item.id === sourceId)?.name ?? sourceId;
     setDetails((current) => ({ ...current, [sourceId]: `${name} 已${enabled ? "启用" : "停用"}。` }));
   }
 
   async function testOne(sourceId: string, controller = new AbortController()) {
-    const manifest = BUILTIN_LITERATURE_SOURCE_MANIFESTS.find((item) => item.id === sourceId);
+    const manifest = manifests.find((item) => item.id === sourceId);
     if (!manifest) return;
     setHealth((current) => ({ ...current, [sourceId]: "checking" }));
     setDetails((current) => ({ ...current, [sourceId]: "" }));
@@ -78,7 +83,7 @@ export function LiteratureSourcePanel() {
   async function testAll() {
     active.current?.abort();
     active.current = new AbortController();
-    const enabled = BUILTIN_LITERATURE_SOURCE_MANIFESTS.filter((manifest) => installationFor(manifest.id)?.enabled);
+    const enabled = manifests.filter((manifest) => installationFor(manifest.id)?.enabled);
     await Promise.all(enabled.map((manifest) => testOne(manifest.id, active.current!)));
   }
 
@@ -88,6 +93,14 @@ export function LiteratureSourcePanel() {
       ...current,
       "ieee-xplore": ieeeKey.trim() ? "Key 已保存在当前浏览器会话。" : "Key 已清除。",
     }));
+  }
+
+  function saveCustomCredential(manifest: LiteratureSourceManifest) {
+    const slot = manifest.auth.credentialSlot;
+    if (!slot) return;
+    const value = customCredentials[manifest.id] ?? "";
+    sourceCredentialStore.set(slot, value);
+    setDetails((current) => ({ ...current, [manifest.id]: value.trim() ? "凭证已保存在当前浏览器会话。" : "凭证已清除。" }));
   }
 
   async function askAssistant() {
@@ -157,11 +170,16 @@ export function LiteratureSourcePanel() {
     if (!importPreview) return;
     let enabled = 0;
     let deferred = 0;
+    const manifestRepository = new SourceManifestRepository();
     for (const source of importPreview.sources) {
       const builtin = BUILTIN_LITERATURE_SOURCE_MANIFESTS.find((item) => item.id === source.id);
-      if (!builtin || JSON.stringify(builtin) !== JSON.stringify(source)) { deferred += 1; continue; }
-      await repository.setEnabled(source.id, true);
-      enabled += 1;
+      if (builtin) {
+        if (JSON.stringify(builtin) !== JSON.stringify(source)) { deferred += 1; continue; }
+        await repository.setEnabled(source.id, true); enabled += 1;
+      } else {
+        try { await manifestRepository.install(source); deferred += 1; }
+        catch { deferred += 1; }
+      }
     }
     const profileRepository = new ResearchProfileRepository();
     for (const profile of importPreview.profiles)
@@ -173,7 +191,8 @@ export function LiteratureSourcePanel() {
         updatedAt: new Date().toISOString(),
       });
     setInstallations(await repository.list());
-    setImportStatus(`已导入 ${importPreview.profiles.length} 个 Profile 副本，启用 ${enabled} 个一致的内置来源。${deferred ? `${deferred} 个自定义或冲突来源仅完成预览，尚未安装。` : ""}`);
+    setManifests(await manifestRepository.list());
+    setImportStatus(`已导入 ${importPreview.profiles.length} 个 Profile 副本，启用 ${enabled} 个一致的内置来源。${deferred ? `${deferred} 个自定义来源已保存但默认停用，或存在冲突；请测试后手动启用。` : ""}`);
     setImportPreview(null);
   }
 
@@ -183,9 +202,11 @@ export function LiteratureSourcePanel() {
       <h2 id="literature-source-title">文献来源</h2>
       <p>默认自动选择可用来源。测试只检查访问能力，不会创建研究任务或写入探索历史。</p>
       <div className={styles.sourceList}>
-        {BUILTIN_LITERATURE_SOURCE_MANIFESTS.map((manifest) => {
+        {manifests.map((manifest) => {
           const enabled = installationFor(manifest.id)?.enabled ?? false;
-          const externalUrl = buildExternalSourceSearchUrl(manifest.id, "robotics localization");
+          const externalUrl = manifest.adapter.kind === "external-search"
+            ? manifest.adapter.urlTemplate.replace("{query}", encodeURIComponent("robotics localization"))
+            : buildExternalSourceSearchUrl(manifest.id, "robotics localization");
           const sourceHealth = health[manifest.id] ?? (manifest.adapter.kind === "external-search" ? "external" : "unknown");
           return (
             <div className={styles.sourceRow} key={manifest.id}>
@@ -207,11 +228,17 @@ export function LiteratureSourcePanel() {
                   <Button type="button" onClick={saveIeeeKey}>保存 Key</Button>
                 </div>
               ) : null}
+              {manifest.id !== "ieee-xplore" && manifest.auth.kind !== "none" ? (
+                <div className={styles.inlineFields}>
+                  <input type="password" value={customCredentials[manifest.id] ?? ""} onChange={(event) => setCustomCredentials((current) => ({ ...current, [manifest.id]: event.target.value }))} placeholder={`${manifest.name} API Key`} aria-label={`${manifest.name} API Key`} />
+                  <Button type="button" onClick={() => saveCustomCredential(manifest)}>保存凭证</Button>
+                </div>
+              ) : null}
               <div className={styles.sourceActions}>
                 {manifest.adapter.kind === "external-search" ? (
                   <a href={externalUrl ?? undefined} target="_blank" rel="noreferrer">打开外部搜索</a>
                 ) : (
-                  <Button type="button" disabled={!enabled} onClick={() => void testOne(manifest.id)}>测试</Button>
+                  <Button type="button" disabled={!enabled && manifest.adapter.kind === "builtin"} onClick={() => void testOne(manifest.id)}>测试</Button>
                 )}
                 {details[manifest.id] ? <span role="status">{details[manifest.id]}</span> : null}
               </div>

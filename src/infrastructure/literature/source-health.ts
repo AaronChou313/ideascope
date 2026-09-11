@@ -2,6 +2,7 @@ import type { LiteratureSourceManifest } from "../../domain/literature-source/li
 import { IeeeXploreLiteratureAdapter } from "./ieee-xplore";
 import { probeOpenAlex } from "./openalex-probe";
 import { classifyResponse } from "../network/errors";
+import { RestJsonLiteratureAdapter } from "./rest-json";
 
 export type SourceHealth = "available" | "unconfigured" | "external";
 
@@ -29,6 +30,15 @@ export async function probeLiteratureSource(
     );
     if (result.record.status !== "completed" && result.record.status !== "empty")
       throw new Error(result.record.status);
+    return "available";
+  }
+  if (manifest.adapter.kind === "rest-json") {
+    const result = await new RestJsonLiteratureAdapter(manifest, { fetcher, getCredential: options.getCredential }).search(
+      { originalIdea: "Custom source health check", keywords: "test", language: "en", rationale: "Minimal source health check" },
+      { limit: 1, maxPages: 1, fields: [] }, signal,
+    );
+    if (result.record.status === "source_unavailable" && manifest.auth.kind !== "none" && !options.getCredential?.(manifest.auth.credentialSlot!)) return "unconfigured";
+    if (!["completed", "empty"].includes(result.record.status)) throw new Error(result.record.status);
     return "available";
   }
   const url = healthUrl(manifest.id);

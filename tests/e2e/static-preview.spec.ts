@@ -305,6 +305,16 @@ test("literature source settings persist enabled state and expose honest source 
   await page.getByRole("button", { name: "校验并预览" }).click();
   await expect(page.getByText("Test Pack", { exact: true })).toBeVisible();
   await expect(page.getByText("配置已通过结构校验")).toBeVisible();
+  const customSource = {
+    documentType: "ideascope.literature-source", manifestVersion: 1, id: "external-library", name: "External Library", description: "Manual search",
+    adapter: { kind: "external-search", urlTemplate: "https://library.example.test/search?q={query}" }, auth: { kind: "none" },
+    capabilities: { search: "unsupported", abstract: "unknown", citations: "unknown", references: "unknown", venueFilter: "unknown", yearFilter: "unknown", authorFilter: "unknown", fullText: "unsupported", directLookup: "unsupported" },
+  };
+  await page.getByLabel("配置 JSON").fill(JSON.stringify(customSource));
+  await page.getByRole("button", { name: "校验并预览" }).click();
+  await page.getByRole("button", { name: "确认导入" }).click();
+  await expect(page.getByText("External Library", { exact: true })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "External Library 启用" })).not.toBeChecked();
   await page.screenshot({ path: "reports/visual/v0.6.7/source-settings.png", fullPage: true });
 });
 

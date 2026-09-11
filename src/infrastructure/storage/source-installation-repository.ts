@@ -9,13 +9,14 @@ export class SourceInstallationRepository {
     const stored = new Map(
       (await this.db.sourceInstallations.toArray()).map((item) => [item.sourceId, item]),
     );
-    return BUILTIN_LITERATURE_SOURCE_MANIFESTS.map(
-      (manifest) => stored.get(manifest.id) ?? defaultInstallation(manifest.id),
+    const customIds = (await this.db.sourceManifests.toArray()).map((manifest) => manifest.id);
+    return [...BUILTIN_LITERATURE_SOURCE_MANIFESTS.map((manifest) => manifest.id), ...customIds].map(
+      (sourceId) => stored.get(sourceId) ?? defaultInstallation(sourceId, customIds.includes(sourceId)),
     );
   }
 
   async setEnabled(sourceId: string, enabled: boolean) {
-    if (!BUILTIN_LITERATURE_SOURCE_MANIFESTS.some((manifest) => manifest.id === sourceId))
+    if (!BUILTIN_LITERATURE_SOURCE_MANIFESTS.some((manifest) => manifest.id === sourceId) && !await this.db.sourceManifests.get(sourceId))
       throw new Error("未知文献来源。");
     const current = await this.db.sourceInstallations.get(sourceId);
     const now = new Date().toISOString();
@@ -32,11 +33,11 @@ export class SourceInstallationRepository {
   }
 }
 
-function defaultInstallation(sourceId: string): SourceInstallation {
+function defaultInstallation(sourceId: string, custom = false): SourceInstallation {
   const now = new Date(0).toISOString();
   return {
     sourceId,
-    enabled: sourceId !== "ieee-xplore",
+    enabled: !custom && sourceId !== "ieee-xplore",
     installedAt: now,
     updatedAt: now,
     credentialSlot: sourceId === "ieee-xplore" ? "ieee-xplore.api-key" : null,

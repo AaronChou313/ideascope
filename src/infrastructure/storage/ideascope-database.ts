@@ -2,7 +2,7 @@ import Dexie, { type EntityTable } from "dexie";
 import type { Branch, Evidence, GraphPatch, Message, Paper } from "../../../contracts/domain";
 import type { SearchRecord } from "../../domain/search/literature";
 import type { SavedProviderProfile } from "../../domain/provider/provider-profile";
-import type { SourceInstallation } from "../../domain/literature-source/literature-source";
+import type { LiteratureSourceManifest, SourceInstallation } from "../../domain/literature-source/literature-source";
 import type { ResearchProfile } from "../../domain/research-profile/research-profile";
 
 export class IdeaScopeDatabase extends Dexie {
@@ -19,6 +19,7 @@ export class IdeaScopeDatabase extends Dexie {
   writerLeases!: EntityTable<WriterLease, "workspaceId">;
   providerProfiles!: EntityTable<SavedProviderProfile, "id">;
   sourceInstallations!: EntityTable<SourceInstallation, "sourceId">;
+  sourceManifests!: EntityTable<LiteratureSourceManifest, "id">;
   researchProfiles!: EntityTable<ResearchProfile, "id">;
   constructor(name = "ideascope") {
     super(name);
@@ -115,6 +116,23 @@ export class IdeaScopeDatabase extends Dexie {
       providerProfiles: "id,updatedAt",
       sourceInstallations: "sourceId,enabled,updatedAt",
       researchProfiles: "id,mode,updatedAt",
+    });
+    this.version(9).stores({
+      papers: "id,externalIds.doi,externalIds.arxiv,externalIds.openalex,fetchedAt",
+      evidence: "id,paperId,level,fetchedAt",
+      searchRecords: "id,source,status,endedAt,cacheKey",
+      branches: "key,workspaceId,branch.id,branch.revision",
+      checkpoints: "id,workspaceId,branchId,revision,createdAt",
+      patchReceipts: "patchId,workspaceId,branchId,runId,committedAt",
+      runSummaries: "runId,workspaceId,branchId,status,endedAt",
+      runExecutions: "id,workspaceId,branchId,status,startedAt,endedAt",
+      messages: "id,branchId,createdAt",
+      workspaces: "id,title,updatedAt,archivedAt",
+      writerLeases: "workspaceId,ownerId,expiresAt",
+      providerProfiles: "id,updatedAt",
+      sourceInstallations: "sourceId,enabled,updatedAt",
+      researchProfiles: "id,mode,updatedAt",
+      sourceManifests: "id,adapter.kind",
     });
   }
 }
