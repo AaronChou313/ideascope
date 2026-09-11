@@ -71,7 +71,7 @@ export class CrossrefLiteratureAdapter implements LiteratureAdapter {
             return [
               {
                 id: doi ? `doi:${doi}` : `crossref:${crypto.randomUUID()}`,
-                externalIds: doi ? { doi } : {},
+                externalIds: doi ? { doi, crossref: doi } : {},
                 title,
                 authors: readAuthors(item.author),
                 year: readYear(item.published),

@@ -5,7 +5,7 @@ export type EpistemicStatus = 'sourced' | 'inference' | 'hypothesis' | 'user_not
 export type EvidenceLevel = 'metadata' | 'abstract' | 'user_excerpt' | 'full_text_excerpt';
 export type Relation = 'decomposes_into' | 'addressed_by' | 'requires' | 'contrasts_with' | 'limited_by' | 'motivates' | 'related_to';
 export interface Paper {
-  id: ID; externalIds: {doi?: string; arxiv?: string; openalex?: string};
+  id: ID; externalIds: {doi?: string; arxiv?: string; openalex?: string; semanticScholar?: string; ieee?: string; crossref?: string};
   title: string; authors: string[]; year: number | null; venue: string | null;
   url: string; abstract: string | null; source: string; fetchedAt: string;
   relatedVersionIds: ID[];

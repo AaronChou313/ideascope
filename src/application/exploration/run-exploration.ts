@@ -11,9 +11,6 @@ import {
   type IntentPlan,
   type ResearchSynthesis,
 } from "../../domain/exploration/exploration-output";
-import {
-  OPENALEX_FIELDS,
-} from "../../infrastructure/literature/openalex";
 import { createConfiguredSourceRegistry } from "../../infrastructure/literature/configured-source-registry";
 import type { SourceRegistry } from "../literature/literature-source-registry";
 import { createAgentProvider } from "../../infrastructure/llm/agent-provider";
@@ -26,7 +23,7 @@ import { applyExplorationSynthesis, ensureRootNode } from "../../domain/explorat
 import { applySessionProfilePatch, mergeResearchProfiles } from "../../domain/research-profile/research-profile";
 import { ResearchProfileRepository } from "../../infrastructure/storage/research-profile-repository";
 import { inferSearchIntent } from "../../domain/search/academic-search";
-import { routeAcademicSearch } from "../literature/route-academic-search";
+import { searchAcademic } from "../literature/search-academic";
 
 export type ExplorationProgress = {
   stage:
@@ -255,25 +252,16 @@ export async function runExploration(
   const sourceRegistry =
     options.literatureRegistry ??
     (await createConfiguredSourceRegistry({ fetcher: options.fetcher }));
-  const routed = routeAcademicSearch(
-    {
+  const searchRequests = plan.queries.map((query) => ({
       requestVersion: 1,
       userQuestion: text,
-      query: plan.queries[0]!,
+      query,
       intent: inferSearchIntent(text, Boolean(focus)),
       budget: { maxSources: 4, maxQueries: plan.queries.length, maxCandidates: 32 },
-    },
-    sourceRegistry,
-    overallContext.effectiveProfile,
-  );
-  const adapter = routed.sources[0]?.adapter;
-  if (!adapter)
-    throw new Error("没有已启用且可自动检索的文献来源；研究想法和已有数据未丢失。");
+    }) as const);
   const sourceName = (sourceId: string) =>
     sourceRegistry.list().find((entry) => entry.manifest.id === sourceId)?.manifest.name ?? sourceId;
-  const papers: Paper[] = [];
   const warnings: string[] = [];
-  let shouldFallback = false;
   if (profileWarning) warnings.push(profileWarning);
   options.onProgress?.({
     stage: "searching",
@@ -281,95 +269,29 @@ export async function runExploration(
     queries: plan.queries.length,
     candidates: 0,
   });
-  for (const query of plan.queries) {
-    if (options.signal.aborted) throw new DOMException("已取消", "AbortError");
-    const result = await adapter.search(
-      {
-        originalIdea: text,
-        keywords: query,
-        language: "en",
-        rationale: plan.understanding,
-      },
-      {
-        limit: 8,
-        maxPages: 1,
-        fields: adapter.source === "openalex" ? OPENALEX_FIELDS : [],
-      },
-      options.signal,
-    );
-    await new SearchRecordStore().save(result.record);
-    if (result.record.status === "cancelled")
-      throw new DOMException("已取消", "AbortError");
-    for (const paper of result.papers)
-      if (
-        !papers.some((item) => item.id === paper.id) &&
-        !workspace.workspace.papers.some((item) => item.id === paper.id)
-      )
-        papers.push(paper);
-    if (
-      result.record.status !== "completed" &&
-      result.record.status !== "empty"
-    ) {
-      const warning =
-        result.record.status === "rate_limited"
-          ? `${sourceName(adapter.source)} 暂时限流，已保留此前找到的资料并继续整理。`
-          : `${sourceName(adapter.source)} 本轮检索未完成（${result.record.status}），已保留此前找到的资料。`;
-      warnings.push(warning);
-      shouldFallback = true;
-      options.onProgress?.({
-        stage: "searching",
-        message: warning,
-        queries: plan.queries.length,
-        candidates: papers.length,
-        tone: "warning",
-      });
-      if (result.record.status === "rate_limited") break;
-      continue;
-    }
-    options.onProgress?.({
-      stage: "searching",
-      message: `已找到 ${papers.length} 条候选资料`,
-      queries: plan.queries.length,
-      candidates: papers.length,
-    });
+  const searched = await searchAcademic({
+    requests: searchRequests,
+    registry: sourceRegistry,
+    effectiveProfile: overallContext.effectiveProfile,
+    signal: options.signal,
+    onRecord: async (record) => { await new SearchRecordStore().save(record); },
+  });
+  const existingPaperIds = new Set(workspace.workspace.papers.map((paper) => paper.id));
+  const papers: Paper[] = searched.papers.filter((paper) => !existingPaperIds.has(paper.id));
+  for (const failure of searched.trace.failures) {
+    const warning = failure.status === "rate_limited"
+      ? `${sourceName(failure.sourceId)} 暂时限流，其他来源结果已保留。`
+      : `${sourceName(failure.sourceId)} 本轮检索未完成（${failure.status}），其他来源结果已保留。`;
+    warnings.push(warning);
+    options.onProgress?.({ stage: "searching", message: warning, queries: searched.trace.queries, candidates: papers.length, tone: "warning" });
   }
-  if (shouldFallback) {
-    for (const source of routed.sources.slice(1).map((item) => item.adapter)) {
-      const label = sourceName(source.source);
-      options.onProgress?.({
-        stage: "searching",
-        message: `正在尝试 ${label} 补充来源`,
-        queries: plan.queries.length,
-        candidates: papers.length,
-      });
-      const fallback = await source.search(
-        {
-          originalIdea: text,
-          keywords: plan.queries[0]!,
-          language: "en",
-          rationale: plan.understanding,
-        },
-        { limit: 8, maxPages: 1, fields: [] },
-        options.signal,
-      );
-      await new SearchRecordStore().save(fallback.record);
-      for (const paper of fallback.papers)
-        if (
-          !papers.some((item) => item.id === paper.id) &&
-          !workspace.workspace.papers.some((item) => item.id === paper.id)
-        )
-          papers.push(paper);
-      if (fallback.record.status === "completed")
-        options.onProgress?.({
-          stage: "searching",
-          message: `${label} 补充后共有 ${papers.length} 条候选资料`,
-          queries: plan.queries.length,
-          candidates: papers.length,
-        });
-      if (papers.length >= 8) break;
-    }
-  }
-  if (!papers.length && warnings.length)
+  options.onProgress?.({
+    stage: "searching",
+    message: `已从 ${searched.trace.sources.length} 个来源取得 ${searched.trace.candidates} 条候选资料，去重后保留 ${papers.length} 条`,
+    queries: searched.trace.queries,
+    candidates: papers.length,
+  });
+  if (!papers.length && warnings.length && !workspace.workspace.papers.length)
     throw new Error(
       "文献来源本轮不可用，且尚未取得可供分析的资料。请稍后重试；研究想法和已有数据未丢失。",
     );

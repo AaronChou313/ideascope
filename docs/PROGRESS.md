@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.9-A 已完成：统一 Academic Search Request、Search Intent 与 capability/Profile-aware Source Routing 已接入探索流程。**
+当前状态：**v0.6.9-B 已完成：受预算的并行多来源检索、统一归一化、精确去重与候选版本关联已接入探索流程。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -38,6 +38,21 @@
 | v0.6.8-C   | 已完成                | 四个内置轻量领域模板、稳定 ID、Venue/Source/Query signals 与 Auto 默认隔离                                      |
 | v0.6.8-D   | 已完成                | 我的研究领域设置、Auto、模板/Session 候选确认、手动编辑、Base 持久化及 Profile 导入导出                         |
 | v0.6.9-A   | 已完成                | Academic Search Request、八类 Intent、Capability 门禁、Effective Profile 偏好与预算路由                         |
+| v0.6.9-B   | 已完成                | 多来源/多查询并行执行、候选预算、DOI/arXiv/ID 精确合并、题名候选版本关联与部分失败保留                           |
+
+## v0.6.9-B 阶段记录
+
+实施日期：2026-09-11。
+
+执行器：新增独立 `searchAcademic` application use case。它对 Academic Search Request 做二次校验，经 Router 选出不超过预算的来源，并按“查询 × 来源”并行执行；每个请求只取一页且按总候选预算分配 limit。所有 SearchRecord 继续进入现有存储，任一来源抛错、限流或返回异常只记录为该来源 failure，不会丢弃其它成功结果。
+
+归一化与去重：各 Adapter 统一补齐来源级 external ID。聚合层按相同记录 ID、规范化 DOI、arXiv base ID、OpenAlex ID 做确定性合并，并保留摘要更丰富的元数据；仅题名、首位作者和相近年份命中的候选版本不静默合并，而是双向写入 `relatedVersionIds` 供后续审阅。最终结果受 `maxCandidates` 硬预算约束。
+
+探索接入：`runExploration` 不再串行执行“主来源失败后才尝试备用来源”，而是一次调用统一多源执行器；研究进度会报告来源数、原始候选数和去重后数量。重复探索只取得已有论文时可继续使用 Workspace 中既有 Evidence，不再误报“无可分析资料”。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、29 个 Vitest 文件 / 130 项测试、production build、7 项 Playwright E2E 与 secret scan。新增并行执行、partial failure、抛错诊断、DOI 精确合并、候选版本关联和重复论文续研回归。构建仍有既有约 2.19 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.9-C，增加可解释候选排序、Profile/Venue/年份/摘要等信号与 `selectionReasons`；不在排序中伪装模型相关性判断。
 
 ## v0.6.9-A 阶段记录
 

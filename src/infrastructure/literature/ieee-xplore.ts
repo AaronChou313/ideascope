@@ -73,7 +73,7 @@ export class IeeeXploreLiteratureAdapter implements LiteratureAdapter {
               const year = Number(article.publication_year);
               return {
                 id: `ieee:${number}`,
-                externalIds: { ...(doi ? { doi } : {}) },
+                externalIds: { ieee: number, ...(doi ? { doi } : {}) },
                 title: article.title,
                 authors: article.authors?.authors.map((author) => author.full_name) ?? [],
                 year: Number.isInteger(year) ? year : null,

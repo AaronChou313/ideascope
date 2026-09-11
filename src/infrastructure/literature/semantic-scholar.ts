@@ -79,6 +79,7 @@ export class SemanticScholarLiteratureAdapter implements LiteratureAdapter {
             return {
               id: `semantic-scholar:${item.paperId}`,
               externalIds: {
+                semanticScholar: item.paperId,
                 ...(doi ? { doi } : {}),
                 ...(arxiv ? { arxiv } : {}),
               },

@@ -231,13 +231,14 @@ describe("initial exploration pipeline", () => {
       },
     );
     expect(result.candidates).toBe(1);
-    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings.length).toBeGreaterThanOrEqual(1);
+    expect(result.warnings.some((warning) => warning.includes("暂时限流"))).toBe(true);
     expect(result.workspace.workspace.branches[0]!.graph.nodes).toHaveLength(6);
     expect(
       progress.some(
         (item) =>
           item.tone === "warning" &&
-          item.message.includes("已保留此前找到的资料"),
+          item.message.includes("其他来源结果已保留"),
       ),
     ).toBe(true);
     expect(progress.at(-1)?.stage).toBe("completed");

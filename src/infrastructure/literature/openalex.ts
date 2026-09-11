@@ -90,9 +90,9 @@ export class OpenAlexLiteratureAdapter implements LiteratureAdapter {
     signal: AbortSignal,
   ): Promise<LiteratureSearchResult> {
     validateLiteratureQuery(query);
+    const fields = options.fields.length ? options.fields : OPENALEX_FIELDS;
     if (
-      options.fields.length === 0 ||
-      options.fields.some(
+      fields.some(
         (field) =>
           !OPENALEX_FIELDS.includes(field as (typeof OPENALEX_FIELDS)[number]),
       )
@@ -126,7 +126,7 @@ export class OpenAlexLiteratureAdapter implements LiteratureAdapter {
       while (cursor && pagesFetched < maxPages && papers.length < limit) {
         const url = buildSearchUrl(
           query,
-          options,
+          { ...options, fields },
           cursor,
           Math.min(100, limit - papers.length),
         );
