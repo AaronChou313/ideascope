@@ -23,7 +23,7 @@ import { applyExplorationSynthesis, ensureRootNode } from "../../domain/explorat
 import { applySessionProfilePatch, mergeResearchProfiles } from "../../domain/research-profile/research-profile";
 import { ResearchProfileRepository } from "../../infrastructure/storage/research-profile-repository";
 import { inferSearchIntent } from "../../domain/search/academic-search";
-import { searchAcademic } from "../literature/search-academic";
+import { searchAcademicIteratively } from "../literature/search-academic-iteratively";
 
 export type ExplorationProgress = {
   stage:
@@ -269,12 +269,19 @@ export async function runExploration(
     queries: plan.queries.length,
     candidates: 0,
   });
-  const searched = await searchAcademic({
+  const searched = await searchAcademicIteratively({
     requests: searchRequests,
     registry: sourceRegistry,
     effectiveProfile: overallContext.effectiveProfile,
     signal: options.signal,
     onRecord: async (record) => { await new SearchRecordStore().save(record); },
+    onRound: (round) => options.onProgress?.({
+      stage: "searching",
+      message: `第 ${round.round} 轮检索完成：累计保留 ${round.deduplicated} 条候选资料`,
+      queries: round.round,
+      candidates: round.deduplicated,
+      ...(round.status === "partial" || round.status === "failed" ? { tone: "warning" as const } : {}),
+    }),
   });
   const existingPaperIds = new Set(workspace.workspace.papers.map((paper) => paper.id));
   const papers: Paper[] = searched.papers.filter((paper) => !existingPaperIds.has(paper.id));
