@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { cloneImportedWorkspace } from "../../domain/export/workspace-export";
-import { downloadText } from "../../infrastructure/export/download";
+import { downloadBytes, downloadText } from "../../infrastructure/export/download";
 import { LocalDataService } from "../../infrastructure/storage/local-data-service";
 import { WorkspaceRepository } from "../../infrastructure/storage/workspace-repository";
 import { Button } from "../../shared/ui";
 import { WorkspaceArchiveService } from "../../application/archive/workspace-archive-service";
+import { WorkspaceBundleService } from "../../application/archive/workspace-bundle-service";
+import type { WorkspaceRecord } from "../../infrastructure/storage/ideascope-database";
 import styles from "./DataSafetyPanel.module.css";
 
 type Summary = Awaited<ReturnType<LocalDataService["summary"]>>;
@@ -14,7 +16,11 @@ export function DataSafetyPanel() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [confirmation, setConfirmation] = useState("");
   const [status, setStatus] = useState("研究项目保存在当前浏览器中。");
-  const refresh = () => void new LocalDataService().summary().then(setSummary);
+  const [workspaces, setWorkspaces] = useState<WorkspaceRecord[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [includeResources, setIncludeResources] = useState(true);
+  const [bundlePreview, setBundlePreview] = useState<string[]>([]);
+  const refresh = () => void Promise.all([new LocalDataService().summary(), new WorkspaceRepository().list()]).then(([nextSummary, nextWorkspaces]) => { setSummary(nextSummary); setWorkspaces(nextWorkspaces); });
   useEffect(refresh, []);
   async function exportAll() {
     const repository = new WorkspaceRepository();
@@ -42,9 +48,26 @@ export function DataSafetyPanel() {
   }
   async function clearCache() { await new LocalDataService().clearCache(); setStatus("缓存已清理，研究项目未删除。"); refresh(); }
   async function clearAll() { try { await new LocalDataService().clearAll(confirmation); setConfirmation(""); setStatus("已删除全部本地研究项目和当前内存密钥。"); refresh(); } catch (error) { setStatus(error instanceof Error ? error.message : "删除失败。"); } }
+  async function exportBundle(ids: string[]) {
+    try {
+      const bundle = await new WorkspaceBundleService().create(ids, includeResources);
+      const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+      downloadBytes(`ideascope-export-${stamp}.ideascope.zip`, "application/zip", bundle.bytes);
+      setStatus(`已导出 ${ids.length} 个探索的完整 Bundle。`);
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Bundle 导出失败。"); }
+  }
+  async function previewBundle(file?: File) {
+    if (!file) return;
+    try {
+      const preview = await new WorkspaceBundleService().preview(new Uint8Array(await file.arrayBuffer()));
+      setBundlePreview(preview.items.map((item) => `${item.title} · ${item.branches} 分支 · ${item.nodes} 节点 · ${item.evidence} Evidence`));
+      setStatus("Bundle 完整性校验通过。导入事务将在下一安全阶段启用。");
+    } catch (error) { setBundlePreview([]); setStatus(error instanceof Error ? `Bundle 无效：${error.message}` : "Bundle 无效。"); }
+  }
   return <section className={styles.panel} aria-labelledby="data-title"><p>DATA &amp; STORAGE</p><h2 id="data-title">数据与存储</h2>
     <div className={styles.summary}><strong>本地研究数据</strong><span>探索项目：{summary?.projects ?? "…"}</span><span>已用空间：{formatBytes(summary?.usage ?? null)}</span></div>
-    <div className={styles.group}><h3>数据备份</h3><Button type="button" onClick={() => void exportAll()}>导出全部数据</Button><label>导入备份<input type="file" accept="application/json,.json" onChange={(event) => void importBackup(event.target.files?.[0])} /></label></div>
+    <div className={styles.group}><h3>数据备份</h3><Button type="button" onClick={() => void exportAll()}>导出全部数据</Button><label>导入备份<input type="file" accept="application/json,.json,.ideascope-archive.json" onChange={(event) => void importBackup(event.target.files?.[0])} /></label></div>
+    <div className={styles.group}><h3>批量导出探索</h3>{workspaces.map((workspace) => <label className={styles.checkRow} key={workspace.id}><input type="checkbox" checked={selected.includes(workspace.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, workspace.id] : current.filter((id) => id !== workspace.id))} />{workspace.title}</label>)}<label className={styles.checkRow}><input type="checkbox" checked={includeResources} onChange={(event) => setIncludeResources(event.target.checked)} />附带非秘密 Source / Profile 资源</label><div className={styles.sourceActions}><Button type="button" onClick={() => setSelected(workspaces.map((workspace) => workspace.id))}>全选</Button><Button type="button" disabled={!selected.length} onClick={() => void exportBundle(selected)}>导出所选</Button><Button type="button" disabled={!workspaces.length} onClick={() => void exportBundle(workspaces.map((workspace) => workspace.id))}>导出全部探索</Button></div><label>预览 Bundle<input type="file" accept=".zip,.ideascope.zip,application/zip" onChange={(event) => void previewBundle(event.target.files?.[0])} /></label>{bundlePreview.map((item) => <small key={item}>{item}</small>)}</div>
     <div className={styles.group}><h3>清理</h3><Button type="button" onClick={() => void clearCache()}>清理缓存</Button><p>清理缓存不会删除研究项目。</p><label>输入“清除全部数据”确认<input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label><Button type="button" disabled={confirmation !== "清除全部数据"} onClick={() => void clearAll()}>删除所有本地研究项目</Button></div><p role="status">{status}</p>
   </section>;
 }

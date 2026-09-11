@@ -7,6 +7,13 @@ export function downloadText(filename: string, type: string, content: string) {
   queueMicrotask(() => URL.revokeObjectURL(url));
 }
 
+export function downloadBytes(filename: string, type: string, content: Uint8Array) {
+  const url = URL.createObjectURL(new Blob([content as Uint8Array<ArrayBuffer>], { type }));
+  const anchor = document.createElement("a");
+  anchor.href = url; anchor.download = filename; anchor.click();
+  queueMicrotask(() => URL.revokeObjectURL(url));
+}
+
 export async function downloadPngOrSvg(filename: string, svg: string, maxDimension = 8192) {
   const match = svg.match(/width="(\d+)" height="(\d+)"/);
   const width = Number(match?.[1] ?? 0);

@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.11-A 已完成：单探索完整 Archive 覆盖研究结构、运行/Search provenance、Profile 与无秘密 Source 快照。**
+当前状态：**v0.6.11-B 已完成：多探索可选择或全部导出为带 SHA-256 清单、可预览的真实 ZIP Bundle。**
 
 | 阶段       | 状态                  | 产物/证据                                                                                                      |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -46,6 +46,21 @@
 | v0.6.10-C  | 已完成                | Custom Manifest 持久化、受限 REST JSON GET/POST/认证/字段映射、默认停用、连接测试与 Router 接入                  |
 | v0.6.10-D  | 已完成                | Provider Web Search 显式能力门禁、unknown 默认拒绝、无名称猜测、Assistant 清晰降级指引                           |
 | v0.6.11-A  | 已完成                | 单 Workspace 完整档案、相关 Search/运行记录、Session/Base Profile、Source 快照与非覆盖恢复                       |
+| v0.6.11-B  | 已完成                | 多 Workspace ZIP、Bundle Manifest/SHA-256、去重 Source/Profile resources、批量选择与导入预览                    |
+
+## v0.6.11-B 阶段记录
+
+实施日期：2026-09-11。
+
+ZIP Bundle：锁定新增纯前端 `fflate@0.8.2`，实现 `WorkspaceBundleService`。导出生成真实 ZIP，根目录为 `ideascope-bundle.json`，每个探索写入 `workspaces/*.ideascope.json` 完整 Archive，并可选将去重后的非秘密 Source/Profile snapshot 写入 `resources/`。单 Bundle 限 250 个 Workspace。
+
+完整性与预览：Bundle Manifest 具有 JSON Schema/Zod 双契约，每个 Workspace entry 包含稳定路径和 SHA-256。预览会解压、验证 manifest、逐项 hash 和 Archive 格式，再显示标题、分支、节点、Paper 与 Evidence 数量；篡改 entry 会明确失败。批量事务导入留在下一安全阶段，本阶段不会在“预览”时写入数据库。
+
+UI：数据与存储页新增紧凑会话复选列表、全选、导出所选、导出全部探索、是否附带非秘密资源以及预览 Bundle。实际浏览器检查发现默认 input 样式会把 checkbox 拉成 40px，已增加专用 15px 行式样式，保持标准设置表单密度。
+
+测试：`npm run check` 通过，包括 ESLint、严格 TypeScript、40 个 Vitest 文件 / 151 项测试、production build、7 项 Playwright E2E 与 secret scan。新增真实 ZIP 结构、双 Manifest 契约、两 Workspace 预览、资源目录和 hash 篡改拒绝测试。构建仍有既有约 2.23 MB 主 chunk 非阻断警告。
+
+下一阶段入口：v0.6.11-C，补齐 ZIP path traversal、压缩/展开/文件数预算、资源 hash、全量 dry-run、选择后单事务导入和失败回滚。
 
 ## v0.6.11-A 阶段记录
 
