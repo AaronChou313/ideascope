@@ -36,10 +36,10 @@ DeepSeek 实测日期为 2026-09-11。普通完成与结构化输出均从本地
 
 | 能力 | mock/本地实现 | 真实服务 | 说明 |
 |---|---|---|---|
-| 普通完成 | 三协议通过 | DeepSeek Chat 通过；其余待验证 | Chat 同时识别 content、reasoning_content、tool_calls、finish_reason |
-| 流式响应 | 三协议请求通过 | 待验证 | 以收到首个 response body chunk 为基础信号 |
-| 结构化输出 | 三策略通过 | DeepSeek json_object 通过；Responses/Messages 待验证 | 返回 JSON 仍需本地契约校验 |
-| 工具调用 | 三协议响应形状通过 | 待验证 | 只请求无参数 `probe_ok`，不执行外部工具 |
+| 普通完成 | 三协议通过 | DeepSeek Chat 通过；其余待验证 | 必须有最终文本才标支持；reasoning-only/token 用尽标结果不足，空文本标测试失败，不误报不支持 |
+| 流式响应 | 三协议事件解析通过 | 待验证 | 解析 SSE/stream JSON、协议 delta/output event，并要求至少一个模型输出事件及合法终止或正常 EOF |
+| 结构化输出 | 三策略通过 | DeepSeek json_object 通过；Responses/Messages 待验证 | 必须可解析 JSON 且严格等于 `{ok:true}` schema（拒绝缺字段、错误类型和额外字段） |
+| 工具调用 | 三协议调用校验通过 | 待验证 | 必须返回真实 `probe_ok` tool/function call，且 arguments/input 是合法 JSON object；不执行工具 |
 | 取消 | fake transport 自动测试通过 | 待验证 | AbortSignal 阻止客户端继续处理；不保证供应商停止计费 |
 | usage reporting | 三协议字段解析通过 | DeepSeek 响应包含 usage；其余待验证 | 只有响应包含有效 usage 时才标 supported |
 
@@ -47,7 +47,8 @@ DeepSeek 实测日期为 2026-09-11。普通完成与结构化输出均从本地
 
 ## 错误与安全行为
 
-- 401、403、429 分开显示；其他网络失败使用“网络错误或浏览器跨域策略阻止访问”，不伪造具体原因。
+- 能力状态为“支持 / 不支持 / 测试失败 / 待验证”。HTTP、网络、CORS 或响应格式错误会把对应能力更新为“测试失败”，不继续显示“待验证”；HTTP 400 不自动等于“不支持”。
+- 401、403、404、429、400 请求格式、模型不存在、参数不支持、响应格式异常、离线网络与疑似 CORS 分开诊断。标准 JSON error body 只提取并截断显示 `type / code / message`，同时脱敏 Bearer token 与 key 形状。
 - API Key 只存在模块内存和受控 input 中；组件卸载时清除，不进入 URL、存储、日志、文档或导出。
-- 每个模型能力探针都需要用户在页面中主动点击，并明确提示可能产生费用。
+- 每个模型能力探针都需要用户在页面中主动点击；“一键测试四项能力”按顺序执行四次最小请求，并明确提示可能产生费用。
 - 未使用 `no-cors`、开发代理、公共 CORS 代理或关闭浏览器安全机制。

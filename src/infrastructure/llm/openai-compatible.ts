@@ -1,5 +1,5 @@
 import { classifyProviderResponse, ConnectionError, normalizeConnectionError } from '../network/errors';
-import { parseProbeResponse, probeRequestBody, providerHeaders, providerUrl } from './provider-protocol';
+import { parseProbeResponse, parseProviderStream, probeRequestBody, providerHeaders, providerUrl } from './provider-protocol';
 import type { ProbeCapability, ProbeResult, ProviderConfig } from './types';
 
 type FetchLike = typeof fetch;
@@ -26,19 +26,15 @@ export async function probeProvider(config: ProviderConfig, key: string, capabil
     if (format === 'openai-chat' && [400, 422].includes(response.status))
       response = await sendProbe(config, key, capability, signal, fetcher, false);
     if (!response.ok) {
-      const failure = await classifyProviderResponse(response);
-      if (failure.code === 'incompatible_request' && capability !== 'completion')
-        return { capability, state: 'unsupported', detail: '该 Provider/模型不支持此能力或对应请求格式。', usageReporting: 'unknown' };
-      throw failure;
+      throw await classifyProviderResponse(response);
     }
     if (capability === 'cancellation') return { capability, state: 'unknown', detail: '请求在取消前已完成，无法确认取消能力。', usageReporting: 'unknown' };
     if (capability === 'streaming') {
-      const first = await response.body?.getReader().read();
-      if (!first || first.done || first.value.length === 0) throw new ConnectionError('invalid_response', '未收到流式数据。');
-      return { capability, state: 'supported', detail: '收到首个流式数据块。', usageReporting: 'unknown' };
+      const detail = await parseProviderStream(format, response.body, response.headers.get('Content-Type') ?? '');
+      return { capability, state: 'supported', detail, usageReporting: 'unknown' };
     }
     const parsed = parseProbeResponse(format, capability, await response.json());
-    return { capability, state: parsed.supported ? 'supported' : 'unsupported', detail: parsed.supported ? parsed.detail : '请求成功，但该 Provider/模型不支持此能力。', usageReporting: parsed.usage ? 'supported' : 'unknown' };
+    return { capability, state: parsed.state, detail: parsed.detail, usageReporting: parsed.usage ? 'supported' : 'unknown' };
   } catch (error) {
     throw normalizeConnectionError(error);
   }

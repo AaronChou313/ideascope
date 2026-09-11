@@ -1,6 +1,6 @@
 # 开发进度
 
-当前状态：**v0.6.1 Provider 协议兼容修复已完成；DeepSeek Chat Completions 最小实测通过，OpenAI Responses 与 Anthropic Messages 待真实凭证验证。**
+当前状态：**v0.6.2 Provider 能力探针可靠性修复已完成；DeepSeek Chat Completions 最小实测沿用 v0.6.1 证据，其余真实能力待凭证验证。**
 
 | 阶段 | 状态 | 产物/证据 |
 |---|---|---|
@@ -24,6 +24,7 @@
 | v0.6.0-B | 已完成 | JSON/Markdown/SVG/PNG、敏感内容审计、SVG 降级、导入新项目与下载 e2e |
 | v0.6.0-C | 已完成 | 安全文本、endpoint/redirect 限制、脱敏诊断、全量清除、攻击夹具与数据流说明 |
 | v0.6.1 | 已完成 | Chat Completions、Responses、Anthropic Messages 三协议 Adapter；DeepSeek 完成/JSON 实测与三类 mock 契约 |
+| v0.6.2 | 已完成 | 四项探针严格判定、完整流事件解析、failed 状态、脱敏错误诊断与一键测试 |
 
 ## 每阶段记录模板
 
@@ -518,3 +519,25 @@
 风险与决策：不按厂商散布硬编码逻辑；常见服务通过三种协议格式、Base URL 和 Model ID 映射。浏览器 fetch 对在线状态下的网络失败与 CORS 无法取得服务端诊断，当前以 `navigator.onLine` 区分明确离线，其余 Fetch TypeError 标为疑似 CORS，不伪造确定原因。
 
 下一阶段入口：仍为 v1.0.0-A 外部门禁；如用户提供 OpenAI/Anthropic 凭证与预算授权，再补真实 Responses/Messages 能力矩阵。否则保持待验证，不以 mock 替代。
+
+## v0.6.2 阶段记录
+
+阶段 ID：v0.6.2
+
+实施日期 / commit：2026-09-11 / 见本阶段 Git 提交
+
+范围：只修复普通完成、流式响应、结构化输出、工具调用四项能力探针的判定、状态显示和错误诊断，并增加顺序执行四项探针的按钮；不增加 Provider、不改变研究工作流或页面结构。
+
+已完成：能力状态扩展为 supported/unsupported/failed/unknown，UI 对应“支持/不支持/测试失败/待验证”，请求异常会写入对应能力而非停留在待验证。普通完成只有最终文本才标支持；reasoning-only 尤其 finish_reason=length 时标结果不足，HTTP 200 空最终文本标测试失败。流式探针读取完整响应，验证 SSE/event framing、三协议模型输出事件和合法终止/正常 EOF。结构化探针实际 JSON.parse，并严格验证唯一布尔字段 `ok=true`。工具探针验证协议对应的真实调用、名称 `probe_ok` 与可解析 object 参数。一键按钮用同一 AbortController 顺序执行四项，取消可中止余下测试。
+
+错误诊断：HTTP 400 不自动映射 unsupported。Provider 标准 JSON error body 的 type/code/message 经换行规整、240 字符截断和 Bearer/key 脱敏后显示；区分 401、403、404、429、模型不存在、参数不支持、请求格式、响应格式、离线网络、疑似 CORS 与取消。
+
+测试覆盖：HTTP 200 空 content + reasoning、output token 用尽、空最终文本、正常 SSE 与无效 stream、JSON 解析失败、schema 失败/额外字段、合法与非法 tool call、HTTP 400 tool 参数诊断、错误脱敏、UI failed 状态及一键四项顺序执行。未再次使用 v0.6.1 的临时 DeepSeek 凭证或产生付费调用。
+
+测试命令与结果：最终 `npm run check` 通过；ESLint、严格 typecheck、19 个 unit/contract 文件共 86 项测试、production build、13 项 Playwright e2e 与 secret scan 全部成功。构建仍只保留既有 ELK/主入口 chunk 大小非阻断警告。
+
+人工验收与截图：更新并检查 `reports/visual/provider-formats-1440x1000.png`；一键测试按钮位于四项探针下方，沿用既有蓝色主操作、白底细边框与双栏结构，1440px 下无横向溢出，未改变其他页面视觉。
+
+待验证：三协议流式事件在各真实服务的浏览器 CORS 与事件变体、真实工具参数错误文案，以及 reasoning 模型在不同 token 预算下的最终输出仍待相应凭证和预算授权，mock 不替代真实验收。
+
+下一阶段入口：保持 v1.0.0-A 外部门禁；不因本补丁引入 v0.7.0 范围。

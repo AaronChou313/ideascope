@@ -1,4 +1,4 @@
-export type CapabilityState = 'supported' | 'unsupported' | 'unknown';
+export type CapabilityState = 'supported' | 'unsupported' | 'failed' | 'unknown';
 export type ProbeCapability = 'completion' | 'streaming' | 'structuredOutput' | 'toolCalling' | 'cancellation';
 export type ProviderFormat = 'openai-chat' | 'openai-responses' | 'anthropic-messages';
 

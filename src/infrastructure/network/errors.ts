@@ -1,4 +1,4 @@
-export type ConnectionErrorCode = 'unauthorized' | 'forbidden' | 'not_found' | 'rate_limited' | 'model_not_found' | 'incompatible_request' | 'network' | 'cors' | 'network_or_cors' | 'invalid_response' | 'cancelled' | 'http_error';
+export type ConnectionErrorCode = 'unauthorized' | 'forbidden' | 'not_found' | 'rate_limited' | 'model_not_found' | 'unsupported_parameter' | 'incompatible_request' | 'network' | 'cors' | 'network_or_cors' | 'invalid_response' | 'cancelled' | 'http_error';
 
 export class ConnectionError extends Error {
   constructor(public readonly code: ConnectionErrorCode, message: string, public readonly status?: number) {
@@ -16,19 +16,32 @@ export function classifyResponse(status: number): ConnectionError {
 }
 
 export async function classifyProviderResponse(response: Response): Promise<ConnectionError> {
-  let message = '';
+  let detail = '';
   try {
     const data = await response.clone().json() as { error?: { message?: unknown; type?: unknown; code?: unknown }; message?: unknown };
-    message = [data.error?.message, data.error?.type, data.error?.code, data.message]
+    detail = [data.error?.type, data.error?.code, data.error?.message, data.message]
       .filter((value): value is string => typeof value === 'string')
-      .join(' ')
-      .toLowerCase();
+      .map(sanitizeProviderDetail)
+      .filter(Boolean)
+      .join(' · ');
   } catch { /* Do not expose an arbitrary provider body. */ }
-  if (/(model|模型).*(not found|not exist|不存在)|unknown[_ ]model/.test(message))
-    return new ConnectionError('model_not_found', '模型不存在或当前凭证无权访问该模型。', response.status);
+  const message = detail.toLowerCase();
+  if (/(model|模型).*(not[ _]found|not[ _]exist|不存在)|unknown[_ ]model/.test(message))
+    return new ConnectionError('model_not_found', diagnostic(response.status, '模型不存在或当前凭证无权访问该模型。', detail), response.status);
+  if (/unsupported[ _](parameter|field)|unknown[ _](parameter|field)|not[ _]supported/.test(message))
+    return new ConnectionError('unsupported_parameter', diagnostic(response.status, 'Provider 不支持请求中的参数。', detail), response.status);
   if ([400, 409, 415, 422].includes(response.status))
-    return new ConnectionError('incompatible_request', '请求格式与所选 Provider 协议或模型能力不兼容。', response.status);
-  return classifyResponse(response.status);
+    return new ConnectionError('incompatible_request', diagnostic(response.status, '请求格式与所选 Provider 协议或模型能力不兼容。', detail), response.status);
+  const base = classifyResponse(response.status);
+  return detail ? new ConnectionError(base.code, diagnostic(response.status, base.message, detail), response.status) : base;
+}
+
+function sanitizeProviderDetail(value: string) {
+  return value.replace(/bearer\s+[^\s]+/gi, 'Bearer [REDACTED]').replace(/\bsk-[a-z0-9_-]{8,}\b/gi, '[REDACTED]').replace(/[\r\n\t]+/g, ' ').slice(0, 240);
+}
+
+function diagnostic(status: number, fallback: string, detail: string) {
+  return `HTTP ${status} · ${detail || fallback}`;
 }
 
 export function normalizeConnectionError(error: unknown): ConnectionError {

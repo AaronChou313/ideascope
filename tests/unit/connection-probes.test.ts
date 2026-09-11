@@ -8,6 +8,19 @@ import { providerUrl } from "../../src/infrastructure/llm/provider-protocol";
 import { probeOpenAlex } from "../../src/infrastructure/literature/openalex-probe";
 import { ConnectionError } from "../../src/infrastructure/network/errors";
 
+function streamResponse(body: string, contentType = "text/event-stream") {
+  const bytes = new TextEncoder().encode(body);
+  return new Response(new ReadableStream({ start(controller) { controller.enqueue(bytes); controller.close(); } }), { status: 200, headers: { "Content-Type": contentType } });
+}
+
+async function captureConnectionError(request: Promise<unknown>) {
+  try { await request; } catch (error) {
+    if (error instanceof ConnectionError) return error;
+    throw error;
+  }
+  throw new Error("Expected ConnectionError");
+}
+
 describe("browser connection probes", () => {
   it("normalizes a user base URL without adding a duplicate v1", () => {
     expect(normalizeBaseUrl("https://gateway.example/v1/")).toBe(
@@ -54,7 +67,7 @@ describe("browser connection probes", () => {
     });
   });
 
-  it("accepts a DeepSeek reasoning-only completion without the old four-token false failure", async () => {
+  it("keeps a reasoning-only token-exhausted completion unknown instead of unsupported", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
       choices: [{ message: { content: "", reasoning_content: "checking" }, finish_reason: "length" }],
       usage: { prompt_tokens: 9, completion_tokens: 64 },
@@ -63,13 +76,38 @@ describe("browser connection probes", () => {
       { format: "openai-chat", baseUrl: "https://api.deepseek.com", model: "deepseek-reasoner" },
       "test-only-key", "completion", new AbortController().signal, fetcher,
     );
-    expect(result.state).toBe("supported");
-    expect(result.detail).toContain("reasoning_content");
+    expect(result.state).toBe("unknown");
+    expect(result.detail).toContain("输出 token 用尽");
     const rawBody = fetcher.mock.calls[0]?.[1]?.body;
     if (typeof rawBody !== "string") throw new Error("Expected JSON body");
     const body = JSON.parse(rawBody) as Record<string, unknown>;
     expect(body.max_tokens).toBe(64);
     expect(body.thinking).toEqual({ type: "disabled" });
+  });
+
+  it("marks HTTP 200 with empty final content as failed, not unsupported", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: "" }, finish_reason: "stop" }] }), { status: 200 }));
+    const result = await probeProvider({ baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "completion", new AbortController().signal, fetcher);
+    expect(result.state).toBe("failed");
+    expect(result.detail).toContain("最终文本为空");
+  });
+
+  it("parses a complete Chat SSE stream with a model delta and terminator", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(streamResponse([
+      'data: {"choices":[{"delta":{"content":"OK"},"finish_reason":null}]}',
+      'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}',
+      'data: [DONE]', '',
+    ].join("\n\n")));
+    const result = await probeProvider({ baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "streaming", new AbortController().signal, fetcher);
+    expect(result.state).toBe("supported");
+    expect(result.detail).toContain("合法终止事件");
+  });
+
+  it("rejects a non-stream body and a stream without model output events", async () => {
+    const plain = vi.fn<typeof fetch>().mockResolvedValue(streamResponse('{"choices":[]}', "application/json"));
+    await expect(probeProvider({ baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "streaming", new AbortController().signal, plain)).rejects.toMatchObject({ code: "invalid_response" });
+    const noOutput = vi.fn<typeof fetch>().mockResolvedValue(streamResponse('data: {"choices":[{"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n'));
+    await expect(probeProvider({ baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "streaming", new AbortController().signal, noOutput)).rejects.toMatchObject({ code: "invalid_response" });
   });
 
   it("uses json_object rather than forcing json_schema for compatible Chat providers", async () => {
@@ -79,6 +117,22 @@ describe("browser connection probes", () => {
     if (typeof rawBody !== "string") throw new Error("Expected JSON body");
     const body = JSON.parse(rawBody) as Record<string, unknown>;
     expect(body.response_format).toEqual({ type: "json_object" });
+  });
+
+  it.each([
+    ["not json", "JSON 解析失败"],
+    ['{"ok":false}', "schema 校验失败"],
+    ['{"ok":true,"extra":1}', "additionalProperties 校验失败"],
+  ])("does not support malformed structured output: %s (%s)", async (content) => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content }, finish_reason: "stop" }] }), { status: 200 }));
+    await expect(probeProvider({ baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "structuredOutput", new AbortController().signal, fetcher)).resolves.toMatchObject({ state: "unsupported" });
+  });
+
+  it("validates the expected tool name and JSON arguments", async () => {
+    const valid = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { tool_calls: [{ type: "function", function: { name: "probe_ok", arguments: "{}" } }] }, finish_reason: "tool_calls" }] }), { status: 200 }));
+    await expect(probeProvider({ baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "toolCalling", new AbortController().signal, valid)).resolves.toMatchObject({ state: "supported" });
+    const invalid = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { tool_calls: [{ type: "function", function: { name: "wrong_tool", arguments: "not-json" } }] }, finish_reason: "tool_calls" }] }), { status: 200 }));
+    await expect(probeProvider({ baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "toolCalling", new AbortController().signal, invalid)).resolves.toMatchObject({ state: "unsupported" });
   });
 
   it("builds and parses an OpenAI Responses API probe", async () => {
@@ -103,9 +157,20 @@ describe("browser connection probes", () => {
     await expect(probeProvider({ format: "openai-responses", baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "completion", new AbortController().signal, fetcher)).rejects.toMatchObject({ code, status });
   });
 
-  it("reports a rejected optional capability as unsupported rather than a connection failure", async () => {
+  it("keeps an HTTP 400 capability request as failed and exposes redacted diagnostics", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ error: { message: "response_format is unsupported" } }), { status: 400 }));
-    await expect(probeProvider({ format: "openai-responses", baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "structuredOutput", new AbortController().signal, fetcher)).resolves.toMatchObject({ state: "unsupported" });
+    const error = await captureConnectionError(probeProvider({ format: "openai-responses", baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "structuredOutput", new AbortController().signal, fetcher));
+    expect(error.code).toBe("incompatible_request");
+    expect(error.message).toContain("HTTP 400");
+  });
+
+  it("extracts safe type/code/message for an HTTP 400 tool parameter error", async () => {
+    const sensitive = "sk-" + "secretshouldberemoved";
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ error: { type: "invalid_request_error", code: "unsupported_parameter", message: `Unsupported parameter: tool_choice; ${sensitive}` } }), { status: 400 }));
+    const error = await captureConnectionError(probeProvider({ format: "openai-responses", baseUrl: "https://gateway.example/v1", model: "test" }, "test-only-key", "toolCalling", new AbortController().signal, fetcher));
+    expect(error.code).toBe("unsupported_parameter");
+    expect(error.message).toContain("invalid_request_error");
+    expect(error.message).not.toContain(sensitive);
   });
 
   it("distinguishes a missing model from a missing endpoint", async () => {
@@ -195,4 +260,5 @@ describe("browser connection probes", () => {
     controller.abort();
     await expect(request).rejects.toMatchObject({ code: "cancelled" });
   });
+
 });

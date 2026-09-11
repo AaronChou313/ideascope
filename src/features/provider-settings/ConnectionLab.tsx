@@ -19,6 +19,12 @@ const capabilities: Array<{ id: ProbeCapability; label: string }> = [
   { id: "structuredOutput", label: "结构化输出" },
   { id: "toolCalling", label: "工具调用" },
 ];
+const stateLabels: Record<ProbeResult["state"], string> = {
+  supported: "支持",
+  unsupported: "不支持",
+  failed: "测试失败",
+  unknown: "待验证",
+};
 
 export function ConnectionLab() {
   const [baseUrl, setBaseUrl] = useState("https://api.openai.com/v1");
@@ -38,9 +44,7 @@ export function ConnectionLab() {
     [],
   );
 
-  async function runProviderProbe(capability: ProbeCapability) {
-    active.current?.abort();
-    active.current = new AbortController();
+  async function executeProviderProbe(capability: ProbeCapability, controller: AbortController) {
     setMessage(
       `正在测试${capabilities.find(({ id }) => id === capability)?.label ?? capability}…`,
     );
@@ -49,16 +53,39 @@ export function ConnectionLab() {
         { format, baseUrl, model },
         memoryKeyStore.get(),
         capability,
-        active.current.signal,
+        controller.signal,
       );
       setResults((current) => [
         ...current.filter(({ capability: id }) => id !== capability),
         result,
       ]);
       setMessage(result.detail);
+      return result;
     } catch (error) {
-      setMessage(normalizeConnectionError(error).message);
+      const normalized = normalizeConnectionError(error);
+      const result: ProbeResult = { capability, state: "failed", detail: normalized.message, usageReporting: "unknown" };
+      setResults((current) => [...current.filter(({ capability: id }) => id !== capability), result]);
+      setMessage(normalized.message);
+      return result;
     }
+  }
+
+  async function runProviderProbe(capability: ProbeCapability) {
+    active.current?.abort();
+    const controller = new AbortController();
+    active.current = controller;
+    await executeProviderProbe(capability, controller);
+  }
+
+  async function runAllProviderProbes() {
+    active.current?.abort();
+    const controller = new AbortController();
+    active.current = controller;
+    for (const { id } of capabilities) {
+      if (controller.signal.aborted) break;
+      await executeProviderProbe(id, controller);
+    }
+    if (!controller.signal.aborted) setMessage("四项能力测试已完成；请查看各项状态与诊断。");
   }
 
   async function runOpenAlexProbe() {
@@ -87,7 +114,7 @@ export function ConnectionLab() {
         <div className={styles.provider}>
           <h3>模型 Provider</h3>
           <p className={styles.help}>
-            每次能力测试会向你填写的服务发送一条最小请求，可能产生费用。密钥只保存在当前页面内存中。
+            每项能力测试会发送一条最小请求；一键测试会顺序发送四次，可能产生费用。密钥只保存在当前页面内存中。
           </p>
           <label>
             Provider Format
@@ -148,11 +175,19 @@ export function ConnectionLab() {
                   onClick={() => void runProviderProbe(id)}
                 >
                   {label}
-                  <small>{result?.state ?? "待验证"}</small>
+                  <small>{result ? stateLabels[result.state] : "待验证"}</small>
                 </button>
               );
             })}
           </div>
+          <button
+            className={styles.primary}
+            type="button"
+            disabled={!keyPresent || !model}
+            onClick={() => void runAllProviderProbes()}
+          >
+            一键测试四项能力
+          </button>
           <button
             className={styles.cancel}
             type="button"
